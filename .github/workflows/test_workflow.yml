@@ -1,0 +1,53 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        pip install pixi pytest-cov
+        pixi install
+    
+    - name: Run tests
+      run: |
+        pixi run pytest -v tests \
+            --html=test-results.html --self-contained-html \
+            --cov=. --no-cov-on-fail \
+            --cov-report=html --cov-report=xml --doctest-modules \
+            --junitxml=junit.xml -o junit_family=legacy
+    
+    - name: Upload coverage report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: |
+          htmlcov/
+          coverage.xml
+          test-results.html
+          junit.xml
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          **/pytest*.xml
+          **/junit*.xml
+          **/htmlcov/
