@@ -89,11 +89,15 @@ A few things to try here.
 - Git Action Board
 - Octolense.com
 - Testspace.com
+- Test-reporter GitHub action
 
 ### Testspace
 Free account. Unlimited for open-source; includes constraints for private usage.
 Use the GitHub Marketplace to install Testspace - https://github.com/marketplace/testspace-com
 Live demo: https://s2.testspace.com/spaces/145811/current/308836/automated%20tests/Code%20Coverage/_details
+
+### test-reporter
+It is a github action that displays test results from popular testing frameworks directly in GitHub. https://github.com/marketplace/actions/test-reporter. It would be a complementary tool to testspace because testspace does not have the feature of showing which test failed in a PR or annotations and diffs.
 
 ## Central Dashboard for VIPER Ecosystem Integration Tests
 
