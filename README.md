@@ -24,7 +24,21 @@ Some basic tests to verify that the components are properly installed
 - test_basic_toolviper.py
 - test_basic_xradio.py
 
-## Setup
+## Workflows for build and test
+.github/workflows....yaml files
+Steps to have in the workflows
+
+- build toolviper
+- build xradio
+- run unit tests
+- run component/stakeholder tests
+- run workflow integration tests
+
+## Setup with Virtual Environment
+...
+...
+
+## Setup with PIXI
 
 1. Install PIXI:
 ```bash
@@ -66,7 +80,7 @@ To update dependencies:
 pixi update
 ```
 
-## Stages
+### Test Stages with PIXI
 Test different stages of the components and use pipelines that test with multiple
 supported versions of python for each of the stages.
 
@@ -74,13 +88,13 @@ Test integration branch
 - Use pixi --environment integration to install the integration branch
 
 Test release branch
-- Use pixi --environment main to install the latest release
+- Use pixi --environment release to install the latest release
 
 Test main branch
 - Use pixi --environment main to build the main branch. Use for example:
   - xradio = { path = ".", editable = true }
   - toolviper = { path = "../toolviper", editable = true }
-To Check: how to install the dependencies of toolviper and xradio
+To Check: how to install the dependencies of toolviper and xradio on branches using pixi
 
 
 ## CI/CD
