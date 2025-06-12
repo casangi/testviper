@@ -1,4 +1,4 @@
-name: Run Tests
+name: Pixi Tests
 
 on:
   push:
@@ -7,23 +7,16 @@ on:
     branches: ["*"]
 
 jobs:
-  test:
+  pixi-test:
     runs-on: ubuntu-latest
-    
+    name: Run Tests with Pixi
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-    
-    - name: Install pixi
-      run: |
-        pip install pixi
-        echo "${HOME}/.pixi/bin" >> $GITHUB_PATH
-        pixi install
-    
-    - name: Run tests
-      run: |
-        pixi run pytest -v tests
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.4.0
+
+      - name: Run tests via Pixi
+        run: pixi run test -v tests
