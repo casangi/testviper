@@ -35,11 +35,16 @@ jobs:
         run: |
           make test-${{ matrix.channel }}
 
+      - name: Install Testspace client
+        run: curl -s https://testspace-client.s3.amazonaws.com/testspace-linux.tgz | tar -zxvf - && sudo mv testspace /usr/local/bin
+
       - name: Run testviper integration tests
         working-directory: ${{ github.workspace }}
         run: |
-          pytest -v -s tests/integration/ 
+          pytest -v -s tests/integration/ --junitxml=test-results.xml
 
+      - name: Push results to Testspace
+        run: testspace "tests:test-results.xml"
 
 
 
