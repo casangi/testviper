@@ -31,8 +31,24 @@ jobs:
           ls -l
           cat Makefile
 
-      - name: Run Makefile target
-        run: make test-${{ matrix.channel }}
+      - name: Install dependencies
+        run: |
+          make requirements/${{ matrix.channel }}.txt
+
+      - name: Run tests
+        run: |
+          pytest -v -s tests/ --html=test-results.html --self-contained-html \
+              --doctest-modules \
+              --junitxml=junit.xml -o junit_family=legacy
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            **/pytest*.xml
+            **/junit*.xml
 
 
 
