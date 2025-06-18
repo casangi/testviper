@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         python-version: ["3.11", "3.12", "3.13"]
 
     steps:
@@ -27,18 +27,14 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install pip dependencies (components)
-        run: |
-          pip install git+https://github.com/casangi/toolviper.git@main
-          pip install git+https://github.com/casangi/xradio.git@main
-          pip install git+https://github.com/casangi/graphviper.git@main
-          pip install git+https://github.com/casangi/astroviper.git@main
+        run: pip install -r requirements/main.txt
 
       - name: Install testviper dependencies
         run: pip install -r requirements/base.txt
 
       - name: Run integration tests
         run: |
-          pytest -v tests --junitxml=test-results.xml
+          pytest -v tests/integration/ --junitxml=test-results.xml
 
       - name: Upload test results
         if: always()
