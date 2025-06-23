@@ -1,5 +1,5 @@
 ---
-name: Integration Tests for Main Branch
+name: Integration Tests - Linux
 
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
 
       - name: Run testviper integration tests
         run: |
-          pytest -v tests/integration/ --junitxml=test-results.xml
+          pytest -v tests/integration/ --junitxml=testviper-test-results.xml
           ls -l
 
       - name: Run xradio tests
@@ -50,9 +50,31 @@ jobs:
           pytest -v ./xradio/tests/ --junitxml=xradio-test-results.xml
           ls -l
 
+      - name: Run toolviper tests
+        run: |
+          pytest -v ./toolviper/tests/ --junitxml=toolviper-test-results.xml
+          ls -l
+
+      - name: Run graphviper tests
+        run: |
+          pytest -v ./graphviper/tests/ --junitxml=graphviper-test-results.xml
+          ls -l
+
+      - name: Run astroviper tests
+        run: |
+          pytest -v ./astroviper/tests/ --junitxml=astroviper-test-results.xml
+          ls -l
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.python-version }}
+          path: |
+            testviper-test-results.xml
+            xradio-test-results.xml
+            toolviper-test-results.xml
+            graphviper-test-results.xml
+            astroviper-test-results.xml
+          if-no-files-found: ignore
           path: test-results.xml

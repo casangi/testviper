@@ -2,9 +2,11 @@
 Automated Test Repository for the VIPER Ecosystem
 
 [![Python 3.11 3.12 3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/downloads/release/python-3130/)
+[![Linux Tests](https://github.com/casangi/testviper/actions/workflows/integration_test_main.yml/badge.svg?branch=main)](https://github.com/casangi/testviper/actions/workflows/integration_test_main.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/casangi/testviper/branch/main/graph/badge.svg)](https://codecov.io/gh/casangi/testviper/branch/main/testviper)
 [![Documentation Status](https://readthedocs.org/projects/testviper/badge/?version=latest)](https://testviper.readthedocs.io)
 [![Version Status](https://img.shields.io/pypi/v/testviper.svg)](https://pypi.python.org/pypi/testviper/)
+
 
 In-progress....
 
@@ -27,14 +29,12 @@ Some basic tests to verify that the components are properly installed
 - test_basic_xradio.py
 
 ## Workflows for build and test
-.github/workflows....yaml files
-Steps to have in the workflows
+The initial integration_test_linux.yml workflow will:
+ - build each components in editable mode on their main branch. 
+ - install the testviper dependencies for tests
+ - run all unit, stakeholder of each component and
+ - run the integration tests stored in testviper.
 
-- build toolviper
-- build xradio
-- run unit tests
-- run component/stakeholder tests
-- run workflow integration tests
 
 ## Setup with Virtual Environment
 Install the components and run the tests inside a virtual environment. This
@@ -48,8 +48,6 @@ source venv-3.13/bin/activate
 make build-main
 make test-main
 ```
-
-...
 
 ## Setup with PIXI
 
