@@ -1,5 +1,5 @@
 ---
-name: Integration Tests
+name: Integration Tests for Main Branch
 
 on:
   push:
@@ -26,14 +26,19 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install pip dependencies (components)
-        run: pip install -r requirements/main.txt
+      - name: Clone component repositories
+        run: |
+          git clone https://github.com/casangi/toolviper.git
+          git clone https://github.com/casangi/xradio.git
+          git clone https://github.com/casangi/graphviper.git
+          git clone https://github.com/casangi/astroviper.git
 
       - name: Install testviper dependencies
         run: pip install -r requirements/base.txt
 
-      - name: Clone xradio repository
-        run: git clone https://github.com/casangi/xradio.git
+      - name: Install components and their dependencies
+        run: make build-main
+#        run: pip install -r requirements/main.tx
 
       - name: Run testviper integration tests
         run: |

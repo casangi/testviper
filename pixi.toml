@@ -1,23 +1,36 @@
-[project]
+# Install the dependencies for testviper and the components
+
+[workspace]
 authors = ["Sandra María Castro <scastro@eso.org>"]
 channels = ["conda-forge"]
 name = "testviper"
-platforms = ["osx-arm64","linux-64"]
-version = "0.0.1"
-#platforms = ["linux-64"]
+platforms = ["osx-arm64"]
+version = "0.1.0"
 
+# TestVIPER dependencies
 [dependencies]
-python = ">=3.11,<3.14"
-pytest = ">=8.4.0,<9"
-python-casacore = "*"
-numba = ">=0.57.0"
-yamllint = "*"
+python = "==3.11,<3.14"
+pytest = ">=8.4.1,<9"
+pytest-cov = ">=6.2.1,<7"
+pytest-html = ">=4.1.1,<5"
+pip = ">=25.1.1,<26"
 
-[pypi-dependencies]
-xradio = ">=0.0.56"
-toolviper = ">=0.0.12"
+# XRADIO dependency on macOS
+python-casacore = ">=3.7.1,<4"
 
-[tasks]
-test = "pytest -v -s tests/integration"
+# Task to install the components in editable mode using pixi run
+#[tasks]
+#pip-components = "pip install -r requirements/main.txt"
+
+# Task with arguments that reads the <branch>.txt file to install with pip
+# Run it this way: pixi run pip-install <branch>
+[tasks.pip-install]
+args = ["branch"]
+cmd = "pip install -r requirements/{{ branch }}.txt"
+
+[tasks.cov]
+args = ["test_name"]
+cmd = "pytest {{ test_name }} --html=test-results.html --self-contained-html --cov=xradio --no-cov-on-fail --cov-report=html --cov-report=xml --doctest-modules --junitxml=junit.xml -o junit_family=legacy"
+
 
 
