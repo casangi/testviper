@@ -5,10 +5,11 @@ Automated Test Repository for the VIPER Ecosystem
 [![Linux Tests](https://github.com/casangi/testviper/actions/workflows/integration_test_main.yml/badge.svg?branch=main)](https://github.com/casangi/testviper/actions/workflows/integration_test_main.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/casangi/testviper/branch/main/graph/badge.svg)](https://codecov.io/gh/casangi/testviper/branch/main/testviper)
 [![Documentation Status](https://readthedocs.org/projects/testviper/badge/?version=latest)](https://testviper.readthedocs.io)
-[![Version Status](https://img.shields.io/pypi/v/testviper.svg)](https://pypi.python.org/pypi/testviper/)
 
 
-In-progress....
+![Static Badge](https://img.shields.io/badge/work_in-progress-yellow)
+
+
 
 This repository is used to build and run integration tests for the VIPER Ecosystem.
 It will install all components and run the available tests in the CI.
