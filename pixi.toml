@@ -1,20 +1,36 @@
-[project]
+# Install the dependencies for testviper and the components
+
+[workspace]
 authors = ["Sandra María Castro <scastro@eso.org>"]
 channels = ["conda-forge"]
 name = "testviper"
-platforms = ["osx-arm64","linux-64", "osx-64"]
-version = "0.0.1"
+platforms = ["osx-arm64"]
+version = "0.1.0"
 
+# TestVIPER dependencies
 [dependencies]
-python = ">=3.11.0,<3.14"
-pytest = ">=8.3.5,<9"
-pytest-cov = ">=4.0.0,<5"
-black = ">=23.0.0,<24"
-isort = ">=5.0.0,<6"
-python-casacore = ">=3.7.1,<4"
-#toolviper = {git = "https://github.com/casangi/toolviper", branch = "main"}
-#xradio = {git = "https://github.com/casangi/xradio", branch = "main"}
+python = "==3.11,<3.14"
+pytest = ">=8.4.1,<9"
+pytest-cov = ">=6.2.1,<7"
+pytest-html = ">=4.1.1,<5"
+pip = ">=25.1.1,<26"
 
-[pypi-dependencies]
-toolviper = ">0.0.12"
-xradio = ">=0.0.56"
+# XRADIO dependency on macOS
+python-casacore = ">=3.7.1,<4"
+
+# Task to install the components in editable mode using pixi run
+#[tasks]
+#pip-components = "pip install -r requirements/main.txt"
+
+# Task with arguments that reads the <branch>.txt file to install with pip
+# Run it this way: pixi run pip-install <branch>
+[tasks.pip-install]
+args = ["branch"]
+cmd = "pip install -r requirements/{{ branch }}.txt"
+
+[tasks.cov]
+args = ["test_name"]
+cmd = "pytest {{ test_name }} --html=test-results.html --self-contained-html --cov=xradio --no-cov-on-fail --cov-report=html --cov-report=xml --doctest-modules --junitxml=junit.xml -o junit_family=legacy"
+
+
+

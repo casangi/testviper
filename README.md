@@ -2,15 +2,20 @@
 Automated Test Repository for the VIPER Ecosystem
 
 [![Python 3.11 3.12 3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/downloads/release/python-3130/)
+[![Linux Tests](https://github.com/casangi/testviper/actions/workflows/integration_test_main.yml/badge.svg?branch=main)](https://github.com/casangi/testviper/actions/workflows/integration_test_main.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/casangi/testviper/branch/main/graph/badge.svg)](https://codecov.io/gh/casangi/testviper/branch/main/testviper)
 [![Documentation Status](https://readthedocs.org/projects/testviper/badge/?version=latest)](https://testviper.readthedocs.io)
-[![Version Status](https://img.shields.io/pypi/v/testviper.svg)](https://pypi.python.org/pypi/testviper/)
+
+
+![Static Badge](https://img.shields.io/badge/work_in-progress-yellow)
+
 
 
 This repository is used to build and run integration tests for the VIPER Ecosystem.
 It will install all components and run the available tests in the CI.
 Proposed structure for this repository:
 - tests
+- requirements
 - docs
 - docs/user_stories
 - ci
@@ -25,18 +30,25 @@ Some basic tests to verify that the components are properly installed
 - test_basic_xradio.py
 
 ## Workflows for build and test
-.github/workflows....yaml files
-Steps to have in the workflows
+The initial integration_test_linux.yml workflow will:
+ - build each components in editable mode on their main branch. 
+ - install the testviper dependencies for tests
+ - run all unit, stakeholder of each component and
+ - run the integration tests stored in testviper.
 
-- build toolviper
-- build xradio
-- run unit tests
-- run component/stakeholder tests
-- run workflow integration tests
 
 ## Setup with Virtual Environment
-...
-...
+Install the components and run the tests inside a virtual environment. This
+setup will not install python-casacore on macOS because it needs to use conda-forge.
+If installing on a macOS system, please use the pixi setup.
+
+To run the tests
+```bash
+python3.13 -m venv venv-3.13
+source venv-3.13/bin/activate
+make build-main
+make test-main
+```
 
 ## Setup with PIXI
 
@@ -44,16 +56,6 @@ Steps to have in the workflows
 ```bash
 curl -fsSL https://pixi.sh/install.sh | sh
 export PATH=/user/../.pixi/bin:$PATH
-```
-
-2. Initialize the environment:
-```bash
-pixi install
-```
-
-3. Run tests:
-```bash
-pixi run pytest
 ```
 
 ### Package Management with PIXI
@@ -80,22 +82,27 @@ To update dependencies:
 pixi update
 ```
 
-### Test Stages with PIXI
-Test different stages of the components and use pipelines that test with multiple
-supported versions of python for each of the stages.
+### Build TestVIPER and the VIPER components
+The file pixi.toml contains the minimum dependencies to install the
+components from any branch. the pixi dependencies are installed from the
+conda-forge channel. The components are installed using pip inside a pixi
+environment.
 
-Test integration branch
-- Use pixi --environment integration to install the integration branch
-
-Test release branch
-- Use pixi --environment release to install the latest release
-
-Test main branch
-- Use pixi --environment main to build the main branch. Use for example:
-  - xradio = { path = ".", editable = true }
-  - toolviper = { path = "../toolviper", editable = true }
-To Check: how to install the dependencies of toolviper and xradio on branches using pixi
-
+The pip-branch "task" in pixi.toml allows to install the components from any branch
+by giving the branch name as an argument.
+```bash
+pixi install
+pixi run pip-install main
+...
+```
+### Run tests from each components and the integration tests in TestVIPER
+```bash
+pixi run pytest -v xradio/tests
+pixi run pytest -v toolviper/tests
+pixi run pytest -v graphviper/tests
+pixi run pytest -v astroviper/tests
+pixi run pytest -v tests/integration
+```
 
 ## CI/CD
 A few things to try here.

@@ -1,0 +1,47 @@
+---
+name: Pixi Tests
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  pixi-test:
+    runs-on: ${{ matrix.os }}
+    name: Run Tests with Pixi on ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.8.10
+        with:
+          pixi-version: v0.44.0
+          cache: false
+      
+      - name: Clone xradio repository
+        run: |
+          git clone https://github.com/casangi/xradio.git
+      
+      - name: Run testviper tests via Pixi
+        run: |
+          # Change to the correct directory where pixi.toml is located
+          cd ${{ github.workspace }}
+          ls -l
+          echo $PATH
+          pixi install
+          pixi run pip-install main
+          pixi run pytest -v tests/integration/
+      
+      - name: Run xradio tests via Pixi
+        run: |
+          cd ${{ github.workspace }}
+          pixi run pytest -v ./xradio/tests/

@@ -1,0 +1,32 @@
+---
+name: Tox Integration Tests
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["*"]
+
+jobs:
+  tox-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toxenv: [latest, main]
+    name: Tox Tests - ${{ matrix.toxenv }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install tox
+        run: pip install tox
+
+      - name: Run tox
+        run: |
+          tox -e ${{ matrix.toxenv }}
+          .tox/${{ matrix.toxenv }}/bin/pytest tests
