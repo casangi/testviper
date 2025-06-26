@@ -70,14 +70,27 @@ jobs:
           --no-cov-on-fail \
           --doctest-modules \
           --cov-report=xml:xradio-tests/${{ matrix.python-version }}/coverage.xml \
-          --junitxml="xradio-tests/${{ matrix.python-version }}/xradio-test-results-${{ matrix.python-version }}.xml"
+          --junitxml="xradio-tests/${{ matrix.python-version }}/xradio-test-results-${{ matrix.python-version }}.xml" \
+          --csv="xradio-test-results-${{ matrix.python-version }}.csv" --csv-columns module,class,function,status,duration,python_version
+
+          mv "xradio-test-results-${{ matrix.python-version }}.csv" "xradio-test-results-${{ matrix.python-version }}.log"
+          
+          passed_count=$(grep -o 'passed' "xradio-test-results-${{ matrix.python-version }}.log" | wc -l)
+          failed_count=$(grep -o 'failed' "xradio-test-results-${{ matrix.python-version }}.log" | wc -l)
+          error_count=$(grep -o 'error' "xradio-test-results-${{ matrix.python-version }}.log" | wc -l)
+          skipped_count=$(grep -o 'skipped' "xradio-test-results-${{ matrix.python-version }}.log" | wc -l)
+          xpassed_count=$(grep -o 'xpassed' "xradio-test-results-${{ matrix.python-version }}.log" | wc -l)
+          xfailed_count=$(grep -o 'xfailed' "xradio-test-results-${{ matrix.python-version }}.log" | wc -l)
+
+          echo '${{ matrix.python-version }} Test Suite Count,'$passed_count','$failed_count','$error_count','$skipped_count > "messages-${{ matrix.python-version }}.csv"
+          cat "messages-${{ matrix.python-version }}.csv"
           ls -l .
           ls -l xradio-tests/${{ matrix.python-version }}
 
           
       - name: Publish xradio results to Testspace
         run: |
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/xradio]xradio-tests/${{ matrix.python-version }}/*.xml"
+          testspace "[Python ${{ matrix.python-version }}/Unit Tests/xradio]xradio-tests/${{ matrix.python-version }}/*.xml" "xradio-test-results-${{ matrix.python-version }}.log"{"messages-${{ matrix.python-version }}.csv"} "${{ github.base_ref || github.ref_name }}"
         if: always()
 
       - name: Run toolviper tests
