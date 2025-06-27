@@ -40,44 +40,45 @@ jobs:
         run: make build-main
 #        run: pip install -r requirements/main.tx
 
-      - name: Create test results directories
-        run: |
-          mkdir -p testviper-tests/${{ matrix.python-version }}
-          mkdir -p toolviper-tests/${{ matrix.python-version }}
-          mkdir -p graphviper-tests/${{ matrix.python-version }}
-          mkdir -p astroviper-tests/${{ matrix.python-version }}
-
-      - name: Run testviper integration tests
-        run: |
-          pytest -v tests/integration/ \
-          --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-test-results-${{ matrix.python-version }}.xml"
-          ls -l testviper-tests/${{ matrix.python-version }}/
+      # - name: Create test results directories
+      #   run: |
+      #     mkdir -p testviper-tests/${{ matrix.python-version }}
+      #     mkdir -p toolviper-tests/${{ matrix.python-version }}
+      #     mkdir -p graphviper-tests/${{ matrix.python-version }}
+      #     mkdir -p astroviper-tests/${{ matrix.python-version }}
+      #     mkdir -p xradio-tests/${{ matrix.python-version }}
 
       - name: Setup Testspace
         uses: testspace-com/setup-testspace@v1
         with:
           domain: 'casangi'
-          project: 'testviper-${{ matrix.python-version }}'
+          project: 'testviper'
 
+      - name: Run testviper integration tests
+        run: |
+          pytest -v tests/integration/ \
+          --junitxml="testviper-test-results.xml"
+          ls -l testviper*
 
-      - name: Create xradio test results directory
-        run: mkdir -p xradio-tests/${{ matrix.python-version }}
-
+      - name: Publish testviper results to Testspace
+        run: |
+          testspace testviper-test-results.xml "testviper-${{ github.ref_name }}:${{ matrix.python-version }}"
+        if: always()
+  
       - name: Run xradio tests
         run: |
-          pytest -v ./xradio/tests \
+          pytest -v ./xradio/tests/unit \
           --cov=xradio \
           --no-cov-on-fail \
           --doctest-modules \
-          --cov-report=xml:xradio-tests/${{ matrix.python-version }}/coverage.xml \
-          --junitxml="xradio-tests/${{ matrix.python-version }}/xradio-test-results-${{ matrix.python-version }}.xml"
+          --cov-report=xml:xradio-coverage.xml \
+          --junitxml="xradio-test-results.xml"
           ls -l .
-          ls -l xradio-tests/${{ matrix.python-version }}
+          ls -l xradio*
 
-          
       - name: Publish xradio results to Testspace
         run: |
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/xradio]xradio-tests/${{ matrix.python-version }}/*.xml"
+          testspace xradio-test-results.xml xradio-coverage.xml "testviper-${{ github.ref_name }}:${{ matrix.python-version }}"
         if: always()
 
       - name: Run toolviper tests
@@ -86,13 +87,13 @@ jobs:
           --cov=toolviper \
           --no-cov-on-fail \
           --doctest-modules \
-          --cov-report=xml:toolviper-tests/${{ matrix.python-version }}/coverage.xml \
-          --junitxml="toolviper-tests/${{ matrix.python-version }}/toolviper-test-results-${{ matrix.python-version }}.xml"
-          ls -l toolviper-tests/${{ matrix.python-version }}
+          --cov-report=xml:toolviper-coverage.xml \
+          --junitxml="toolviper-test-results.xml"
+          ls -l toolviper*
 
       - name: Publish toolviper results to Testspace
         run: |
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/toolviper]toolviper-tests/${{ matrix.python-version }}/*.xml"
+          testspace toolviper-test-results.xml toolviper-coverage.xml "testviper/${{ github.ref_name }}/${{ matrix.python-version }}"
         if: always()
 
       - name: Run graphviper tests
@@ -101,13 +102,13 @@ jobs:
           --cov=graphviper \
           --no-cov-on-fail \
           --doctest-modules \
-          --cov-report=xml:graphviper-tests/${{ matrix.python-version }}/coverage.xml \
-          --junitxml="graphviper-tests/${{ matrix.python-version }}/graphviper-test-results-${{ matrix.python-version }}.xml"
-          ls -l graphviper-tests/${{ matrix.python-version }}
+          --cov-report=xml:graphviper-coverage.xml \
+          --junitxml="graphviper-test-results.xml"
+          ls -l graphviper*
 
       - name: Publish graphviper results to Testspace
         run: |
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/graphviper]graphviper-tests/${{ matrix.python-version }}/*.xml"
+          testspace graphviper-test-results.xml graphviper-coverage.xml "testviper-${{ github.ref_name }}:${{ matrix.python-version }}"
         if: always()
 
       - name: Run astroviper tests
@@ -116,13 +117,13 @@ jobs:
           --cov=astroviper \
           --no-cov-on-fail \
           --doctest-modules \
-          --cov-report=xml:astroviper-tests/${{ matrix.python-version }}/coverage.xml \
-          --junitxml="astroviper-tests/${{ matrix.python-version }}/astroviper-test-results-${{ matrix.python-version }}.xml"
-          ls -l astroviper-tests/${{ matrix.python-version }}
+          --cov-report=xml:astroviper-coverage.xml \
+          --junitxml="astroviper-test-results.xml"
+          ls -l astroviper*
 
       - name: Publish astroviper results to Testspace
         run: |
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/astroviper]astroviper-tests/${{ matrix.python-version }}/*.xml" 
+          testspace astroviper-test-results.xml astroviper-coverage.xml "testviper-${{ github.ref_name }}:${{ matrix.python-version }}"
         if: always()
 
       - name: Upload test results
