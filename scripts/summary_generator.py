@@ -61,11 +61,15 @@ def generate_summary_html():
     integration_stats = parse_allure_summary("allure-report/integration")
     toolviper_stats = parse_allure_summary("allure-report/toolviper")
     xradio_stats = parse_allure_summary("allure-report/xradio")
+    graphviper_stats = parse_allure_summary("allure-report/graphviper")
+    astroviper_stats = parse_allure_summary("allure-report/astroviper")
     
     # Get coverage statistics
     integration_coverage = parse_coverage_xml("coverage/coverage-integration.xml")
     toolviper_coverage = parse_coverage_xml("coverage/coverage-toolviper.xml")
     xradio_coverage = parse_coverage_xml("coverage/coverage-xradio.xml")
+    graphviper_coverage = parse_coverage_xml("coverage/coverage-graphviper.xml")
+    astroviper_coverage = parse_coverage_xml("coverage/coverage-astroviper.xml")
     
     # Generate timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -397,6 +401,72 @@ def generate_summary_html():
                         <a href="xradio/index.html" class="report-link">View Full Report</a>
                     </div>
                 </div>
+
+                <div class="component-card">
+                    <div class="card-header">
+                        <h3>📡 GraphVIPER</h3>
+                        <p>Radio component tests</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="metrics-row">
+                            <span class="metric-label">Total Tests:</span>
+                            <span class="metric-value">{graphviper_stats['total']}</span>
+                        </div>
+                        <div class="metrics-row">
+                            <span class="metric-label">Passed:</span>
+                            <span class="metric-value passed">{graphviper_stats['passed']}</span>
+                        </div>
+                        <div class="metrics-row">
+                            <span class="metric-label">Failed:</span>
+                            <span class="metric-value failed">{graphviper_stats['failed']}</span>
+                        </div>
+                        <div class="metrics-row">
+                            <span class="metric-label">Skipped:</span>
+                            <span class="metric-value skipped">{graphviper_stats['skipped']}</span>
+                        </div>
+                        
+                        <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill" style="width: {graphviper_coverage['percentage']}%"></div>
+                        </div>
+                        <div class="coverage-text">{graphviper_coverage['percentage']}% ({graphviper_coverage['lines_covered']}/{graphviper_coverage['lines_valid']} lines)</div>
+                        
+                        <a href="graphviper/index.html" class="report-link">View Full Report</a>
+                    </div>
+                </div>
+                
+                <div class="component-card">
+                    <div class="card-header">
+                        <h3>📡 AstroVIPER</h3>
+                        <p>Radio component tests</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="metrics-row">
+                            <span class="metric-label">Total Tests:</span>
+                            <span class="metric-value">{astroviper_stats['total']}</span>
+                        </div>
+                        <div class="metrics-row">
+                            <span class="metric-label">Passed:</span>
+                            <span class="metric-value passed">{astroviper_stats['passed']}</span>
+                        </div>
+                        <div class="metrics-row">
+                            <span class="metric-label">Failed:</span>
+                            <span class="metric-value failed">{astroviper_stats['failed']}</span>
+                        </div>
+                        <div class="metrics-row">
+                            <span class="metric-label">Skipped:</span>
+                            <span class="metric-value skipped">{astroviper_stats['skipped']}</span>
+                        </div>
+                        
+                        <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
+                        <div class="coverage-bar">
+                            <div class="coverage-fill" style="width: {astroviper_coverage['percentage']}%"></div>
+                        </div>
+                        <div class="coverage-text">{astroviper_coverage['percentage']}% ({astroviper_coverage['lines_covered']}/{astroviper_coverage['lines_valid']} lines)</div>
+                        
+                        <a href="astroviper/index.html" class="report-link">View Full Report</a>
+                    </div>
+                </div>  
             </div>
         </div>
         

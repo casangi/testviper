@@ -32,6 +32,8 @@ def main():
     ensure_dir("allure-report/integration")
     ensure_dir("allure-report/toolviper")
     ensure_dir("allure-report/xradio")
+    ensure_dir("allure-report/graphviper")
+    ensure_dir("allure-report/astroviper")
     
     success = True
     
@@ -58,7 +60,23 @@ def main():
     cmd = "allure generate allure-results/xradio -o allure-report/xradio --clean"
     if not run_command(cmd):
         success = False
-    
+
+     # Generate GraphVIPER Report
+    print("=" * 50)
+    print("Generating GraphVIPER Allure Report")
+    print("=" * 50)
+    cmd = "allure generate allure-results/graphviper -o allure-report/graphviper --clean"
+    if not run_command(cmd):
+        success = False
+
+    # Generate AstroVIPER Report
+    print("=" * 50)
+    print("Generating AstroVIPER Allure Report")
+    print("=" * 50)
+    cmd = "allure generate allure-results/astroviper -o allure-report/astroviper --clean"
+    if not run_command(cmd):
+        success = False
+
     print("=" * 50)
     print("Allure report generation completed")
     print("=" * 50)

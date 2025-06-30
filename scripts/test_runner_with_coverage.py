@@ -32,17 +32,18 @@ def main():
     ensure_dir("allure-results/integration")
     ensure_dir("allure-results/toolviper") 
     ensure_dir("allure-results/xradio")
+    ensure_dir("allure-results/graphviper")
+    ensure_dir("allure-results/astroviper")
     ensure_dir("coverage")
     
     success = True
     
     # Run Integration Tests (testviper)
     print("=" * 50)
-    print("Running Integration Tests (testviper)")
+    print("Running TestVIPER Integration Tests")
     print("=" * 50)
-    print(os.getcwd())
     cmd = """
-    pytest tests/integration \
+    pytest -v tests/integration \
         --alluredir=allure-results/integration \
         --cov=toolviper --cov=xradio \
         --cov-report=xml:coverage/coverage-integration.xml \
@@ -54,11 +55,10 @@ def main():
     
     # Run Toolviper Component Tests
     print("=" * 50)
-    print("Running Toolviper Component Tests")
+    print("Running ToolVIPER Tests")
     print("=" * 50)
-    print(os.getcwd())
     cmd = """
-    pytest toolviper/tests/ \
+    pytest -v toolviper/tests/ \
         --alluredir=allure-results/toolviper \
         --cov=toolviper \
         --cov-report=xml:coverage/coverage-toolviper.xml \
@@ -70,10 +70,10 @@ def main():
     
     # Run Xradio Component Tests
     print("=" * 50)
-    print("Running Xradio Component Tests")
+    print("Running XRADIO Component Tests")
     print("=" * 50)
     cmd = """
-    pytest xradio/tests/unit \
+    pytest -v xradio/tests/unit \
         --alluredir=allure-results/xradio \
         --cov=xradio \
         --cov-report=xml:coverage/coverage-xradio.xml \
@@ -86,7 +86,45 @@ def main():
     print("=" * 50)
     print("Test execution completed")
     print("=" * 50)
+
+     # Run GraphVIPER Component Tests
+    print("=" * 50)
+    print("Running GraphVIPER Tests")
+    print("=" * 50)
+    cmd = """
+    pytest -v graphviper/tests/unit \
+        --alluredir=allure-results/graphviper \
+        --cov=graphviper \
+        --cov-report=xml:coverage/coverage-graphviper.xml \
+        --cov-report=html:coverage/htmlcov-graphviper \
+        --cov-report=json:coverage/coverage-graphviper.json
+    """
+    if not run_command(cmd):
+        success = False
     
+    print("=" * 50)
+    print("Test execution completed")
+    print("=" * 50)
+   
+    # Run AstroVIPER Component Tests
+    print("=" * 50)
+    print("Running AstroVIPER Tests")
+    print("=" * 50)
+    cmd = """
+    pytest -v astroviper/tests/unit \
+        --alluredir=allure-results/astroviper \
+        --cov=astroviper \
+        --cov-report=xml:coverage/coverage-astroviper.xml \
+        --cov-report=html:coverage/htmlcov-astroviper \
+        --cov-report=json:coverage/coverage-astroviper.json
+    """
+    if not run_command(cmd):
+        success = False
+    
+    print("=" * 50)
+    print("Test execution completed")
+    print("=" * 50)
+   
     # List generated files
     run_command("ls -la allure-results/")
     run_command("ls -la coverage/")
