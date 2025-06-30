@@ -1,0 +1,67 @@
+name: Integration Tests with Allure Report
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: Install testviper dependencies
+      run: |
+        pwd
+        ls -l
+        make build-testviper
+        
+    - name: Clone component repositories
+      run: |
+        git clone https://github.com/casangi/toolviper.git
+        git clone https://github.com/casangi/xradio.git
+        ls -l
+        
+    - name: Install components
+      run: |
+        make build-main
+        ls -l
+        
+    - name: Install Allure CLI
+      run: |
+        wget -qO- https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz | tar -xz
+        sudo mv allure-2.24.1 /opt/allure
+        sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
+        
+    - name: Run tests and generate coverage
+      run: python scripts/test_runner_with_coverage.py
+      
+    - name: Generate Allure reports
+      run: python scripts/report_generator.py
+      
+    - name: Generate summary report
+      run: python scripts/summary_generator.py
+      
+    - name: Upload Allure Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: allure-reports
+        path: allure-report/
+        retention-days: 30
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: allure-report
