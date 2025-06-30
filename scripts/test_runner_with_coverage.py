@@ -57,7 +57,6 @@ def main():
     print("Running Toolviper Component Tests")
     print("=" * 50)
     print(os.getcwd())
-    print(os.system('ls -l'))
     cmd = """
     pytest toolviper/tests/ \
         --alluredir=allure-results/toolviper \
@@ -66,7 +65,7 @@ def main():
         --cov-report=html:coverage/htmlcov-toolviper \
         --cov-report=json:coverage/coverage-toolviper.json
     """
-    if not run_command(cmd, cwd="toolviper"):
+    if not run_command(cmd):
         success = False
     
     # Run Xradio Component Tests
@@ -81,7 +80,7 @@ def main():
         --cov-report=html:coverage/htmlcov-xradio \
         --cov-report=json:coverage/coverage-xradio.json
     """
-    if not run_command(cmd, cwd="xradio"):
+    if not run_command(cmd):
         success = False
     
     print("=" * 50)
