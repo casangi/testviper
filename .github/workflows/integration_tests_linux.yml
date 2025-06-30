@@ -1,152 +1,137 @@
-
 ---
-name: Integration Tests - Linux
-
-on:
-  push:
-    branches: ["**"]
-  pull_request:
-
-jobs:
-  test:
-    name: >-
-      Integration Tests on ${{ matrix.os }} /
-      Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.12", "3.13"]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-            python-version: ${{ matrix.python-version }}
-
-      - name: Clone component repositories
-        run: |
-          git clone https://github.com/casangi/toolviper.git
-          git clone https://github.com/casangi/xradio.git
-          git clone https://github.com/casangi/graphviper.git
-          git clone https://github.com/casangi/astroviper.git
-
-      - name: Install testviper dependencies
-        run: pip install -r requirements/base.txt
-
-      - name: Install components and their dependencies
-        run: make build-main
-
-      - name: Create test results directories
-        run: |
-          mkdir -p testviper-tests/${{ matrix.python-version }}
-          mkdir -p toolviper-tests/${{ matrix.python-version }}
-          mkdir -p graphviper-tests/${{ matrix.python-version }}
-          mkdir -p astroviper-tests/${{ matrix.python-version }}
-          mkdir -p xradio-tests/${{ matrix.python-version }}
-
-      - name: Setup Testspace
-        uses: testspace-com/setup-testspace@v1
-        with:
-          domain: 'casangi'
-          project: 'testviper'
-
-      - name: Run testviper integration tests
-        run: |
-          pytest -v tests/integration/ \
-          --junitxml="testviper-test-results.xml"
-          ls -l testviper*
-
-      - name: Publish testviper results to Testspace
-        run: |
-          testspace testviper-test-results.xml "${{ github.ref_name }}:${{ matrix.python-version }}"
-        if: always()
+  name: Integration Tests - Linux
   
-      - name: Run xradio tests
-        run: |
-          pytest -v ./xradio/tests/unit \
-          --cov=xradio \
-          --no-cov-on-fail \
-          --doctest-modules \
-          --cov-report=xml:xradio-coverage.xml \
-          --junitxml="xradio-test-results.xml"
-          ls -l .
-          ls -l xradio*
+  on:
+    push:
+      branches: ["**"]
+    pull_request:
+  
+  jobs:
+    test:
+      name: >-
+        Integration Tests on ${{ matrix.os }} /
+        Python ${{ matrix.python-version }}
+      runs-on: ${{ matrix.os }}
+      strategy:
+        matrix:
+          os: [ubuntu-latest]
+          python-version: ["3.13"]
+  
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+  
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v5
+          with:
+            python-version: ${{ matrix.python-version }}
+  
+        - name: Clone component repositories
+          run: |
+            git clone https://github.com/casangi/toolviper.git
+            git clone https://github.com/casangi/xradio.git
+            git clone https://github.com/casangi/graphviper.git
+            git clone https://github.com/casangi/astroviper.git
+  
+        - name: Install testviper dependencies
+          run: pip install -r requirements/base.txt
+  
+        - name: Install components and their dependencies
+          run: make build-main
+  
+        - name: Create test results directories
+          run: |
+            mkdir -p testviper-tests/${{ matrix.python-version }}
+            mkdir -p toolviper-tests/${{ matrix.python-version }}
+            mkdir -p graphviper-tests/${{ matrix.python-version }}
+            mkdir -p astroviper-tests/${{ matrix.python-version }}
+  
+        - name: Run testviper integration tests
+          run: |
+            pytest -v tests/integration/ \
+            --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-test-results-${{ matrix.python-version }}.xml"
+            ls -l testviper-tests/${{ matrix.python-version }}/
+    
+        - name: Create xradio test results directory
+          run: mkdir -p xradio-tests/${{ matrix.python-version }}
+  
+        - name: Run xradio tests
+          run: |
+            pytest -v ./xradio/tests \
+            --cov=xradio \
+            --no-cov-on-fail \
+            --doctest-modules \
+            --cov-report=xml:xradio-tests/${{ matrix.python-version }}/coverage.xml \
+            --junitxml="xradio-tests/${{ matrix.python-version }}/xradio-test-results-${{ matrix.python-version }}.xml"
+            ls -l .
+            ls -l xradio-tests/${{ matrix.python-version }}
+  
+        - name: Run toolviper tests
+          run: |
+            pytest -v ./toolviper/tests/ \
+            --cov=toolviper \
+            --no-cov-on-fail \
+            --doctest-modules \
+            --cov-report=xml:toolviper-tests/${{ matrix.python-version }}/coverage.xml \
+            --junitxml="toolviper-tests/${{ matrix.python-version }}/toolviper-test-results-${{ matrix.python-version }}.xml"
+            ls -l toolviper-tests/${{ matrix.python-version }}
+  
+        - name: Run graphviper tests
+          run: |
+            pytest -v ./graphviper/tests/ \
+            --cov=graphviper \
+            --no-cov-on-fail \
+            --doctest-modules \
+            --cov-report=xml:graphviper-tests/${{ matrix.python-version }}/coverage.xml \
+            --junitxml="graphviper-tests/${{ matrix.python-version }}/graphviper-test-results-${{ matrix.python-version }}.xml"
+            ls -l graphviper-tests/${{ matrix.python-version }}
+  
+        - name: Run astroviper tests
+          run: |
+            pytest -v ./astroviper/tests/ \
+            --cov=astroviper \
+            --no-cov-on-fail \
+            --doctest-modules \
+            --cov-report=xml:astroviper-tests/${{ matrix.python-version }}/coverage.xml \
+            --junitxml="astroviper-tests/${{ matrix.python-version }}/astroviper-test-results-${{ matrix.python-version }}.xml"
+            ls -l astroviper-tests/${{ matrix.python-version }}
 
-      - name: Publish xradio results to Testspace
-        run: |
-          testspace xradio-test-results.xml xradio-coverage.xml "${{ github.ref_name }}:${{ matrix.python-version }}"
-        if: always()
+        - name: Check CODECOV_TOKEN
+          run: echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
 
-      - name: Run toolviper tests
-        run: |
-          pytest -v ./toolviper/tests/ \
-          --cov=toolviper \
-          --no-cov-on-fail \
-          --doctest-modules \
-          --cov-report=xml:toolviper-coverage.xml \
-          --junitxml="toolviper-test-results.xml"
-          ls -l toolviper*
+        - name: Upload code coverage results to Codecov
+          uses: codecov/codecov-action@v5
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}  # Use the passed token from workflow_call
+            slug: ${{ github.repository }}
 
-      - name: Publish toolviper results to Testspace
-        run: |
-          testspace toolviper-test-results.xml toolviper-coverage.xml "${{ github.ref_name }}:${{ matrix.python-version }}"
-        if: always()
+        - name: Upload test stats to Codecov
+          if: ${{ !cancelled() }}
+          uses: codecov/test-results-action@v1
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}
+            slug: casangi/testviper
 
-      - name: Run graphviper tests
-        run: |
-          pytest -v ./graphviper/tests/ \
-          --cov=graphviper \
-          --no-cov-on-fail \
-          --doctest-modules \
-          --cov-report=xml:graphviper-coverage.xml \
-          --junitxml="graphviper-test-results.xml"
-          ls -l graphviper*
-
-      - name: Publish graphviper results to Testspace
-        run: |
-          testspace graphviper-test-results.xml graphviper-coverage.xml "[${{ github.ref_name }}:${{ matrix.python-version }}]"
-        if: always()
-
-      - name: Run astroviper tests
-        run: |
-          pytest -v ./astroviper/tests/ \
-          --cov=astroviper \
-          --no-cov-on-fail \
-          --doctest-modules \
-          --cov-report=xml:astroviper-coverage.xml \
-          --junitxml="astroviper-test-results.xml"
-          ls -l astroviper*
-
-      - name: Publish astroviper results to Testspace
-        run: |
-          testspace astroviper-test-results.xml astroviper-coverage.xml "${{ github.ref_name }}:${{ matrix.python-version }}"
-        if: always()
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results-${{ matrix.python-version }}
-          path: |
-            test-results/*.xml
-          if-no-files-found: ignore
-
-    # - name: Check CODECOV_TOKEN
-    #   run: echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
-
-      - name: Upload code coverage results to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}  # Use the passed token from workflow_call
-          slug: ${{ github.repository }}
-
-      - name: Upload test stats to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: casangi/testviper
+        - name: Setup Testspace
+          uses: testspace-com/setup-testspace@v1
+          with:
+            domain: 'casangi'
+            project: 'testviper-${{ matrix.python-version }}'
+  
+        - name: Publish test results to Testspace
+          run: |
+            testspace "[Python ${{ matrix.python-version }}/Unit Tests/testviper]testviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov 
+            testspace "[Python ${{ matrix.python-version }}/Unit Tests/toolviper]toolviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
+            testspace "[Python ${{ matrix.python-version }}/Unit Tests/xradio]xradio-tests/${{ matrix.python-version }}/*.xml" --link=codecov
+            testspace "[Python ${{ matrix.python-version }}/Unit Tests/graphviper]graphviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
+            testspace "[Python ${{ matrix.python-version }}/Unit Tests/astroviper]astroviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov 
+          if: always()
+  
+        - name: Upload test results
+          if: always()
+          uses: actions/upload-artifact@v4
+          with:
+            name: test-results-${{ matrix.python-version }}
+            path: |
+              test-results/*.xml
+            if-no-files-found: ignore
