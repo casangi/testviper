@@ -39,9 +39,9 @@ def main():
     success = True
     
     # Run Integration Tests (testviper)
-    print("=" * 50)
+    print("*" * 50)
     print("Running TestVIPER Integration Tests")
-    print("=" * 50)
+    print("*" * 50)
     cmd = """
     pytest -v tests/integration \
         --alluredir=allure-results/integration \
@@ -54,9 +54,9 @@ def main():
         success = False
     
     # Run Toolviper Component Tests
-    print("=" * 50)
+    print("*" * 50)
     print("Running ToolVIPER Tests")
-    print("=" * 50)
+    print("*" * 50)
     cmd = """
     pytest -v toolviper/tests/ \
         --alluredir=allure-results/toolviper \
@@ -69,11 +69,11 @@ def main():
         success = False
     
     # Run Xradio Component Tests
-    print("=" * 50)
+    print("*" * 50)
     print("Running XRADIO Component Tests")
-    print("=" * 50)
+    print("*" * 50)
     cmd = """
-    pytest -v xradio/tests/unit \
+    pytest -v xradio/tests \
         --alluredir=allure-results/xradio \
         --cov=xradio \
         --cov-report=xml:coverage/coverage-xradio.xml \
@@ -92,7 +92,7 @@ def main():
     print("Running GraphVIPER Tests")
     print("=" * 50)
     cmd = """
-    pytest -v graphviper/tests/unit \
+    pytest -v graphviper/tests \
         --alluredir=allure-results/graphviper \
         --cov=graphviper \
         --cov-report=xml:coverage/coverage-graphviper.xml \
@@ -102,16 +102,16 @@ def main():
     if not run_command(cmd):
         success = False
     
-    print("=" * 50)
+    print("*" * 50)
     print("Test execution completed")
-    print("=" * 50)
+    print("*" * 50)
    
     # Run AstroVIPER Component Tests
-    print("=" * 50)
+    print("*" * 50)
     print("Running AstroVIPER Tests")
-    print("=" * 50)
+    print("*" * 50)
     cmd = """
-    pytest -v astroviper/tests/unit \
+    pytest -v astroviper/tests \
         --alluredir=allure-results/astroviper \
         --cov=astroviper \
         --cov-report=xml:coverage/coverage-astroviper.xml \
@@ -121,9 +121,9 @@ def main():
     if not run_command(cmd):
         success = False
     
-    print("=" * 50)
+    print("*" * 50)
     print("Test execution completed")
-    print("=" * 50)
+    print("*" * 50)
    
     # List generated files
     run_command("ls -la allure-results/")
