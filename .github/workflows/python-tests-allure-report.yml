@@ -49,21 +49,8 @@
         run: |
           python scripts/test_runner_with_coverage.py
         
-      # - name: Generate Allure reports
-      #   run: python scripts/report_generator.py
-        
-      # - name: Generate summary report
-      #   run: python scripts/summary_generator.py
-
-      # - name: Generate and publish Allure report
-      #   uses: simple-elf/allure-report-action@v1
-      #   if: always()
-      #   with:
-      #     allure_results: allure-results
-      #     allure_history: allure-history
-##############################################
       - name: Get Allure history
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4  # Updated from v2
         if: always()
         continue-on-error: true
         with:
@@ -78,11 +65,11 @@
           allure_report: allure-report
           gh_pages: gh-pages
           allure_history: allure-history
-
+  
       # - name: Generate summary report
       #   run: python scripts/summary_generator.py
-
-      # Add this for testing on feature branches
+  
+      # Upload artifact for all branches (testing purposes)
       - name: Upload Allure Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -90,49 +77,16 @@
           name: allure-report-preview
           path: allure-history/
           retention-days: 7
-
-      # Deploy Allure Report to GitHub Pages (Main)
-      - name: Deploy Allure Report to GitHub Pages (Main)
+  
+      # Deploy to GitHub Pages (Main branch only)
+      - name: Deploy Allure Report to GitHub Pages
         if: always() && github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v2
-        env:
-          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: peaceiris/actions-gh-pages@v3  # Updated version
         with:
-          PUBLISH_BRANCH: gh-pages
-          PUBLISH_DIR: allure-history
-
-      # # Deploy to GitHub Pages (Staging)
-      # - name: Deploy to GitHub Pages (Staging)
-      #   if: always() && github.ref != 'refs/heads/main'
-      #   uses: peaceiris/actions-gh-pages@v2
-      #   env:
-      #     PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     PUBLISH_BRANCH: gh-pages-staging
-      #     PUBLISH_DIR: allure-history
-      
-      # - name: Deploy to GitHub Pages (Staging) - needs the branch to exist before
-      #   if: always() && github.ref != 'refs/heads/main'
-      #   uses: peaceiris/actions-gh-pages@v3  # Use v3 or later
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     publish_branch: gh-pages-staging
-      #     publish_dir: allure-history
-      #     force_orphan: true  # This creates the branch if it doesn't exist
-
-      # - name: Deploy Allure Report to GitHub Pages (Staging)
-      #   if: always() && github.ref != 'refs/heads/main'
-      #   uses: JamesIves/github-pages-deploy-action@v4
-      #   with:
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-      #     branch: gh-pages-staging
-      #     folder: allure-history
-      #     clean: true
-
-
-
-
-
+          github_token: ${{ secrets.GITHUB_TOKEN }}  # Correct parameter format
+          publish_branch: gh-pages  # Lowercase parameter name
+          publish_dir: allure-history  # Lowercase parameter name
+          force_orphan: true  # Add this for first run only - remove after first successful deployment
 
 
     # ---
