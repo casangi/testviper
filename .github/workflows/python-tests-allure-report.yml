@@ -79,6 +79,9 @@
           gh_pages: gh-pages
           allure_history: allure-history
 
+      - name: Generate summary report
+        run: python scripts/summary_generator.py
+
       # Add this for testing on feature branches
       - name: Upload Allure Report for Testing
         if: always() && github.ref != 'refs/heads/main'
@@ -98,16 +101,24 @@
           PUBLISH_BRANCH: gh-pages
           PUBLISH_DIR: allure-history
 
-      # Deploy to GitHub Pages (Staging)
+      # # Deploy to GitHub Pages (Staging)
+      # - name: Deploy to GitHub Pages (Staging)
+      #   if: always() && github.ref != 'refs/heads/main'
+      #   uses: peaceiris/actions-gh-pages@v2
+      #   env:
+      #     PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     PUBLISH_BRANCH: gh-pages-staging
+      #     PUBLISH_DIR: allure-history
+      
       - name: Deploy to GitHub Pages (Staging)
         if: always() && github.ref != 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v2
-        env:
-          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: peaceiris/actions-gh-pages@v3  # Use v3 or later
         with:
-          PUBLISH_BRANCH: gh-pages-staging
-          PUBLISH_DIR: allure-history
-
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages-staging
+          publish_dir: allure-history
+          force_orphan: true  # This creates the branch if it doesn't exist
 
 
 
