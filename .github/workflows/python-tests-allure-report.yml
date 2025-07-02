@@ -91,8 +91,8 @@
           path: allure-history/
           retention-days: 7
 
-      # Deploy only to main
-      - name: Deploy report to Github Pages
+      # Deploy Allure Report to GitHub Pages (Main)
+      - name: Deploy Allure Report to GitHub Pages (Main)
         if: always() && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v2
         env:
@@ -111,16 +111,23 @@
       #     PUBLISH_BRANCH: gh-pages-staging
       #     PUBLISH_DIR: allure-history
       
-      - name: Deploy to GitHub Pages (Staging)
+      # - name: Deploy to GitHub Pages (Staging) - needs the branch to exist before
+      #   if: always() && github.ref != 'refs/heads/main'
+      #   uses: peaceiris/actions-gh-pages@v3  # Use v3 or later
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_branch: gh-pages-staging
+      #     publish_dir: allure-history
+      #     force_orphan: true  # This creates the branch if it doesn't exist
+
+      - name: Deploy Allure Report to GitHub Pages (Staging)
         if: always() && github.ref != 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3  # Use v3 or later
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages-staging
-          publish_dir: allure-history
-          force_orphan: true  # This creates the branch if it doesn't exist
-
-
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages-staging
+          folder: allure-history
+          clean: true
 
 
 
