@@ -73,7 +73,7 @@ def main():
     print("Running XRADIO Component Tests")
     print("*" * 50)
     cmd = """
-    pytest -v xradio/tests \
+    pytest -v xradio/tests/unit \
         --alluredir=allure-results/xradio \
         --cov=xradio \
         --cov-report=xml:coverage/coverage-xradio.xml \
