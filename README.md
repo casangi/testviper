@@ -19,6 +19,7 @@ Proposed structure for this repository:
 - docs
 - docs/user_stories
 - ci
+- scripts
 - tests/integration
 - ......
 
