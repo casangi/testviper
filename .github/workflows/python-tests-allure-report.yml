@@ -22,20 +22,16 @@ jobs:
         
     - name: Install testviper dependencies
       run: |
-        ls -l
         pip install -r requirements/base.txt
         
     - name: Clone component repositories
       run: |
-        git clone https://github.com/casangi/toolviper.git
         git clone https://github.com/casangi/xradio.git
-        git clone https://github.com/casangi/graphviper.git
-        git clone https://github.com/casangi/astroviper.git
-        ls -l
+       
         
     - name: Install components
       run: |
-        make build-main
+        pip install -e "./xradio[all]"
         ls -l
         
     - name: Install Allure CLI
@@ -46,7 +42,13 @@ jobs:
         
     - name: Run tests and generate coverage
       run: |
-        python scripts/test_runner_with_coverage.py
+        mkdir -p allure-results
+        pytest -v tests \
+        --alluredir=allure-results \
+        --cov=xradio \
+        --cov-report=xml:coverage/coverage.xml \
+        --cov-report=html:coverage/htmlcov \
+        --cov-report=json:coverage/coverage.json
       
 #    - name: Generate Allure reports
 #      run: python scripts/report_generator.py
@@ -60,8 +62,8 @@ jobs:
       if: always()
       continue-on-error: true
       with:
-        ref: gh-pages
-        path: gh-pages
+        ref: gh-pages-staging
+        path: gh-pages-staging
         
     # Build test report with history
     - name: Build test report with history
@@ -69,7 +71,7 @@ jobs:
       if: always()
       with:
         allure_results: allure-results
-        gh_pages: gh-pages
+        gh_pages: gh-pages-staging
         allure_report: allure-report
         allure_history: allure-history
       
@@ -87,7 +89,7 @@ jobs:
       if: always()
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_branch: gh-pages
+        publish_branch: gh-pages-staging
         publish_dir: allure-history
         
     # Optional: Post link to the report as a status check
