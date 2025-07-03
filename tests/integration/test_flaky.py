@@ -4,8 +4,10 @@ import ctypes
 
 
 def test_random_failure():
-    assert random.random() < 0.3, "Random failure triggered (30% chance)"
-
+    if random.random() < 0.3
+        assert False, "Random failure triggered (30% chance)"
+    assert True
+    
 def test_random_segfault():
     "Random Seg Fault triggered (10% chance)"
     if random.random() < 0.10:
