@@ -14,6 +14,7 @@ class TestBasicXradio:
 
     def test_simple_string(self, sample_fixture):
         print(f"Sample fixture value: {sample_fixture}")
+        print("Basic test for integration testing")
         assert sample_fixture == "sample_data"
 
     def test_invalid_sel(self):
