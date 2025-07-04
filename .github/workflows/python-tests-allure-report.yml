@@ -45,15 +45,35 @@ jobs:
         sudo mv allure-2.24.1 /opt/allure
         sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
         
+    - name: Checkout gh-pages-testing for history
+      uses: actions/checkout@v4
+      if: always()
+      continue-on-error: true
+      with:
+        ref: gh-pages-testing
+        path: gh-pages-testing
+        
+    - name: Copy Allure history
+      if: always()
+      continue-on-error: true
+      run: |
+        mkdir -p allure-results
+        if [ -d "gh-pages-testing/allure-history" ]; then
+          echo "Copying Allure history from previous runs"
+          cp -r gh-pages-testing/allure-history allure-results/history
+        else
+          echo "No previous Allure history found"
+        fi
+        
     - name: Run tests and generate coverage
       run: |
         python scripts/test_runner_with_coverage.py
       
-    - name: Generate Allure reports
-      run: python scripts/report_generator.py
+    - name: Generate Allure reports with history
+      run: python scripts/enhanced_report_generator.py
       
-    - name: Generate summary report
-      run: python scripts/summary_generator.py
+    - name: Generate enhanced summary report with CodeCov links
+      run: python scripts/enhanced_summary_generator.py
       
     - name: Upload Allure Reports
       uses: actions/upload-artifact@v4
@@ -63,11 +83,11 @@ jobs:
         path: allure-report/
         retention-days: 30
         
-    - name: Deploy to GitHub Pages
+    - name: Deploy to gh-pages-testing
       uses: peaceiris/actions-gh-pages@v4
-      if: github.ref == 'refs/heads/main'
+      if: always()
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: allure-report
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: ${{ github.repository }}
+        publish_branch: gh-pages-testing
+        force_orphan: false
