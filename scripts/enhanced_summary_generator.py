@@ -99,31 +99,54 @@ def parse_allure_results(results_dir):
     
     return stats
 
-def parse_coverage_xml(component_path):
+def parse_coverage_xml(component_name):
     """Parse coverage.xml to extract coverage percentage"""
-    coverage_file = Path(component_path) / "coverage.xml"
+    # Map component names to their coverage file names
+    coverage_file_map = {
+        'testviper': 'coverage/coverage-integration.xml',
+        'toolviper': 'coverage/coverage-toolviper.xml',
+        'xradio': 'coverage/coverage-xradio.xml',
+        'graphviper': 'coverage/coverage-graphviper.xml',
+        'astroviper': 'coverage/coverage-astroviper.xml'
+    }
+    
+    coverage_file_path = coverage_file_map.get(component_name)
+    if not coverage_file_path:
+        print(f"No coverage file mapping found for component: {component_name}")
+        return {'percentage': 0.0, 'lines_covered': 0, 'lines_total': 0}
+    
+    coverage_file = Path(coverage_file_path)
     
     if not coverage_file.exists():
+        print(f"Coverage file not found: {coverage_file_path}")
         return {'percentage': 0.0, 'lines_covered': 0, 'lines_total': 0}
     
     try:
         tree = ET.parse(coverage_file)
         root = tree.getroot()
         
-        # Find coverage element
-        coverage_elem = root.find('.//coverage')
+        # Check if root element is coverage or find coverage element
+        coverage_elem = None
+        if root.tag == 'coverage':
+            coverage_elem = root
+        else:
+            coverage_elem = root.find('.//coverage')
+            
         if coverage_elem is not None:
             line_rate = float(coverage_elem.get('line-rate', 0))
             lines_covered = int(coverage_elem.get('lines-covered', 0))
             lines_valid = int(coverage_elem.get('lines-valid', 0))
             
+            print(f"Coverage parsed for {component_name}: {line_rate * 100:.1f}% ({lines_covered}/{lines_valid} lines)")
             return {
                 'percentage': line_rate * 100,
                 'lines_covered': lines_covered,
                 'lines_total': lines_valid
             }
+        else:
+            print(f"No coverage element found in XML for {component_name}")
     except Exception as e:
-        print(f"Error parsing coverage for {component_path}: {e}")
+        print(f"Error parsing coverage for {component_name}: {e}")
     
     return {'percentage': 0.0, 'lines_covered': 0, 'lines_total': 0}
 
@@ -510,7 +533,7 @@ def main():
         stats = parse_allure_results(results_dir)
         
         # Parse coverage data
-        coverage = parse_coverage_xml(component['path'])
+        coverage = parse_coverage_xml(component['name'])
         
         # Update overall stats
         for key in ['total', 'passed', 'failed', 'broken', 'skipped']:
