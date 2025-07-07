@@ -1,15 +1,15 @@
 # Enhanced Allure Reporting System
 
-This enhanced system provides comprehensive test reporting for all CASA Next Generation components with historical tracking and CodeCov integration.
+This enhanced system provides comprehensive test reporting for the VIPER components with historical tracking and CodeCov integration.
 
 ## Features
 
 ### 🔍 Individual Component Reports
-- **TestViper Integration**: Core integration tests
-- **ToolViper**: Tool component tests  
-- **XRadio**: Radio astronomy data processing tests
-- **GraphViper**: Graph processing and visualization tests
-- **AstroViper**: Astronomy calculation and utility tests
+- **TestVIPER Integration**: Workflow integration tests
+- **ToolVIPER**: ToolVIPER component tests  
+- **XRadio**: Xarray radio astronomy data IO tests
+- **GraphVIPER**: Tests for Dask based MapReduce for Multi-Xarray datasets
+- **AstroVIPER**: Radio interferometry data processing tests
 
 ### 📊 Enhanced Capabilities
 - **Allure History Preservation**: Maintains test trend data across runs
@@ -124,11 +124,11 @@ Each component card includes:
 - **Hover Effects**: Visual feedback for interactive elements
 
 ### CodeCov URLs
-- **TestViper**: https://app.codecov.io/gh/casangi/testviper
-- **ToolViper**: https://app.codecov.io/gh/casangi/toolviper  
+- **TestVIPER**: https://app.codecov.io/gh/casangi/testviper
+- **ToolVIPER**: https://app.codecov.io/gh/casangi/toolviper  
 - **XRadio**: https://app.codecov.io/gh/casangi/xradio
-- **GraphViper**: https://app.codecov.io/gh/casangi/graphviper
-- **AstroViper**: https://app.codecov.io/gh/casangi/astroviper
+- **GraphVIPER**: https://app.codecov.io/gh/casangi/graphviper
+- **AstroVIPER**: https://app.codecov.io/gh/casangi/astroviper
 
 ## Customization
 
@@ -184,5 +184,4 @@ Each script provides verbose output including:
 ### Performance Optimizations
 - **Parallel Test Execution**: Run component tests in parallel
 - **Incremental Reports**: Only regenerate changed components
-- **CDN Integration**: Faster asset loading
-- **Caching**: Cache coverage and test data between runs
+
