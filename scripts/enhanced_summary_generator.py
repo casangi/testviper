@@ -251,9 +251,24 @@ def create_summary_html(components_data, overall_stats):
         
         .summary-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 1fr);
             gap: 30px;
             margin-bottom: 40px;
+        }}
+        
+        @media (max-width: 1200px) {{
+            .summary-grid {{
+                grid-template-columns: repeat(2, 1fr);
+                grid-template-rows: repeat(3, 1fr);
+            }}
+        }}
+        
+        @media (max-width: 768px) {{
+            .summary-grid {{
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(6, 1fr);
+            }}
         }}
         
         .component-card {{
