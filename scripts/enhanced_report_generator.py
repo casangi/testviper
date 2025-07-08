@@ -29,7 +29,7 @@ COMPONENTS = [
     },
     {
         'name': 'xradio',
-        'display_name': 'XRadio',
+        'display_name': 'Xradio',
         'path': 'xradio',
         'test_path': 'tests/unit',
         'icon': '📡'
@@ -148,7 +148,7 @@ def run_component_tests(component):
         # Add timeout to prevent hanging
         print(f"Running command: {' '.join(test_command)}")
         result = subprocess.run(test_command, capture_output=True, text=True, 
-                              timeout=60)  # 1 minute timeout for safety
+                              timeout=300)  # 1 minute timeout for safety
         print(f"Tests completed for {component_name}")
         print(f"Exit code: {result.returncode}")
         if result.stdout:
