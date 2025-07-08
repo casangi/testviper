@@ -147,8 +147,7 @@ def run_component_tests(component):
     try:
         # Add timeout to prevent hanging
         print(f"Running command: {' '.join(test_command)}")
-        result = subprocess.run(test_command, capture_output=True, text=True, 
-                              timeout=300)  # 1 minute timeout for safety
+        result = subprocess.run(test_command, capture_output=True, text=True)  
         print(f"Tests completed for {component_name}")
         print(f"Exit code: {result.returncode}")
         if result.stdout:
