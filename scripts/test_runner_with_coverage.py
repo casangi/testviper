@@ -45,7 +45,7 @@ def main():
     cmd = """
     pytest -v tests/integration \
         --alluredir=allure-results/integration \
-        --cov=toolviper --cov=xradio \
+        --cov=testviper \
         --cov-report=xml:coverage/coverage-integration.xml \
         --cov-report=html:coverage/htmlcov-integration \
         --cov-report=json:coverage/coverage-integration.json
