@@ -1,0 +1,204 @@
+---
+name: TestViper CI with Allure Reports
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  testviper-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install testviper dependencies
+      run: |
+        pip install -r requirements/base.txt
+
+    - name: Clone component repositories
+      run: |
+        git clone https://github.com/casangi/toolviper.git
+        git clone https://github.com/casangi/xradio.git
+        git clone https://github.com/casangi/graphviper.git
+        git clone https://github.com/casangi/astroviper.git
+
+    - name: Install components
+      run: |
+        pip install -r requirements/main.txt
+
+    - name: Install Allure CLI
+      run: |
+        wget -qO- https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz | tar -xz
+        sudo mv allure-2.24.1 /opt/allure
+        sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
+
+    - name: Create allure-results directories
+      run: |
+        mkdir -p allure-results/integration
+        mkdir -p allure-results/toolviper
+        mkdir -p allure-results/xradio
+        mkdir -p allure-results/graphviper
+        mkdir -p allure-results/astroviper
+        mkdir -p coverage
+
+    - name: Run TestViper Integration Tests
+      run: |
+        pytest -v tests/integration \
+          --alluredir=allure-results/integration \
+          --cov=testviper \
+          --cov-report=xml:coverage/coverage-integration.xml \
+          --cov-report=html:coverage/htmlcov-integration \
+          --cov-report=json:coverage/coverage-integration.json
+
+    - name: Run ToolViper Tests
+      run: |
+        pytest -v toolviper/tests/ \
+          --alluredir=allure-results/toolviper \
+          --cov=toolviper \
+          --cov-report=xml:coverage/coverage-toolviper.xml \
+          --cov-report=html:coverage/htmlcov-toolviper \
+          --cov-report=json:coverage/coverage-toolviper.json
+
+    - name: Run XRadio Tests
+      run: |
+        pytest -v xradio/tests/unit \
+          --alluredir=allure-results/xradio \
+          --cov=xradio \
+          --cov-report=xml:coverage/coverage-xradio.xml \
+          --cov-report=html:coverage/htmlcov-xradio \
+          --cov-report=json:coverage/coverage-xradio.json
+
+    - name: Run GraphViper Tests
+      run: |
+        pytest -v graphviper/tests/ \
+          --alluredir=allure-results/graphviper \
+          --cov=graphviper \
+          --cov-report=xml:coverage/coverage-graphviper.xml \
+          --cov-report=html:coverage/htmlcov-graphviper \
+          --cov-report=json:coverage/coverage-graphviper.json
+
+    - name: Run AstroViper Tests
+      run: |
+        pytest -v astroviper/tests/ \
+          --alluredir=allure-results/astroviper \
+          --cov=astroviper \
+          --cov-report=xml:coverage/coverage-astroviper.xml \
+          --cov-report=html:coverage/htmlcov-astroviper \
+          --cov-report=json:coverage/coverage-astroviper.json
+        ls -la
+
+    # Load test report history from gh-pages-staging branch
+    - name: Load test report history
+      uses: actions/checkout@v4
+      if: always()
+      continue-on-error: true
+      with:
+        ref: gh-pages-staging
+        path: gh-pages-staging
+
+    - name: Create main directory structure
+      if: always()
+      run: |
+        mkdir -p main/testviper
+        mkdir -p main/toolviper
+        mkdir -p main/xradio
+        mkdir -p main/graphviper
+        mkdir -p main/astroviper
+
+    # Build individual component reports with history
+    - name: Build TestViper Integration Report with history
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: allure-results/integration
+        gh_pages: gh-pages-staging/main/testviper
+        allure_report: main/testviper
+        allure_history: main/testviper/history
+
+    - name: Build ToolViper Report with history
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: allure-results/toolviper
+        gh_pages: gh-pages-staging/main/toolviper
+        allure_report: main/toolviper
+        allure_history: main/toolviper/history
+
+    - name: Build XRadio Report with history
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: allure-results/xradio
+        gh_pages: gh-pages-staging/main/xradio
+        allure_report: main/xradio
+        allure_history: main/xradio/history
+
+    - name: Build GraphViper Report with history
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: allure-results/graphviper
+        gh_pages: gh-pages-staging/main/graphviper
+        allure_report: main/graphviper
+        allure_history: main/graphviper/history
+
+    - name: Build AstroViper Report with history
+      uses: simple-elf/allure-report-action@master
+      if: always()
+      with:
+        allure_results: allure-results/astroviper
+        gh_pages: gh-pages-staging/main/astroviper
+        allure_report: main/astroviper
+        allure_history: main/astroviper/history
+
+    - name: Generate Summary Landing Page
+      if: always()
+      run: |
+        python scripts/generate_allure_summary_page.py
+
+    - name: Upload Allure Reports as artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: allure-reports
+        path: main/
+        retention-days: 30
+
+    - name: Upload Coverage Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage-reports
+        path: coverage/
+        retention-days: 30
+
+    # Publish to GitHub Pages
+    - name: Publish test reports to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      if: always()
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages-staging
+        publish_dir: main
+        destination_dir: main
+        keep_files: true
+
+    # Post link to the report as a status check
+    - name: Post link to the report
+      if: always()
+      uses: Sibz/github-status-action@v1
+      with:
+        authToken: ${{ secrets.GITHUB_TOKEN }}
+        context: 'Allure Test Report'
+        state: 'success'
+        sha: ${{ github.event.pull_request.head.sha || github.sha }}
+        target_url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/main/
