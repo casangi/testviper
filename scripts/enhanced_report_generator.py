@@ -17,7 +17,7 @@ COMPONENTS = [
         'name': 'testviper',
         'display_name': 'TestViper Integration',
         'path': '.',
-        'test_path': 'tests',
+        'test_path': 'tests/integration',
         'icon': '🔬'
     },
     {
@@ -31,7 +31,7 @@ COMPONENTS = [
         'name': 'xradio',
         'display_name': 'XRadio',
         'path': 'xradio',
-        'test_path': 'tests',
+        'test_path': 'tests/unit',
         'icon': '📡'
     },
     {
