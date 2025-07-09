@@ -34,6 +34,7 @@ source venv-3.13/bin/activate
 make build-main
 make test-main
 pytest -v tests/integration
+deactivate
 ```
 
 To run the tests in a macOS system, it is necessary to install the python-casacore library as a dependency for xradio, using conda-forge.
@@ -45,6 +46,7 @@ conda install -c conda-forge python-casacore
 pip install -r requirements/base.txt
 make build-main
 pytest -v tests/integration
+conda deactivate
 ```
 
 ## Setup with PIXI
