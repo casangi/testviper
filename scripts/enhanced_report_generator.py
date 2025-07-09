@@ -155,7 +155,7 @@ def run_component_tests(component):
         if result.stderr and result.stderr.strip():
             print("STDERR (last 200 chars):", result.stderr[-200:])
     except subprocess.TimeoutExpired:
-        print(f"Tests for {component_name} timed out after 1 minute")
+        print(f"Tests for {component_name} timed out after # minutes")
         create_minimal_result(results_dir, component_name, "Tests timed out")
     except Exception as e:
         print(f"Error running tests for {component_name}: {e}")
