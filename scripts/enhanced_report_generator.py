@@ -186,13 +186,9 @@ def generate_allure_report(component):
     
     print(f"Generating Allure report for {component_name}...")
     
-    # Copy history if available
-    history_source = f"allure-results/history"
-    history_dest = f"{results_dir}/history"
-    
-    if os.path.exists(history_source):
-        print(f"Copying history for {component_name}")
-        shutil.copytree(history_source, history_dest, dirs_exist_ok=True)
+    # The workflow now restores per-component history to allure-results-<component>/history
+    # No need to copy a global history directory here
+    # (Removed buggy block that copied allure-results/history to each component)
     
     # Generate report
     generate_command = [

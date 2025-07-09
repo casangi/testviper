@@ -53,18 +53,20 @@ jobs:
         ref: gh-pages-staging
         path: gh-pages-staging
         
-    - name: Copy Allure history
+    - name: Copy Allure history for each component
       if: always()
       continue-on-error: true
       run: |
-        mkdir -p allure-results
-        if [ -d "gh-pages-staging/main/allure-history" ]; then
-          echo "Copying Allure history from previous runs"
-          cp -r gh-pages-staging/main/allure-history allure-results/history
-        else
-          echo "No previous Allure history found"
-        fi
-        
+        for comp in testviper toolviper xradio graphviper astroviper; do
+          if [ -d "gh-pages-staging/main/allure-history/$comp" ]; then
+            mkdir -p "allure-results-$comp/history"
+            cp -r "gh-pages-staging/main/allure-history/$comp/." "allure-results-$comp/history/"
+            echo "Copied history for $comp"
+          else
+            echo "No previous history for $comp"
+          fi
+        done
+      
     # - name: Run tests and generate coverage
     #   run: |
     #     python scripts/test_runner_with_coverage.py
