@@ -96,21 +96,21 @@
             --junitxml="astroviper-tests/${{ matrix.python-version }}/astroviper-test-results-${{ matrix.python-version }}.xml"
             ls -l astroviper-tests/${{ matrix.python-version }}
 
-        - name: Check CODECOV_TOKEN
-          run: echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
+        # - name: Check CODECOV_TOKEN
+        #   run: echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
 
-        - name: Upload code coverage results to Codecov
-          uses: codecov/codecov-action@v5
-          with:
-            token: ${{ secrets.CODECOV_TOKEN }}  # Use the passed token from workflow_call
-            slug: ${{ github.repository }}
+        # - name: Upload code coverage results to Codecov
+        #   uses: codecov/codecov-action@v5
+        #   with:
+        #     token: ${{ secrets.CODECOV_TOKEN }}  # Use the passed token from workflow_call
+        #     slug: ${{ github.repository }}
 
-        - name: Upload test stats to Codecov
-          if: ${{ !cancelled() }}
-          uses: codecov/test-results-action@v1
-          with:
-            token: ${{ secrets.CODECOV_TOKEN }}
-            slug: casangi/testviper
+        # - name: Upload test stats to Codecov
+        #   if: ${{ !cancelled() }}
+        #   uses: codecov/test-results-action@v1
+        #   with:
+        #     token: ${{ secrets.CODECOV_TOKEN }}
+        #     slug: casangi/testviper
 
         - name: Setup Testspace
           uses: testspace-com/setup-testspace@v1
@@ -120,7 +120,7 @@
   
         - name: Publish test results to Testspace
           run: |
-            testspace "[Python ${{ matrix.python-version }}/Unit Tests/testviper]testviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov 
+            testspace "[Python ${{ matrix.python-version }}/Unit Tests/testviper]testviper-tests/${{ matrix.python-version }}/*.xml"
             testspace "[Python ${{ matrix.python-version }}/Unit Tests/toolviper]toolviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
             testspace "[Python ${{ matrix.python-version }}/Unit Tests/xradio]xradio-tests/${{ matrix.python-version }}/*.xml" --link=codecov
             testspace "[Python ${{ matrix.python-version }}/Unit Tests/graphviper]graphviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov

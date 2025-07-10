@@ -45,15 +45,37 @@ jobs:
         sudo mv allure-2.24.1 /opt/allure
         sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
         
-    - name: Run tests and generate coverage
+    - name: Checkout gh-pages-staging for history
+      uses: actions/checkout@v4
+      if: always()
+      continue-on-error: true
+      with:
+        ref: gh-pages-staging
+        path: gh-pages-staging
+        
+    - name: Copy Allure history for each component
+      if: always()
+      continue-on-error: true
       run: |
-        python scripts/test_runner_with_coverage.py
+        for comp in testviper toolviper xradio graphviper astroviper; do
+          if [ -d "gh-pages-staging/main/allure-history/$comp" ]; then
+            mkdir -p "allure-results-$comp/history"
+            cp -r "gh-pages-staging/main/allure-history/$comp/." "allure-results-$comp/history/"
+            echo "Copied history for $comp"
+          else
+            echo "No previous history for $comp"
+          fi
+        done
       
-    - name: Generate Allure reports
-      run: python scripts/report_generator.py
+    # - name: Run tests and generate coverage
+    #   run: |
+    #     python scripts/test_runner_with_coverage.py
       
-    - name: Generate summary report
-      run: python scripts/summary_generator.py
+    - name: Run tests and generate Allure reports with history
+      run: python scripts/enhanced_report_generator.py
+      
+    - name: Generate enhanced summary report with CodeCov links
+      run: python scripts/enhanced_summary_generator.py
       
     - name: Upload Allure Reports
       uses: actions/upload-artifact@v4
@@ -63,11 +85,13 @@ jobs:
         path: allure-report/
         retention-days: 30
         
-    - name: Deploy to GitHub Pages
+    - name: Deploy to gh-pages-staging
       uses: peaceiris/actions-gh-pages@v4
-      if: github.ref == 'refs/heads/main'
+      if: always()
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: allure-report
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: ${{ github.repository }}
+        publish_branch: gh-pages-staging
+        destination_dir: main
+        keep_files: true
+        force_orphan: false
