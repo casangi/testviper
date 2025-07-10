@@ -2,15 +2,12 @@
 Automated Test Repository for the VIPER Ecosystem
 
 [![Python 3.11 3.12 3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/downloads/release/python-3130/)
-[![Linux Tests](https://github.com/casangi/testviper/actions/workflows/integration_test_main.yml/badge.svg?branch=main)](https://github.com/casangi/testviper/actions/workflows/integration_test_main.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/casangi/testviper/branch/main/graph/badge.svg)](https://codecov.io/gh/casangi/testviper/branch/main/testviper)
+[![Linux Tests](https://github.com/casangi/testviper/actions/workflows/python-tests-allure-report.yml/badge.svg?branch=main)](https://github.com/casangi/testviper/actions/workflows/python-tests-allure-report.yml?query=branch%3Amain)
 [![Documentation Status](https://readthedocs.org/projects/testviper/badge/?version=latest)](https://testviper.readthedocs.io)
-
-
 ![Static Badge](https://img.shields.io/badge/work_in-progress-yellow)
 
 
-This repository is used to build and run integration tests for the VIPER Ecosystem.
+This repository will be used to build and run integration tests for the VIPER Ecosystem.
 It will install all components and run the available tests in the CI.
 Structure of this repository:
 - tests/integration: workflow integration tests
@@ -27,7 +24,7 @@ the test. The user stories can also be added to the documentation of the test fr
 ## Setup with Virtual Environment
 Install the components and run the tests inside a virtual environment. 
 
-To run the tests in a Linux system:
+To run the tests in a Linux system, use any recent Python version such as 3.11, 3.12 or 3.13:
 ```bash
 python3.13 -m venv venv-3.13
 source venv-3.13/bin/activate
@@ -40,7 +37,7 @@ deactivate
 To run the tests in a macOS system, it is necessary to install the python-casacore library as a dependency for xradio, using conda-forge.
 
 ```bash
-conda create --name testviper-venv python=3.12 --no-default-packages
+conda create --name testviper-venv python=3.13 --no-default-packages
 conda activate testviper-venv
 conda install -c conda-forge python-casacore
 pip install -r requirements/base.txt
@@ -103,7 +100,7 @@ pixi run pytest -v astroviper/tests
 pixi run pytest -v tests/integration
 ```
 
-## CI/CD
+## CI/CD - in progress
 A few things to try here.
 - Allure Report
 - Testspace.com
@@ -120,7 +117,7 @@ There is another draft implementation of test aggregation using Testspace, acces
 https://casangi.testspace.com/projects/68338/spaces and https://casangi.testspace.com/spaces/311697/metrics.
 
 
-### What the Dashboard Should Show
+### What the Dashboard Should Show in the future
 - Test status per component (e.g., AstroVIPER, ToolVIPER, etc.)
 - Latest test runs and build status
 - Test trends over time (pass/fail rates, flakiness)

@@ -15,8 +15,8 @@ from pathlib import Path
 COMPONENTS = [
     {
         'name': 'testviper',
-        'display_name': 'TestViper Integration',
-        'description': 'Integration test suite',
+        'display_name': 'TestVIPER Integration',
+        'description': 'Integration test framework',
         'path': '.',
         'test_path': 'tests',
         'icon': '🔬',
@@ -25,8 +25,8 @@ COMPONENTS = [
     },
     {
         'name': 'toolviper',
-        'display_name': 'ToolViper',
-        'description': 'Tool component tests',
+        'display_name': 'ToolVIPER',
+        'description': 'Radio astronomy processing tools',
         'path': 'toolviper',
         'test_path': 'tests',
         'icon': '🛠️',
@@ -35,8 +35,8 @@ COMPONENTS = [
     },
     {
         'name': 'xradio',
-        'display_name': 'XRadio',
-        'description': 'Radio component tests',
+        'display_name': 'XRADIO',
+        'description': 'Xarray radio astronomy data IO',
         'path': 'xradio',
         'test_path': 'tests',
         'icon': '📡',
@@ -45,8 +45,8 @@ COMPONENTS = [
     },
     {
         'name': 'graphviper',
-        'display_name': 'GraphViper',
-        'description': 'Graph component tests',
+        'display_name': 'GraphVIPER',
+        'description': 'Dask based MapReduce for Multi-Xarray datasets',
         'path': 'graphviper',
         'test_path': 'tests',
         'icon': '📊',
@@ -55,8 +55,8 @@ COMPONENTS = [
     },
     {
         'name': 'astroviper',
-        'display_name': 'AstroViper',
-        'description': 'Astronomy component tests',
+        'display_name': 'AstroVIPER',
+        'description': 'Radio interferometry data processing algorithms',
         'path': 'astroviper',
         'test_path': 'tests',
         'icon': '🌟',
@@ -194,7 +194,9 @@ def generate_component_card(component, stats, coverage):
             <div class="coverage-bar">
                 <div class="coverage-fill" style="width: {coverage['percentage']:.1f}%"></div>
             </div>
-            <div class="coverage-text">{coverage['percentage']:.1f}% ({coverage['lines_covered']}/{coverage['lines_total']} lines)</div>
+            <div class="coverage-text">
+                {"N/A" if component['name'] == "testviper" else f"{coverage['percentage']:.1f}% ({coverage['lines_covered']}/{coverage['lines_total']} lines)"}
+            </div>
             
             {codecov_badge_html}
             
@@ -218,7 +220,9 @@ def create_summary_html(components_data, overall_stats):
         )
     
     # Calculate overall metrics
-    avg_coverage = sum(cd['coverage']['percentage'] for cd in components_data) / len(components_data) if components_data else 0
+    # Exclude testviper from average coverage calculation
+    coverage_values = [cd['coverage']['percentage'] for cd in components_data if cd['component']['name'] != 'testviper']
+    avg_coverage = sum(coverage_values) / len(coverage_values) if coverage_values else 0
     
     html_content = f"""
 <!DOCTYPE html>
@@ -532,8 +536,11 @@ def main():
         results_dir = f"allure-results-{component['name']}"
         stats = parse_allure_results(results_dir)
         
-        # Parse coverage data
-        coverage = parse_coverage_xml(component['name'])
+        # Skip coverage for testviper
+        if component['name'] == 'testviper':
+            coverage = {'percentage': 0.0, 'lines_covered': 0, 'lines_total': 0}
+        else:
+            coverage = parse_coverage_xml(component['name'])
         
         # Update overall stats
         for key in ['total', 'passed', 'failed', 'broken', 'skipped']:
