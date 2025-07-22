@@ -1,0 +1,369 @@
+name: Component Tests with ReportPortal & Coverage
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'Component to test (all, xradio, astroviper, toolviper, graphviper, integration)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - xradio
+        - astroviper
+        - toolviper
+        - graphviper
+        - integration
+
+env:
+  RP_ENDPOINT: ${{ vars.RP_ENDPOINT || 'https://reportportal.example.com' }}
+  RP_PROJECT: ${{ vars.RP_PROJECT || 'testviper' }}
+
+jobs:
+  # Component testing matrix
+  component-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [xradio, astroviper, toolviper, graphviper, integration]
+        include:
+          - component: xradio
+            test_path: "xradio/tests"
+            display_name: "XRADIO"
+          - component: astroviper
+            test_path: "astroviper/tests"
+            display_name: "AstroViper"
+          - component: toolviper
+            test_path: "toolviper/tests"
+            display_name: "ToolViper"
+          - component: graphviper
+            test_path: "graphviper/tests"
+            display_name: "GraphViper"
+          - component: integration
+            test_path: "tests/integration"
+            display_name: "Integration Tests"
+    
+    env:
+      RP_API_KEY: ${{ secrets.RP_TOKEN }}
+      TV_COMPONENT_NAME: ${{ matrix.component }}
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+        
+    - name: Install Python dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements/base.txt
+        pip install pytest-cov pytest-reportportal python-dotenv
+        
+    - name: Install all components
+      run: make build-main
+      continue-on-error: true
+      
+    - name: Setup environment
+      run: |
+        cp .env.example .env
+        echo "RP_API_KEY=${{ secrets.RP_TOKEN }}" >> .env
+        echo "RP_ENDPOINT=${{ env.RP_ENDPOINT }}" >> .env
+        echo "RP_PROJECT=${{ env.RP_PROJECT }}" >> .env
+        
+    - name: Check component availability
+      id: check_component
+      run: |
+        if [ "${{ github.event.inputs.component }}" != "" ] && [ "${{ github.event.inputs.component }}" != "all" ]; then
+          if [ "${{ matrix.component }}" != "${{ github.event.inputs.component }}" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping ${{ matrix.component }} (only testing ${{ github.event.inputs.component }})"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "skip=false" >> $GITHUB_OUTPUT
+        fi
+        
+        # Check if test path exists
+        if [ ! -d "${{ matrix.test_path }}" ]; then
+          echo "Test path ${{ matrix.test_path }} not found, skipping"
+          echo "skip=true" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Run ${{ matrix.display_name }} tests with coverage
+      if: steps.check_component.outputs.skip == 'false'
+      run: |
+        python dashboard/run_tests_with_reportportal.py \
+          --test-path "${{ matrix.test_path }}" \
+          --launch-name "CI_${{ matrix.component }}_tests_${{ github.run_number }}" \
+          --pytest-args "--maxfail=5" \
+          --skip-analytics
+      continue-on-error: true
+      
+    - name: Upload coverage reports
+      if: steps.check_component.outputs.skip == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ matrix.component }}
+        path: |
+          coverage_*.json
+          coverage_*.xml
+        retention-days: 30
+      continue-on-error: true
+
+  # Analytics and reporting job
+  analytics-report:
+    needs: component-tests
+    runs-on: ubuntu-latest
+    if: always()
+    
+    env:
+      RP_API_KEY: ${{ secrets.RP_TOKEN }}
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+        
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements/base.txt
+        pip install python-dotenv requests
+        
+    - name: Setup environment
+      run: |
+        cp .env.example .env
+        echo "RP_API_KEY=${{ secrets.RP_TOKEN }}" >> .env
+        echo "RP_ENDPOINT=${{ env.RP_ENDPOINT }}" >> .env
+        echo "RP_PROJECT=${{ env.RP_PROJECT }}" >> .env
+        
+    - name: Download all coverage artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: coverage-*
+        merge-multiple: true
+      continue-on-error: true
+      
+    - name: Generate analytics report
+      run: |
+        python dashboard/run_tests_with_reportportal.py --analytics-only
+      continue-on-error: true
+      
+    - name: Upload analytics reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: analytics-reports-${{ github.run_number }}
+        path: |
+          dashboard/reports/tv_json/*.json
+          dashboard/reports/tv_html/*.html
+        retention-days: 90
+      continue-on-error: true
+      
+    - name: Check coverage thresholds
+      id: threshold_check
+      run: |
+        # Check coverage thresholds
+        echo "🔍 Checking coverage thresholds..."
+        python dashboard/coverage_threshold_checker.py --output dashboard/reports/tv_json/threshold_report.json
+        threshold_exit_code=$?
+        
+        echo "threshold_result=$threshold_exit_code" >> $GITHUB_OUTPUT
+        
+    - name: Detect coverage regressions
+      id: regression_check
+      run: |
+        # Check for coverage regressions
+        echo "🚨 Detecting coverage regressions..."
+        python dashboard/coverage_regression_detector.py --days 14 --output dashboard/reports/tv_json/regression_report.json --alert-only
+        regression_exit_code=$?
+        
+        echo "regression_result=$regression_exit_code" >> $GITHUB_OUTPUT
+        
+        # Generate regression summary for PR comments
+        if [ -f "dashboard/reports/tv_json/regression_report.json" ]; then
+          python -c "
+          import json
+          import os
+          
+          try:
+              with open('dashboard/reports/tv_json/regression_report.json', 'r') as f:
+                  data = json.load(f)
+              
+              summary = data.get('summary', {})
+              regressions = data.get('regressions', [])
+              
+              if summary.get('total', 0) == 0:
+                  regression_summary = '✅ No coverage regressions detected'
+              else:
+                  total = summary.get('total', 0)
+                  major = summary.get('major', 0) 
+                  moderate = summary.get('moderate', 0)
+                  minor = summary.get('minor', 0)
+                  
+                  status_emoji = '🔴' if major > 0 else '🟡' if moderate > 0 else '🟠'
+                  regression_summary = f'{status_emoji} {total} regression(s): {major} major, {moderate} moderate, {minor} minor'
+                  
+                  # Add top regressions details
+                  if regressions:
+                      details = []
+                      for reg in regressions[:3]:  # Top 3 regressions
+                          comp = reg.get('component', 'unknown')
+                          severity = reg.get('severity', 'unknown')
+                          reg_type = reg.get('type', 'unknown')
+                          
+                          if reg_type == 'immediate':
+                              drop = reg.get('coverage_drop', 0)
+                              details.append(f'{comp}: ↓{drop:.1f}% ({severity})')
+                          elif reg_type == 'trend':
+                              slope = reg.get('trend_slope', 0)
+                              details.append(f'{comp}: declining trend ({severity})')
+                          else:
+                              details.append(f'{comp}: {reg_type} ({severity})')
+                      
+                      if details:
+                          regression_summary += f' | {", ".join(details)}'
+              
+              print(f'REGRESSION_SUMMARY={regression_summary}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f'summary={regression_summary}\n')
+                  f.write(f'has_regressions={str(summary.get("total", 0) > 0).lower()}\n')
+          except Exception as e:
+              print(f'Error processing regression report: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f'summary=Regression detection failed\n')
+                  f.write(f'has_regressions=false\n')
+          "
+        fi
+        
+        # Continue regardless of regression results (they're informational)
+        exit 0
+      continue-on-error: true
+        
+    - name: Generate combined coverage summary
+      id: coverage_summary
+      run: |
+        # Generate summary for PR comment combining threshold and regression data
+        if [ -f "dashboard/reports/tv_json/threshold_report.json" ]; then
+          python -c "
+          import json
+          import os
+          
+          try:
+              with open('dashboard/reports/tv_json/threshold_report.json', 'r') as f:
+                  data = json.load(f)
+              
+              # Create summary message
+              overall_result = data.get('overall_result', 'UNKNOWN')
+              overall_coverage = data.get('overall_coverage', 0)
+              summary_data = data.get('summary', {})
+              
+              emoji = {'PASS': '✅', 'WARN': '⚠️', 'FAIL': '❌'}.get(overall_result, '❓')
+              
+              summary = f'{emoji} {overall_result} | Average: {overall_coverage:.1f}% | '
+              summary += f'Components: {summary_data.get("passing", 0)}✅ {summary_data.get("warnings", 0)}⚠️ {summary_data.get("failing", 0)}❌'
+              
+              # Add component details
+              components = []
+              for comp, details in data.get('components', {}).items():
+                  comp_emoji = details.get('status_emoji', '❓')
+                  comp_coverage = details.get('coverage', 0)
+                  components.append(f'{comp}: {comp_emoji}{comp_coverage:.1f}%')
+              
+              if components:
+                  summary += f' | Details: {", ".join(components)}'
+              
+              print(f'THRESHOLD_SUMMARY={summary}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f'summary={summary}\n')
+                  f.write(f'details_available=true\n')
+          except Exception as e:
+              print(f'Error processing threshold report: {e}')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f'summary=Coverage threshold check failed\n')
+                  f.write(f'details_available=false\n')
+          "
+        fi
+      
+    - name: Comment on PR with coverage summary
+      if: github.event_name == 'pull_request' && steps.coverage_summary.outputs.details_available == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const thresholdSummary = '${{ steps.coverage_summary.outputs.summary }}';
+          const thresholdResult = '${{ steps.threshold_check.outputs.threshold_result }}';
+          const regressionSummary = '${{ steps.regression_check.outputs.summary }}';
+          const hasRegressions = '${{ steps.regression_check.outputs.has_regressions }}' === 'true';
+          const regressionResult = '${{ steps.regression_check.outputs.regression_result }}';
+          
+          // Determine overall status
+          const thresholdPassed = thresholdResult === '0';
+          const regressionsPassed = regressionResult === '0';
+          
+          let overallStatus = '✅ PASSED';
+          if (!thresholdPassed || (hasRegressions && regressionResult !== '0')) {
+            overallStatus = '❌ FAILED';
+          } else if (hasRegressions) {
+            overallStatus = '⚠️ WARNING';
+          }
+          
+          const body = `## 📊 Coverage Analysis Report - ${overallStatus}
+          
+          ### 🎯 Threshold Check
+          ${thresholdSummary}
+          
+          ### 🚨 Regression Detection  
+          ${regressionSummary}
+          
+          ### 📋 Coverage Quality Gates
+          - **Overall Project**: 60% minimum coverage required
+          - **Component Thresholds**: XRADIO (70%), AstroViper (65%), Others (60%)
+          - **Quality Levels**: 🔴 Critical (0-40%), 🟡 Low (40-60%), 🟢 Good (60-80%), 🌟 Excellent (80%+)
+          - **Regression Detection**: Monitors for coverage drops >5% and declining trends
+          
+          ### 📈 Resources
+          - **ReportPortal Dashboard**: [${{ env.RP_ENDPOINT }}](${{ env.RP_ENDPOINT }})
+          - **Coverage Analytics**: Check artifacts for threshold and regression reports
+          - **Historical Trends**: Coverage analytics track 30-day trends per component
+          
+          ${!thresholdPassed || hasRegressions ? 
+            '⚠️ **Action Required**: ' + 
+            (!thresholdPassed ? 'Coverage thresholds not met. ' : '') +
+            (hasRegressions ? 'Coverage regressions detected. ' : '') +
+            'Please review the detailed reports in artifacts.' 
+            : '🎯 **Excellent!** All coverage checks passed with no regressions detected.'}
+          
+          *Generated by CI run #${{ github.run_number }} | Reports available in artifacts*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: body
+          });
+      continue-on-error: true
+      
+    - name: Fail job if thresholds not met (configurable)
+      if: steps.threshold_check.outputs.threshold_result != '0' && vars.ENFORCE_COVERAGE_THRESHOLDS == 'true'
+      run: |
+        echo "❌ Coverage thresholds not met and enforcement is enabled"
+        echo "Set repository variable ENFORCE_COVERAGE_THRESHOLDS to 'false' to make this non-blocking"
+        exit 1 

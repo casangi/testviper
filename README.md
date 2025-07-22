@@ -6,13 +6,31 @@ Automated Test Repository for the VIPER Ecosystem
 [![Documentation Status](https://readthedocs.org/projects/testviper/badge/?version=latest)](https://testviper.readthedocs.io)
 ![Static Badge](https://img.shields.io/badge/work_in-progress-yellow)
 
+## 🚀 ReportPortal Integration
 
-This repository will be used to build and run integration tests for the VIPER Ecosystem.
+This repository includes a complete ReportPortal integration for comprehensive test reporting and analytics. The system provides:
+
+- **Real-time Test Execution Tracking**: Monitor test progress as it happens
+- **Launch Management**: Organize test runs with custom launch names and descriptions
+- **Coverage Analytics**: Track code coverage for each component
+- **Historical Trends**: Analyze test results over time
+- **Multi-Component Support**: Integrated testing for all VIPER ecosystem components
+
+### Quick Start with ReportPortal
+
+1. **Start ReportPortal**: `docker-compose up -d`
+2. **Access Dashboard**: http://localhost:8080 (login: `superadmin`/`erebus`)
+3. **Run Tests**: `python dashboard/run_tests_with_reportportal.py`
+
+---
+
+This repository is used to build and run integration tests for the VIPER Ecosystem.
 It will install all components and run the available tests in the CI.
 Structure of this repository:
 - tests/integration: workflow integration tests
 - requirements: requirements to build dependencies
 - ci: configuration for CI system
+- dashboard: ReportPortal integration and analytics
 - (docs)
 - (docs/user_stories)
 - scripts: scripts to generate reports and results
@@ -98,7 +116,44 @@ pixi run pytest -v toolviper/tests
 pixi run pytest -v graphviper/tests
 pixi run pytest -v astroviper/tests
 pixi run pytest -v tests/integration
+
+# Run tests with ReportPortal integration
+python dashboard/run_tests_with_reportportal.py
+
+# Run with custom launch name for organized tracking
+python dashboard/run_tests_with_reportportal.py --launch-name "nightly_regression"
 ```
+
+## ReportPortal Dashboard
+
+Access the ReportPortal web interface at **http://localhost:8080** (login: `superadmin`/`erebus`)
+
+### 🔧 Configuration Updates (Latest Fixes)
+
+**Important**: The following configuration fixes have been applied to resolve xradio test launch creation issues:
+
+1. **pytest.ini Configuration**: Updated `rp_uuid` to `rp_api_key` for proper pytest-reportportal plugin authentication
+2. **Plugin Manager Fix**: Fixed session.pluginmanager access in testviper_rp_reporter.py for newer pytest versions
+3. **Launch Creation**: All components (toolviper, graphviper, xradio, astroviper) now create launches successfully
+
+### 🚀 Running Tests with ReportPortal
+
+**Launch Naming**: By default, launches use component names automatically determined from test paths (e.g., `xradio`, `toolviper`, `graphviper`) and are auto-indexed (#2, #3, etc.). Use `--launch-name` for custom organization:
+
+```bash
+# Run all integration tests
+python dashboard/run_tests_with_reportportal.py
+
+# Run specific component tests
+python dashboard/run_tests_with_reportportal.py tests/integration/test_basic_xradio.py
+python dashboard/run_tests_with_reportportal.py toolviper/tests/unit
+
+# Custom launch names for organized tracking
+python dashboard/run_tests_with_reportportal.py --launch-name "feature_xyz"
+python dashboard/run_tests_with_reportportal.py --launch-name "nightly_regression"
+
+# Component-specific testing
+TV_COMPONENT_NAME=xradio python dashboard/run_tests_with_reportportal.py tests/integration/test_basic_xradio.py
 
 ## CI/CD - in progress
 A few things to try here.

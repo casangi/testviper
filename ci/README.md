@@ -1,6 +1,28 @@
-# CI Workflow for Allure Reports and Trend History
+# CI Workflow for Allure Reports and ReportPortal Integration
 
-This document outlines the steps performed by the GitHub Actions workflow for integration testing, Allure report generation, and trend history preservation in this repository.
+This document outlines the steps performed by the GitHub Actions workflow for integration testing, Allure report generation, ReportPortal integration, and trend history preservation in this repository.
+
+## 🚀 ReportPortal Integration in CI
+
+The CI workflow has been enhanced to support ReportPortal integration alongside traditional Allure reporting:
+
+### ReportPortal CI Features
+- **Automated Launch Creation**: Each CI run creates organized launches in ReportPortal
+- **Component-Specific Tracking**: Individual launches for each VIPER component
+- **Coverage Integration**: Automatic coverage metrics injection
+- **Historical Trending**: Long-term test result analysis
+
+### ReportPortal CI Configuration
+```yaml
+# Example GitHub Actions integration
+- name: Run Tests with ReportPortal
+  run: |
+    python dashboard/run_tests_with_reportportal.py --launch-name "ci-build-${{ github.run_number }}"
+  env:
+    RP_ENDPOINT: ${{ secrets.RP_ENDPOINT }}
+    RP_PROJECT: ${{ secrets.RP_PROJECT }}
+    RP_API_KEY: ${{ secrets.RP_API_KEY }}
+```
 
 ## Workflow Overview
 
