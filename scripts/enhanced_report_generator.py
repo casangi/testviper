@@ -149,7 +149,8 @@ def run_component_tests(component):
         str(full_test_path),
         f"--alluredir={results_dir}",
         "--tb=short",
-        "-v"
+        "-v",
+        "-k xds"
     ]
     
     try:
@@ -258,7 +259,7 @@ def main():
     processed_count = 0
     for component in COMPONENTS:
         print(f"\n{'='*50}")
-        component['display_name'] = "{} {}".format(component['display_name'], read_version(component['path'])) 
+        component['display_name'] = "{} {}".format(component['display_name'], read_version(component['path']))
         print(f"Processing {component['display_name']}")
         print(f"Path: {component['path']}")
         print(f"{'='*50}")
