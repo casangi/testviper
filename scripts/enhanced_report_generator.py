@@ -10,6 +10,7 @@ import json
 import subprocess
 import shutil
 from pathlib import Path
+import tomllib  # Python 3.11+ supports tomllib natively
 
 # Component configurations
 COMPONENTS = [
@@ -49,6 +50,13 @@ COMPONENTS = [
         'icon': '🌟'
     }
 ]
+def read_version(path_to_toml):
+    """Read version from pyproject.toml"""
+    if not os.path.exists(os.path.join(path_to_toml, "pyproject.toml")):
+        return "0.0.1"  # Default version if file not found
+    with open(os.path.join(path_to_toml,"pyproject.toml"), "rb") as f:
+        data = tomllib.load(f)
+    return data['project']['version']
 
 def create_allure_environment(component_name, component_path):
     """Create environment.properties for Allure report"""
@@ -250,6 +258,7 @@ def main():
     processed_count = 0
     for component in COMPONENTS:
         print(f"\n{'='*50}")
+        component['display_name'] = "{} {}".format(component['display_name'], read_version(component['path'])) 
         print(f"Processing {component['display_name']}")
         print(f"Path: {component['path']}")
         print(f"{'='*50}")

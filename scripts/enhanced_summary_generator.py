@@ -10,6 +10,7 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
+import tomllib  # Python 3.11+ supports tomllib natively
 
 # Component configurations with CodeCov links
 COMPONENTS = [
@@ -64,6 +65,13 @@ COMPONENTS = [
         'codecov_badge': 'https://codecov.io/gh/casangi/astroviper/branch/main/graph/badge.svg'
     }
 ]
+def read_version(path_to_toml):
+    """Read version from pyproject.toml"""
+    if not os.path.exists(os.path.join(path_to_toml, "pyproject.toml")):
+        return "0.0.1"  # Default version if file not found
+    with open(os.path.join(path_to_toml,"pyproject.toml"), "rb") as f:
+        data = tomllib.load(f)
+    return data['project']['version']
 
 def parse_allure_results(results_dir):
     """Parse Allure results to extract test statistics"""
@@ -530,6 +538,8 @@ def main():
     
     # Process each component
     for component in COMPONENTS:
+        component['display_name'] = "{} {}".format(component['display_name'], read_version(component['path'])) 
+
         print(f"Processing {component['display_name']}...")
         
         # Parse Allure results
