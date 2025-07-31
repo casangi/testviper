@@ -51,12 +51,17 @@ COMPONENTS = [
     }
 ]
 def read_version(path_to_toml):
-    """Read version from pyproject.toml"""
-    if not os.path.exists(os.path.join(path_to_toml, "pyproject.toml")):
-        return "0.0.1"  # Default version if file not found
-    with open(os.path.join(path_to_toml,"pyproject.toml"), "rb") as f:
-        data = tomllib.load(f)
-    return data['project']['version']
+    """Read version from .toml"""
+    if os.path.exists(os.path.join(path_to_toml, "pyproject.toml")):
+        with open(os.path.join(path_to_toml,"pyproject.toml"), "rb") as f:
+            data = tomllib.load(f)
+            return data['project']['version'] if data['project']['version'].startswith("v") else f"v{data['project']['version']}"
+    if os.path.exists(os.path.join(path_to_toml, "pixi.toml")):
+        with open(os.path.join(path_to_toml,"pixi.toml"), "rb") as f:
+            data = tomllib.load(f)
+            return data['workspace']['version'] if data['workspace']['version'].startswith("v") else f"v{data['workspace']['version']}"
+
+    return "v0.0.0"  # Default version if file not found
 
 def create_allure_environment(component_name, component_path):
     """Create environment.properties for Allure report"""
