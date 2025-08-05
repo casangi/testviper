@@ -141,7 +141,9 @@ def run_component_tests(component):
         str(full_test_path),
         f"--alluredir={results_dir}",
         "--tb=short",
-        "-v"
+        "-v",
+        f"--html={component_name}-pytest-report.html",
+        "--self-contained-html"
     ]
     
     try:
