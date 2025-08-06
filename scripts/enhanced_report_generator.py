@@ -187,13 +187,14 @@ def create_minimal_result(results_dir, component_name, error_message):
         "start": 0,
         "stop": 0
     }
-    
+ 
     with open(f"{results_dir}/minimal-test-result.json", "w") as f:
         json.dump(minimal_result, f, indent=2)
 
 def generate_allure_report(component):
     """Generate Allure HTML report for a component"""
     component_name = component['name']
+    component_version = read_version(component['path'])
     results_dir = f"allure-results-{component_name}"
     report_dir = f"allure-report/{component_name}"
     
@@ -222,7 +223,15 @@ def generate_allure_report(component):
         if os.path.exists(f"{report_dir}/history"):
             os.makedirs(history_output, exist_ok=True)
             shutil.copytree(f"{report_dir}/history", history_output, dirs_exist_ok=True)
-            
+
+        # Update summary.json with component name and version
+        json_file = os.path.join(report_dir, 'widgets', 'summary.json')
+        with open(json_file, "r") as file:
+            data = json.load(file)
+        data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
+        with open(json_file, "w") as file:
+            json.dump(data, file, indent=4)
+    
     except Exception as e:
         print(f"Error generating Allure report for {component_name}: {e}")
         # Create a minimal HTML report
