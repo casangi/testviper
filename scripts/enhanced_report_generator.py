@@ -11,6 +11,7 @@ import subprocess
 import shutil
 from pathlib import Path
 import tomllib  # Python 3.11+ supports tomllib natively
+from bs4 import BeautifulSoup
 
 # Component configurations
 COMPONENTS = [
@@ -231,7 +232,17 @@ def generate_allure_report(component):
         data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
         with open(json_file, "w") as file:
             json.dump(data, file, indent=4)
-    
+       
+        # Update index.html title
+        index_file = os.path.join(report_dir,'index.html')
+        with open(index_file, "r") as file:
+            soup = BeautifulSoup(file, "html.parser")
+        title_tag = soup.find("title")
+        if title_tag:
+            title_tag.string = f'{component_name} Allure Report'
+        with open(index_file, "w") as file:
+            file.write(str(soup))
+  
     except Exception as e:
         print(f"Error generating Allure report for {component_name}: {e}")
         # Create a minimal HTML report
