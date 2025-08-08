@@ -4,7 +4,7 @@ import ctypes
 
 
 def test_random_failure():
-    if random.random() < 0.15:
+    if random.random() > 0.015:
         assert False, "Random failure triggered (15% chance)"
     assert True
     
