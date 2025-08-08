@@ -142,7 +142,7 @@ def run_component_tests(component):
         f"--alluredir={results_dir}",
         "--tb=short",
         "-v",
-        f"--html={results_dir}/{component_name}-pytest-report.html",
+        f"--html={component['test_path']}/{component_name}-pytest-report.html",
         "--self-contained-html"
     ]
     
