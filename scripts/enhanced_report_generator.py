@@ -10,6 +10,8 @@ import json
 import subprocess
 import shutil
 from pathlib import Path
+import tomllib  # Python 3.11+ supports tomllib natively
+from bs4 import BeautifulSoup
 
 # Component configurations
 COMPONENTS = [
@@ -49,6 +51,18 @@ COMPONENTS = [
         'icon': '🌟'
     }
 ]
+def read_version(path_to_toml):
+    """Read version from .toml"""
+    if os.path.exists(os.path.join(path_to_toml, "pyproject.toml")):
+        with open(os.path.join(path_to_toml,"pyproject.toml"), "rb") as f:
+            data = tomllib.load(f)
+            return data['project']['version'] if data['project']['version'].startswith("v") else f"v{data['project']['version']}"
+    if os.path.exists(os.path.join(path_to_toml, "pixi.toml")):
+        with open(os.path.join(path_to_toml,"pixi.toml"), "rb") as f:
+            data = tomllib.load(f)
+            return data['workspace']['version'] if data['workspace']['version'].startswith("v") else f"v{data['workspace']['version']}"
+
+    return "v0.0.0"  # Default version if file not found
 
 def create_allure_environment(component_name, component_path):
     """Create environment.properties for Allure report"""
@@ -174,13 +188,14 @@ def create_minimal_result(results_dir, component_name, error_message):
         "start": 0,
         "stop": 0
     }
-    
+ 
     with open(f"{results_dir}/minimal-test-result.json", "w") as f:
         json.dump(minimal_result, f, indent=2)
 
 def generate_allure_report(component):
     """Generate Allure HTML report for a component"""
     component_name = component['name']
+    component_version = read_version(component['path'])
     results_dir = f"allure-results-{component_name}"
     report_dir = f"allure-report/{component_name}"
     
@@ -209,7 +224,25 @@ def generate_allure_report(component):
         if os.path.exists(f"{report_dir}/history"):
             os.makedirs(history_output, exist_ok=True)
             shutil.copytree(f"{report_dir}/history", history_output, dirs_exist_ok=True)
-            
+
+        # Update summary.json with component name and version
+        json_file = os.path.join(report_dir, 'widgets', 'summary.json')
+        with open(json_file, "r") as file:
+            data = json.load(file)
+        data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
+        with open(json_file, "w") as file:
+            json.dump(data, file, indent=4)
+       
+        # Update index.html title
+        index_file = os.path.join(report_dir,'index.html')
+        with open(index_file, "r") as file:
+            soup = BeautifulSoup(file, "html.parser")
+        title_tag = soup.find("title")
+        if title_tag:
+            title_tag.string = f'{component_name} Allure Report'
+        with open(index_file, "w") as file:
+            file.write(str(soup))
+  
     except Exception as e:
         print(f"Error generating Allure report for {component_name}: {e}")
         # Create a minimal HTML report
@@ -250,6 +283,7 @@ def main():
     processed_count = 0
     for component in COMPONENTS:
         print(f"\n{'='*50}")
+        component['display_name'] = "{} {}".format(component['display_name'], read_version(component['path']))
         print(f"Processing {component['display_name']}")
         print(f"Path: {component['path']}")
         print(f"{'='*50}")
