@@ -155,7 +155,8 @@ def run_component_tests(component):
         str(full_test_path),
         f"--alluredir={results_dir}",
         "--tb=short",
-        "-v"
+        "-v",
+        f"--junitxml={component['test_path']}/{component_name}-pytest-report.xml"
     ]
     
     try:
