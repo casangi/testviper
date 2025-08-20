@@ -1,6 +1,6 @@
 # Enhanced Allure Reporting System
 
-This enhanced system provides comprehensive test reporting for the VIPER components with historical tracking and CodeCov integration.
+This enhanced system provides comprehensive test reporting for Integration tests of the VIPER eco-system and its individual components with historical tracking and CodeCov integration.
 
 ## Features
 
@@ -27,7 +27,8 @@ The system integrates with GitHub Actions to:
 3. Preserve and restore historical test data
 4. Generate individual Allure reports with custom styling
 5. Create a unified summary dashboard
-6. Deploy to `gh-pages-testing` branch for staging
+6. Deploy to `gh-pages` under directory main
+7. Top-level index.html with summary and link to component reports
 
 ### File Structure
 ```
@@ -85,16 +86,15 @@ Each component is configured with:
 ### GitHub Actions Workflow
 The workflow is configured to:
 - Run on all branches for testing
-- Deploy to `gh-pages-testing` branch
+- Deploy to `gh-pages` branch
 - Preserve history between runs
 - Handle missing components gracefully
 
 ## Deployment
 
-### Branches
+### Main
 - **Source**: Any branch (for testing)
-- **Deployment**: `gh-pages-testing` (staging environment)
-- **Production**: Manual promotion to `gh-pages` when ready
+- **Deployment to Production**: `gh-pages`
 
 ### Access URLs
 - **Staging**: `https://casangi.github.io/testviper/` (from gh-pages-testing)
@@ -171,17 +171,4 @@ Each script provides verbose output including:
 - Test execution results
 - Report generation progress
 - File creation confirmations
-
-## Future Enhancements
-
-### Planned Features
-- **Test Execution Time Trends**: Track performance over time
-- **Failure Analysis**: Categorize and trend test failures
-- **Environment Comparison**: Compare results across different environments
-- **Slack/Email Notifications**: Alert on test failures or coverage drops
-- **API Integration**: Programmatic access to test metrics
-
-### Performance Optimizations
-- **Parallel Test Execution**: Run component tests in parallel
-- **Incremental Reports**: Only regenerate changed components
 
