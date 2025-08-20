@@ -26,12 +26,12 @@ The workflow is defined in `.github/workflows/python-tests-allure-report.yml` an
 6. **Install Allure CLI**
    - Downloads and installs the Allure command-line tool for report generation.
 
-7. **Checkout gh-pages-staging for History**
-   - Checks out the `gh-pages-staging` branch to access previous Allure history and reports.
+7. **Checkout gh-pages for History**
+   - Checks out the `gh-pages` branch to access previous Allure history and reports.
 
 8. **Restore Allure History for Each Component**
    - For each component (`testviper`, `toolviper`, `xradio`, `graphviper`, `astroviper`):
-     - If previous history exists in `gh-pages-staging/main/allure-history/<component>`, it is copied to `allure-results-<component>/history`.
+     - If previous history exists in `gh-pages/main/allure-history/<component>`, it is copied to `allure-results-<component>/history`.
      - This enables Allure to generate trend charts and preserve test history.
 
 9. **Run Tests and Generate Allure Reports**
@@ -47,8 +47,8 @@ The workflow is defined in `.github/workflows/python-tests-allure-report.yml` an
 11. **Upload Allure Reports**
     - Uses `actions/upload-artifact` to save the generated Allure reports as a workflow artifact.
 
-12. **Deploy to gh-pages-staging**
-    - Uses `peaceiris/actions-gh-pages` to deploy the contents of `allure-report/` to the `gh-pages-staging` branch under the `main` directory.
+12. **Deploy to gh-pages**
+    - Uses `peaceiris/actions-gh-pages` to deploy the contents of `allure-report/` to the `gh-pages` branch under the `main` directory.
     - This makes the reports and history available for the next workflow run and for web viewing.
 
 ---

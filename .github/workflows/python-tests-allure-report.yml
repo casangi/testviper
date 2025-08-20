@@ -3,9 +3,7 @@ name: Integration Tests with Allure Report
 
 on:
   push:
-    branches: ["**"]
-  pull_request:
-    branches: ["**"]
+    branches: ["main"]
 
 jobs:
   integration-tests:
@@ -18,12 +16,11 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
         
     - name: Install testviper dependencies
       run: |
         pwd
-        ls -l
         make build-testviper
         
     - name: Clone component repositories
@@ -45,22 +42,22 @@ jobs:
         sudo mv allure-2.24.1 /opt/allure
         sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
         
-    - name: Checkout gh-pages-staging for history
+    - name: Checkout gh-pages for history
       uses: actions/checkout@v4
       if: always()
       continue-on-error: true
       with:
-        ref: gh-pages-staging
-        path: gh-pages-staging
+        ref: gh-pages
+        path: gh-pages
         
     - name: Copy Allure history for each component
       if: always()
       continue-on-error: true
       run: |
         for comp in testviper toolviper xradio graphviper astroviper; do
-          if [ -d "gh-pages-staging/main/allure-history/$comp" ]; then
+          if [ -d "gh-pages/main/allure-history/$comp" ]; then
             mkdir -p "allure-results-$comp/history"
-            cp -r "gh-pages-staging/main/allure-history/$comp/." "allure-results-$comp/history/"
+            cp -r "gh-pages/main/allure-history/$comp/." "allure-results-$comp/history/"
             echo "Copied history for $comp"
           else
             echo "No previous history for $comp"
@@ -90,13 +87,13 @@ jobs:
       with:
         paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
         
-    - name: Deploy to gh-pages-staging
+    - name: Deploy to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       if: always()
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: allure-report
-        publish_branch: gh-pages-staging
+        publish_branch: gh-pages
         destination_dir: main
         keep_files: true
         force_orphan: false
