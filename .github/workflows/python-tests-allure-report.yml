@@ -67,20 +67,43 @@ jobs:
     # - name: Run tests and generate coverage
     #   run: |
     #     python scripts/test_runner_with_coverage.py
+
+    - name: SetUp Grafana Alloy
+      run: |
+          export GCLOUD_HOSTED_METRICS_ID="2641355" 
+          export GCLOUD_HOSTED_METRICS_URL="https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push" 
+          export GCLOUD_HOSTED_LOGS_ID="1316354" 
+          export GCLOUD_HOSTED_LOGS_URL="https://logs-prod-036.grafana.net/loki/api/v1/push" 
+          export GCLOUD_FM_URL="https://fleet-management-prod-008.grafana.net" 
+          export GCLOUD_FM_POLL_FREQUENCY="60s" 
+          export GCLOUD_FM_HOSTED_ID="1358560" 
+          export ARCH="amd64" 
+          export GCLOUD_RW_API_KEY="${{ secrets.GCLOUD_RW_API_KEY }}"
+          /bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
+          echo -e 'prometheus.remote_write "metrics_hosted_prometheus" {
+              endpoint {
+              name = "hosted-prometheus"
+              url  = "https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push"
+          
+              basic_auth {
+                username = "2641355"
+                password = "${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}"
+              }
+           }}' > /etc/alloy/config.alloy
+          systemctl restart alloy.service
+    #- name: Run tests and generate Allure reports with history
+    #  run: python scripts/enhanced_report_generator.py
       
-    - name: Run tests and generate Allure reports with history
-      run: python scripts/enhanced_report_generator.py
+    #- name: Generate enhanced summary report with CodeCov links
+    #  run: python scripts/enhanced_summary_generator.py
       
-    - name: Generate enhanced summary report with CodeCov links
-      run: python scripts/enhanced_summary_generator.py
-      
-    - name: Upload Allure Reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: allure-reports
-        path: allure-report/
-        retention-days: 30
+    #- name: Upload Allure Reports
+    #  uses: actions/upload-artifact@v4
+    #  if: always()
+    #  with:
+    #    name: allure-reports
+    #    path: allure-report/
+    #    retention-days: 30
         
     - name: Generate Test Summary
       uses: test-summary/action@v2
