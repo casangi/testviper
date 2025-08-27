@@ -9,3 +9,22 @@ prometheus.remote_write "metrics_hosted_prometheus" {
       }
    }
 }
+
+logging {
+  level = "warn"
+}
+prometheus.exporter.unix "default" {
+  include_exporter_metrics = true
+  disable_collectors       = ["mdadm"]
+}
+prometheus.scrape "default" {
+  targets = array.concat(
+    prometheus.exporter.unix.default.targets,
+    [{
+      // Self-collect metrics
+      job         = "alloy",
+      __address__ = "127.0.0.1:12345",
+    }],
+  )
+  forward_to = [ prometheus.remote_write.metrics_hosted_prometheus.receiver]
+}
