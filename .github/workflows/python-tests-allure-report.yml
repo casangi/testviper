@@ -80,10 +80,16 @@ jobs:
           ARCH: "amd64" 
           GCLOUD_RW_API_KEY: ${{ secrets.GCLOUD_RW_API_KEY }}    
       run: |
-          /bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux-binary.sh)"
-          cat ./config.alloy
-          cat config/config.alloy >> ./config.alloy
-          ./alloy-linux-amd64 run ./config.alloy
+          sudo mkdir -p /etc/apt/keyrings/
+          wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+
+          sudo apt-get update
+          sudo apt-get install alloy
+          cat config/config.alloy >> /etc/alloy/config.alloy
+          sudo systemctl start alloy
+
+
     #- name: Run tests and generate Allure reports with history
     #  run: python scripts/enhanced_report_generator.py
       
