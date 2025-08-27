@@ -81,17 +81,8 @@ jobs:
           GCLOUD_RW_API_KEY: ${{ secrets.GCLOUD_RW_API_KEY }}
       run: |
           /bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
-          echo -e 'prometheus.remote_write "metrics_hosted_prometheus" {
-              endpoint {
-              name = "hosted-prometheus"
-              url  = "https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push"
-          
-              basic_auth {
-                username = "2641355"
-                password = ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}
-              }
-           }}' > /etc/alloy/config.alloy
-          systemctl restart alloy.service
+          cp config/config.alloy /etc/alloy/config.alloy
+          sudo systemctl restart alloy.service
     #- name: Run tests and generate Allure reports with history
     #  run: python scripts/enhanced_report_generator.py
       
