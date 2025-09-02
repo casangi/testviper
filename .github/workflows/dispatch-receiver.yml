@@ -25,13 +25,14 @@ jobs:
       with:
         script: |
           const payload = context.payload.client_payload;
+          const targetRef = payload && payload.target_ref ? payload.target_ref : 'main';
           
           // Trigger the python-tests-allure-report workflow
           await github.rest.actions.createWorkflowDispatch({
             owner: context.repo.owner,
             repo: context.repo.repo,
             workflow_id: 'python-tests-allure-report.yml',
-            ref: context.ref,
+            ref: targetRef,
             inputs: {
               'source_repository': payload.repository || '',
               'source_ref': payload.ref || '',
