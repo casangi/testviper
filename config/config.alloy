@@ -1,21 +1,32 @@
-prometheus.remote_write "metrics_hosted_prometheus" {
-   endpoint {
-      name = "hosted-prometheus"
-      url  = "https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push"
-  
-      basic_auth {
-        username = "2641355"
-        password = ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}
-      }
-   }
+remotecfg {
+	url            = "https://fleet-management-prod-008.grafana.net"
+	id             = "f0a6ec246068"
+	poll_frequency = "30s"
+
+	basic_auth {
+		username = "1358560"
+		password = ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}
+	}
 }
 
+prometheus.remote_write "metrics_service" {
+	endpoint {
+		url = "https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push"
 
-prometheus.scrape "default" {
-  // Collect metrics from the default listen address.
-  targets = [{
-    __address__ = "127.0.0.1:12345",
-  }]
+		basic_auth {
+			username = "2641355"
+			password = ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}
+		}
+	}
+}
 
-  forward_to = [ prometheus.remote_write.metrics_hosted_prometheus.receiver]
+loki.write "grafana_cloud_loki" {
+	endpoint {
+		url = "https://logs-prod-036.grafana.net/loki/api/v1/push"
+
+		basic_auth {
+			username = "1316354"
+			password = ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}
+		}
+	}
 }
