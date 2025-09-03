@@ -1,12 +1,24 @@
 # CI Workflow for Allure Reports and Trend History
 
-This document outlines the steps performed by the GitHub Actions workflow for integration testing, Allure report generation, and trend history preservation in this repository.
+This document outlines the steps performed by the GitHub Actions workflow for integration testing, Allure report generation, and repository dispatch responsible for triggering the execution of tests on merges to component's main branches.
 
 ## Workflow Overview
 
-The workflow is defined in `.github/workflows/python-tests-allure-report.yml` and is triggered on every push and pull request.
+A repository dispatch is implemented in TestVIPER to trigger the execution of integration tests everytime there is
+a merge to the main branch of any of the VIPER components: ToolVIPER, XRADIO, GraphVIPER and AstroVIPER. 
+
+The dispatch sender is implemented for all components in `toolviper/.github/workflows/python-testing-integration.yml`, which will send a dispatch on the event of a merge to main in one of the components, conditionally that the workflow with tests runs successfully in the component repository.
+
+In TestVIPER, there is a workflow configured to receive the dispatch in `.github/workflows/dispatch-receiver.yml`, which
+will trigger the execution of the integration tests and generation of Allure Reports as part of the workflow
+defined in `.github/workflows/python-tests-allure-report.yml`.
+
+A new version of the Allure Reports will be created in the gh-pages branch and deployed to `https://casangi.github.io/testviper/main/index.html`, preserving the previous history of the reports.
 
 ### Main Steps
+
+1. **Listen for Dispatch Events**
+   - Uses: `actions/github-script@v6` from `.github/workflows/dispatch-receiver.yml` to trigger the execution of tests.
 
 1. **Checkout Repository**
    - Uses `actions/checkout` to clone the main repository.
@@ -48,7 +60,7 @@ The workflow is defined in `.github/workflows/python-tests-allure-report.yml` an
     - Uses `actions/upload-artifact` to save the generated Allure reports as a workflow artifact.
 
 12. **Deploy to gh-pages**
-    - Uses `peaceiris/actions-gh-pages` to deploy the contents of `allure-report/` to the `gh-pages` branch under the `main` directory.
+    - Uses `peaceiris/actions-gh-pages` to deploy the contents of `allure-report/` to the `gh-pages` branch under the `main` directory. The reports can be accessed from the https://casangi.github.io/testviper/ URL.
     - This makes the reports and history available for the next workflow run and for web viewing.
 
 ---
@@ -61,6 +73,31 @@ The workflow is defined in `.github/workflows/python-tests-allure-report.yml` an
   - Generates a summary dashboard with test and coverage statistics.
 
 ---
+
+## Testing Locally
+Manual tests are recommended when making changes to the files in scripts, html template, etc.
+
+Inside a Python virtual environment, install all dependencies and run some tests from tests/integration and then follow  these steps manually:
+
+### Install dependencies
+`pip install pytest allure-pytest coverage`
+
+### Run enhanced report generation
+`python scripts/enhanced_report_generator.py`
+
+### Generate summary page
+`python scripts/enhanced_summary_generator.py`
+
+### View results in a browser
+`open allure-report/index.html`
+
+Or use the provided script in `scripts/tests/test_enhanced_report.py` after
+installing base.txt from the requirements.
+`python scripts/tests/test_enhanced_reports.py`
+
+### View results in a browser
+`open allure-report/index.html`
+
 
 ## Notes
 - Allure trend charts require that each component's history is preserved and restored individually.
