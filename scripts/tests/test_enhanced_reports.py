@@ -49,7 +49,8 @@ def install_requirements():
     packages = [
         "pytest",
         "allure-pytest", 
-        "coverage"
+        "coverage",
+        "beautifulsoup4"
     ]
     
     for package in packages:
