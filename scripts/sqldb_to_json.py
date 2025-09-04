@@ -1,5 +1,6 @@
 import sqlite3
 import json
+import argparse
 
 def main(mydb, myjson_testcases, myjson_testsuites):
     conn = sqlite3.connect(mydb)
