@@ -33,7 +33,7 @@ COMPONENTS = [
         'name': 'xradio',
         'display_name': 'Xradio',
         'path': 'xradio',
-        'test_path': 'tests',
+        'test_path': 'tests/unit/measurement_set',
         'icon': '📡'
     },
     {

@@ -118,14 +118,32 @@ jobs:
       uses: test-summary/action@v2
       with:
         paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
-        
-    - name: Deploy to gh-pages
-      uses: peaceiris/actions-gh-pages@v4
+    
+    - name: Generate JUnit DataBase
       if: always()
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: allure-report
-        publish_branch: gh-pages
-        destination_dir: main
-        keep_files: true
-        force_orphan: false
+      run: |
+        for FILE in /home/runner/work/testviper/testviper/tests/*.xml; do
+          echo "Processing file: $FILE"
+          testfile=$(basename $FILE); 
+          testprefix=${testfile%.*};
+          python scripts/xml_to_sql.py $FILE --create-tables --output database/$testprefix.sql
+        done
+        
+        for FILE in database/*.sql; do
+          echo "Processing file: $FILE"
+          testfile=$(basename $FILE); 
+          testprefix=${testfile%.*};
+          python scripts/create_database.py --sql_file $FILE --db_file database/mydatabase.db
+        done
+
+        python scripts/sqldb_to_json.py --db_file database/mydatabase.db --myjson_testcases database/test_cases.json --myjson_testsuites database/test_suites.json
+  #  - name: Deploy to gh-pages
+  #    uses: peaceiris/actions-gh-pages@v4
+  #    if: always()
+  #    with:
+  #      github_token: ${{ secrets.GITHUB_TOKEN }}
+  #      publish_dir: allure-report
+  #      publish_branch: gh-pages
+  #      destination_dir: main
+  #      keep_files: true
+  #      force_orphan: false
