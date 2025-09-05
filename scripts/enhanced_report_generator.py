@@ -25,28 +25,28 @@ COMPONENTS = [
     {
         'name': 'toolviper',
         'display_name': 'ToolViper',
-        'path': 'toolviper',
+        'path': 'external/toolviper',
         'test_path': 'tests',
         'icon': '🛠️'
     },
     {
         'name': 'xradio',
         'display_name': 'Xradio',
-        'path': 'xradio',
+        'path': 'external/xradio',
         'test_path': 'tests',
         'icon': '📡'
     },
     {
         'name': 'graphviper',
         'display_name': 'GraphViper',
-        'path': 'graphviper',
+        'path': 'external/graphviper',
         'test_path': 'tests',
         'icon': '📊'
     },
     {
         'name': 'astroviper',
         'display_name': 'AstroViper',
-        'path': 'astroviper',
+        'path': 'external/astroviper',
         'test_path': 'tests',
         'icon': '🌟'
     }
