@@ -25,19 +25,10 @@
           uses: actions/setup-python@v5
           with:
             python-version: ${{ matrix.python-version }}
-  
-        - name: Clone component repositories
-          run: |
-            git clone https://github.com/casangi/toolviper.git
-            git clone https://github.com/casangi/xradio.git
-            git clone https://github.com/casangi/graphviper.git
-            git clone https://github.com/casangi/astroviper.git
-  
-        - name: Install testviper dependencies
-          run: pip install -r requirements/base.txt
-  
-        - name: Install components and their dependencies
-          run: make build-main
+    
+        - name: Install testviper dependencies and components
+          run: make build-main  #installs under external
+          ls -l external
   
         - name: Create test results directories
           run: |
@@ -57,7 +48,7 @@
   
         - name: Run xradio tests
           run: |
-            pytest -v ./xradio/tests \
+            pytest -v ./external/xradio/tests \
             --cov=xradio \
             --no-cov-on-fail \
             --doctest-modules \
@@ -68,7 +59,7 @@
   
         - name: Run toolviper tests
           run: |
-            pytest -v ./toolviper/tests/ \
+            pytest -v ./external/toolviper/tests/ \
             --cov=toolviper \
             --no-cov-on-fail \
             --doctest-modules \
@@ -78,7 +69,7 @@
   
         - name: Run graphviper tests
           run: |
-            pytest -v ./graphviper/tests/ \
+            pytest -v ./external/graphviper/tests/ \
             --cov=graphviper \
             --no-cov-on-fail \
             --doctest-modules \
@@ -88,7 +79,7 @@
   
         - name: Run astroviper tests
           run: |
-            pytest -v ./astroviper/tests/ \
+            pytest -v ./external/astroviper/tests/ \
             --cov=astroviper \
             --no-cov-on-fail \
             --doctest-modules \
