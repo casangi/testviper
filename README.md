@@ -3,50 +3,89 @@ Automated Test Repository for the VIPER Ecosystem
 
 [![Python 3.11 3.12 3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/downloads/release/python-3130/)
 [![Linux Tests](https://github.com/casangi/testviper/actions/workflows/python-tests-allure-report.yml/badge.svg?branch=main)](https://github.com/casangi/testviper/actions/workflows/python-tests-allure-report.yml?query=branch%3Amain)
-[![Documentation Status](https://readthedocs.org/projects/testviper/badge/?version=latest)](https://testviper.readthedocs.io)
+[![CI-Dashboard](https://img.shields.io/badge/Dashboard-Status-green)](https://casangi.github.io/testviper/)
 ![Static Badge](https://img.shields.io/badge/work_in-progress-yellow)
 
 
 This repository will be used to build and run integration tests for the VIPER Ecosystem.
 It will install all components and run the available tests in the CI.
 Structure of this repository:
-- tests/integration: workflow integration tests
-- requirements: requirements to build dependencies
 - ci: configuration for CI system
-- (docs)
-- (docs/user_stories)
-- scripts: scripts to generate reports and results
-- ......
+- (docs): TBD
+- requirements: requirements to build dependencies
+- scripts: scripts to generate reports and for installation
+- tests/integration: workflow integration tests
 
-User stories will be saved in Issues with the label "User Story" and linked to the issue that implements
-the test. The user stories can also be added to the documentation of the test framework.
 
-## Setup with Virtual Environment
-Install the components and run the tests inside a virtual environment. 
+## Installation
+This repository runs integration and component tests against VIPER components in editable mode, with branch/tag/commit selection per component. The flow is PEP 508–compliant and CI-friendly.
 
-To run the tests in a Linux system, use any recent Python version such as 3.11, 3.12 or 3.13:
-```bash
-python3.13 -m venv venv-3.13
-source venv-3.13/bin/activate
-make build-main
-make test-main
-pytest -v tests/integration
-deactivate
-```
+### Prerequisites
+- Python 3.12 or 3.13
+- git
+- pip >= 24.1 (recommended)
+- macOS users need conda to install `python-casacore` (not required for the default build), but required to run tests.
 
-To run the tests in a macOS system, it is necessary to install the python-casacore library as a dependency for xradio, using conda-forge.
+### What gets installed
+- Components (editable) from local clones under `external/`:
+  - `external/xradio`, `external/graphviper`, `external/astroviper`, `external/toolviper`
+- TestVIPER dependencies from `requirements/base.txt`
+
+Components are synced by `scripts/sync_components.sh` and installed via `requirements/main.txt` using editable local paths (PEP 508–compliant).
+
+### Quick start (all components on main)
+
+#### Using Conda for macOS
+Use conda-forge to install the python-casacore library as a dependency for xradio.
 
 ```bash
 conda create --name testviper-venv python=3.13 --no-default-packages
 conda activate testviper-venv
 conda install -c conda-forge python-casacore
-pip install -r requirements/base.txt
 make build-main
-pytest -v tests/integration
-conda deactivate
 ```
 
-## Setup with PIXI
+#### Using a Python Virtual Environment
+```bash
+python3.13 -m venv venv
+source venv/bin/activate
+```
+
+```bash
+make build-main
+```
+Runs:
+- Clone/update all components to `main`
+- Install components in editable mode
+- Install TestViper base dependencies
+
+Run tests:
+```bash
+make test-main        # Component test suites under external/<component>/tests
+make test-testviper   # Integration tests in tests/integration
+```
+
+### Build all components at the same branch/tag/commit
+```bash
+make build-branch REF=feature/my-branch
+```
+Examples:
+- Branch: `make build-branch REF=19-fix-bug-in-configuration`
+- Tag: `make build-branch REF=v0.3.1`
+- Commit: `make build-branch REF=2c4b0f1`
+
+### Build with per-component refs
+```bash
+make build-refs \
+  XRADIO=78-io-rework \
+  GRAPHVIPER=v0.3.1 \
+  ASTROVIPER=2c4b0f1 \
+  TOOLVIPER=main
+```
+Provide only what you need; unspecified components default to `main`.
+
+
+## Alternative Installation using PIXI
 
 1. Install PIXI:
 ```bash
@@ -93,35 +132,16 @@ pixi run pip-install main
 ```
 ### Run tests from each components and the integration tests in TestVIPER
 ```bash
-pixi run pytest -v xradio/tests
-pixi run pytest -v toolviper/tests
-pixi run pytest -v graphviper/tests
-pixi run pytest -v astroviper/tests
 pixi run pytest -v tests/integration
+pixi run pytest -v external/xradio/tests
+...etc.
 ```
-
-## CI/CD - in progress
-A few things to try here.
-- Allure Report
-- Testspace.com
-- GitHub Datadog CI Visibility: for monitoring services
-- Git Action Board
-- Octolense.com
-- Test-reporter GitHub action
 
 ## Central Dashboard for VIPER Ecosystem Integration Tests
 Currently there is a draft implementation using Allure Reports and accessible via
-https://casangi.github.io/testviper/main
+https://casangi.github.io/testviper/
 
 There is another draft implementation of test aggregation using Testspace, accessible via
 https://casangi.testspace.com/projects/68338/spaces and https://casangi.testspace.com/spaces/311697/metrics.
 
-
-### What the Dashboard Should Show in the future
-- Test status per component (e.g., AstroVIPER, ToolVIPER, etc.)
-- Latest test runs and build status
-- Test trends over time (pass/fail rates, flakiness)
-- Linked user stories or features
-- Links to detailed test reports (e.g., Allure, HTML, logs)
-- Metadata: commit ID, test duration, environment
 - ....
