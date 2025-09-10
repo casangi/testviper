@@ -19,7 +19,7 @@ class JUnitToSQL:
         self.test_suites = []
         self.test_cases = []
     
-    def parse_junit_xml(self, xml_file_path: str, component: str, branch: str) -> None:
+    def parse_junit_xml(self, xml_file_path: str, component: str, branch: str, run_identification: str, run_number: str) -> None:
         """Parse the JUnit XML file and extract test data."""
         try:
             tree = ET.parse(xml_file_path)
@@ -41,14 +41,17 @@ class JUnitToSQL:
             sys.exit(1)
         
         for testsuite in testsuites:
-            self._parse_testsuite(testsuite, component, branch)
+            self._parse_testsuite(testsuite, component, branch, run_identification, run_number)
     
-    def _parse_testsuite(self, testsuite_elem: ET.Element, component: str, branch: str) -> None:
+    def _parse_testsuite(self, testsuite_elem: ET.Element, component: str, branch: str,
+                          run_identification: str, run_number: str) -> None:
         """Parse a single testsuite element."""
         suite_data = {
             'name': testsuite_elem.get('name', ''),
             'component': f'{component}' if component else 'testviper',
             'branch': f'{branch}' if branch else 'NULL',
+            'run_identification': f'{run_identification}' if run_identification else 'NULL',
+            'run_number': f'{run_number}' if run_number else 'NULL',
             'tests': int(testsuite_elem.get('tests', '0')),
             'failures': int(testsuite_elem.get('failures', '0')),
             'errors': int(testsuite_elem.get('errors', '0')),
@@ -116,6 +119,8 @@ CREATE TABLE IF NOT EXISTS test_suites (
     id INTEGER PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     component VARCHAR(255) NOT NULL,
+    runid VARCHAR(255) NOT NULL,
+    runnumber VARCHAR(255) NOT NULL,
     branch VARCHAR(255) NOT NULL,
     tests INTEGER DEFAULT 0,
     failures INTEGER DEFAULT 0,
@@ -167,8 +172,10 @@ CREATE TABLE IF NOT EXISTS test_cases (
             timestamp_val = self._escape_sql_string(suite['timestamp']) if suite['timestamp'] else 'NULL'
             hostname_val = self._escape_sql_string(suite['hostname']) if suite['hostname'] else 'NULL'
             
-            sql = f"""INSERT OR IGNORE INTO test_suites (id, name, component, branch, tests, failures, errors, skipped, time, timestamp, hostname) 
-VALUES ({suite['id']}, {self._escape_sql_string(suite['name'])}, {self._escape_sql_string(suite['component'])}, {self._escape_sql_string(suite['branch'])}, {suite['tests']}, 
+            sql = f"""INSERT OR IGNORE INTO test_suites (id, name, component, runid, runnumber, branch, tests, failures, errors, skipped, time, timestamp, hostname) 
+VALUES ({suite['id']}, {self._escape_sql_string(suite['name'])}, {self._escape_sql_string(suite['component'])},
+{self._escape_sql_string(suite['run_identification'])},{self._escape_sql_string(suite['run_number'])},
+ {self._escape_sql_string(suite['branch'])}, {suite['tests']}, 
         {suite['failures']}, {suite['errors']}, {suite['skipped']}, {suite['time']}, 
         {timestamp_val}, {hostname_val});"""
             sql_statements.append(sql)
@@ -256,10 +263,14 @@ def main():
                        help='Viper Component (AstroViper/GraphViper)')
     parser.add_argument('--branch',
                        help='Git Branch name')
+    parser.add_argument('--run-identification',
+                       help='A unique number for each workflow run within a repository. This number does not change if you re-run the workflow run.')
+    parser.add_argument('--run-number',
+                       help="A unique number for each run of a particular workflow in a repository. This number begins at 1 for the workflow's first run, and increments with each new run.")
     args = parser.parse_args()
     
     converter = JUnitToSQL()
-    converter.parse_junit_xml(args.xml_file, args.component, args.branch)
+    converter.parse_junit_xml(args.xml_file, args.component, args.branch, args.run_identification, args.run_number)
     
     output_content = []
     
