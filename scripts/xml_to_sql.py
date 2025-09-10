@@ -250,7 +250,7 @@ def main():
                        help='Include CREATE TABLE statements')
     parser.add_argument('--summary', action='store_true',
                        help='Include summary queries')
-    parser.add_argument('--component', action='store_true',
+    parser.add_argument('--component',
                        help='Viper Component (AstroViper/GraphViper)')
     
     args = parser.parse_args()

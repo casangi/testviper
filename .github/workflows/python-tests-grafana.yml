@@ -1,5 +1,5 @@
 ---
-name: Integration Tests with Allure Report
+name: Integration Tests to Grafana
 
 on:
   push:
@@ -60,7 +60,7 @@ jobs:
           sudo cat /etc/alloy/config.alloy
           /bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
 
-    - name: Run tests and generate DB
+    - name: Run tests and generate Sql Database
       run: |           
       
         echo "#### Starting Alloy ####"
@@ -70,12 +70,13 @@ jobs:
         sudo systemctl status alloy.service
        
         echo "#### Running Tests ####"
+        mkdir -p pytestreport
 
         python -m pytest astroviper/tests/ -v --junitxml=astroviper-pytest-report.xml
-        python scripts/xml_to_sql.py astroviper-pytest-report.xml --component=astroviper --create-tables --output database/astroviper.sql
+        python scripts/xml_to_sql.py pytestreport/astroviper-pytest-report.xml --component=astroviper --create-tables --output database/astroviper.sql
 
         python -m pytest graphviper/tests/ -v --junitxml=graphviper-pytest-report.xml
-        python scripts/xml_to_sql.py graphviper-pytest-report.xml --component=graphviper --create-tables --output database/graphviper.sql
+        python scripts/xml_to_sql.py pytestreport/graphviper-pytest-report.xml --component=graphviper --create-tables --output database/graphviper.sql
           
 
       
@@ -93,7 +94,7 @@ jobs:
     - name: Generate Test Summary
       uses: test-summary/action@v2
       with:
-        paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
+        paths: "pytestreport/*-pytest-report.xml"
     
     - name: Generate JUnit DataBase
       if: always()
