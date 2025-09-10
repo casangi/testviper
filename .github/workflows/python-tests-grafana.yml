@@ -36,46 +36,46 @@ jobs:
         make build-main
         ls -l
         
-    - name: SetUp Grafana Alloy
-      env:
-          GCLOUD_HOSTED_METRICS_ID: "2641355" 
-          GCLOUD_HOSTED_METRICS_URL: "https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push" 
-          GCLOUD_HOSTED_LOGS_ID: "1316354" 
-          GCLOUD_HOSTED_LOGS_URL: "https://logs-prod-036.grafana.net/loki/api/v1/push" 
-          GCLOUD_FM_URL: "https://fleet-management-prod-008.grafana.net" 
-          GCLOUD_FM_POLL_FREQUENCY: "30s" 
-          GCLOUD_FM_HOSTED_ID: "1358560" 
-          ARCH: "amd64" 
-          GCLOUD_RW_API_KEY: ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}    
-      run: |
-          sudo mkdir -p /etc/apt/keyrings/
-          wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-          echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+    # - name: SetUp Grafana Alloy
+    #   env:
+    #       GCLOUD_HOSTED_METRICS_ID: "2641355" 
+    #       GCLOUD_HOSTED_METRICS_URL: "https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push" 
+    #       GCLOUD_HOSTED_LOGS_ID: "1316354" 
+    #       GCLOUD_HOSTED_LOGS_URL: "https://logs-prod-036.grafana.net/loki/api/v1/push" 
+    #       GCLOUD_FM_URL: "https://fleet-management-prod-008.grafana.net" 
+    #       GCLOUD_FM_POLL_FREQUENCY: "30s" 
+    #       GCLOUD_FM_HOSTED_ID: "1358560" 
+    #       ARCH: "amd64" 
+    #       GCLOUD_RW_API_KEY: ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}    
+    #   run: |
+    #       sudo mkdir -p /etc/apt/keyrings/
+    #       wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+    #       echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
 
-          sudo apt-get update
-          sudo apt-get install alloy
-          sudo rm -rf /etc/alloy/config.alloy
-          sudo cp config/config.alloy /etc/alloy/config.alloy
-          echo "#### Config Updated ####"
-          sudo cat /etc/alloy/config.alloy
-          /bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
+    #       sudo apt-get update
+    #       sudo apt-get install alloy
+    #       sudo rm -rf /etc/alloy/config.alloy
+    #       sudo cp config/config.alloy /etc/alloy/config.alloy
+    #       echo "#### Config Updated ####"
+    #       sudo cat /etc/alloy/config.alloy
+    #       /bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
 
     - name: Run tests and generate Sql Database
       run: |           
       
-        echo "#### Starting Alloy ####"
-        sudo systemctl start alloy
-        sudo systemctl start alloy.service
-        sudo systemctl status alloy
-        sudo systemctl status alloy.service
+        #echo "#### Starting Alloy ####"
+        #sudo systemctl start alloy
+        #sudo systemctl start alloy.service
+        #sudo systemctl status alloy
+        #sudo systemctl status alloy.service
        
         echo "#### Running Tests ####"
         mkdir -p pytestreport
 
-        python -m pytest astroviper/tests/ -v --junitxml=astroviper-pytest-report.xml
+        python -m pytest astroviper/tests/ -v --junitxml=pytestreport/astroviper-pytest-report.xml
         python scripts/xml_to_sql.py pytestreport/astroviper-pytest-report.xml --component=astroviper --create-tables --output database/astroviper.sql
 
-        python -m pytest graphviper/tests/ -v --junitxml=graphviper-pytest-report.xml
+        python -m pytest graphviper/tests/ -v --junitxml=pytestreport/graphviper-pytest-report.xml
         python scripts/xml_to_sql.py pytestreport/graphviper-pytest-report.xml --component=graphviper --create-tables --output database/graphviper.sql
           
 
