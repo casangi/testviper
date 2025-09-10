@@ -1,0 +1,125 @@
+---
+name: Integration Tests with Allure Report
+
+on:
+  push:
+    branches: ["**"]
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+        
+    - name: Install testviper dependencies
+      run: |
+        pwd
+        make build-testviper
+        
+    - name: Clone component repositories
+      run: |
+        git clone https://github.com/casangi/toolviper.git
+        git clone https://github.com/casangi/xradio.git
+        git clone https://github.com/casangi/graphviper.git
+        git clone https://github.com/casangi/astroviper.git
+        ls -l
+        
+    - name: Install components
+      run: |
+        make build-main
+        ls -l
+        
+    - name: SetUp Grafana Alloy
+      env:
+          GCLOUD_HOSTED_METRICS_ID: "2641355" 
+          GCLOUD_HOSTED_METRICS_URL: "https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push" 
+          GCLOUD_HOSTED_LOGS_ID: "1316354" 
+          GCLOUD_HOSTED_LOGS_URL: "https://logs-prod-036.grafana.net/loki/api/v1/push" 
+          GCLOUD_FM_URL: "https://fleet-management-prod-008.grafana.net" 
+          GCLOUD_FM_POLL_FREQUENCY: "30s" 
+          GCLOUD_FM_HOSTED_ID: "1358560" 
+          ARCH: "amd64" 
+          GCLOUD_RW_API_KEY: ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}    
+      run: |
+          sudo mkdir -p /etc/apt/keyrings/
+          wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
+          echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
+
+          sudo apt-get update
+          sudo apt-get install alloy
+          sudo rm -rf /etc/alloy/config.alloy
+          sudo cp config/config.alloy /etc/alloy/config.alloy
+          echo "#### Config Updated ####"
+          sudo cat /etc/alloy/config.alloy
+          /bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
+
+    - name: Run tests and generate DB
+      run: |           
+      
+        echo "#### Starting Alloy ####"
+        sudo systemctl start alloy
+        sudo systemctl start alloy.service
+        sudo systemctl status alloy
+        sudo systemctl status alloy.service
+       
+        echo "#### Running Tests ####"
+
+        python -m pytest astroviper/tests/ -v --junitxml=astroviper-pytest-report.xml
+        python scripts/xml_to_sql.py astroviper-pytest-report.xml --component=astroviper --create-tables --output database/astroviper.sql
+
+        python -m pytest graphviper/tests/ -v --junitxml=graphviper-pytest-report.xml
+        python scripts/xml_to_sql.py graphviper-pytest-report.xml --component=graphviper --create-tables --output database/graphviper.sql
+          
+
+      
+    #- name: Generate enhanced summary report with CodeCov links
+    #  run: python scripts/enhanced_summary_generator.py
+      
+    #- name: Upload Allure Reports
+    #  uses: actions/upload-artifact@v4
+    #  if: always()
+    #  with:
+    #    name: allure-reports
+    #    path: allure-report/
+    #    retention-days: 30
+        
+    - name: Generate Test Summary
+      uses: test-summary/action@v2
+      with:
+        paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
+    
+    - name: Generate JUnit DataBase
+      if: always()
+      run: |
+
+        for FILE in database/*.sql; do
+          echo "Processing file: $FILE"
+          testfile=$(basename $FILE); 
+          testprefix=${testfile%.*};
+          python scripts/create_database.py --sql_file $FILE --db_file database/mydatabase.db
+        done
+
+        python scripts/sqldb_to_json.py --db_file database/mydatabase.db --myjson_testcases database/test_cases.json --myjson_testsuites database/test_suites.json
+    
+    - name: Commit Results
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        file_pattern: database/*
+        commit_message: Updated test db
+  #  - name: Deploy to gh-pages
+  #    uses: peaceiris/actions-gh-pages@v4
+  #    if: always()
+  #    with:
+  #      github_token: ${{ secrets.GITHUB_TOKEN }}
+  #      publish_dir: allure-report
+  #      publish_branch: gh-pages
+  #      destination_dir: main
+  #      keep_files: true
+  #      force_orphan: false

@@ -19,7 +19,7 @@ class JUnitToSQL:
         self.test_suites = []
         self.test_cases = []
     
-    def parse_junit_xml(self, xml_file_path: str) -> None:
+    def parse_junit_xml(self, xml_file_path: str, component: str) -> None:
         """Parse the JUnit XML file and extract test data."""
         try:
             tree = ET.parse(xml_file_path)
@@ -41,12 +41,13 @@ class JUnitToSQL:
             sys.exit(1)
         
         for testsuite in testsuites:
-            self._parse_testsuite(testsuite)
+            self._parse_testsuite(testsuite, component)
     
-    def _parse_testsuite(self, testsuite_elem: ET.Element) -> None:
+    def _parse_testsuite(self, testsuite_elem: ET.Element, component: str) -> None:
         """Parse a single testsuite element."""
         suite_data = {
             'name': testsuite_elem.get('name', ''),
+            'component': component,
             'tests': int(testsuite_elem.get('tests', '0')),
             'failures': int(testsuite_elem.get('failures', '0')),
             'errors': int(testsuite_elem.get('errors', '0')),
@@ -113,6 +114,7 @@ class JUnitToSQL:
 CREATE TABLE IF NOT EXISTS test_suites (
     id INTEGER PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    component VARCHAR(255) NOT NULL,
     tests INTEGER DEFAULT 0,
     failures INTEGER DEFAULT 0,
     errors INTEGER DEFAULT 0,
@@ -163,8 +165,8 @@ CREATE TABLE IF NOT EXISTS test_cases (
             timestamp_val = self._escape_sql_string(suite['timestamp']) if suite['timestamp'] else 'NULL'
             hostname_val = self._escape_sql_string(suite['hostname']) if suite['hostname'] else 'NULL'
             
-            sql = f"""INSERT OR IGNORE INTO test_suites (id, name, tests, failures, errors, skipped, time, timestamp, hostname) 
-VALUES ({suite['id']}, {self._escape_sql_string(suite['name'])}, {suite['tests']}, 
+            sql = f"""INSERT OR IGNORE INTO test_suites (id, name, component, tests, failures, errors, skipped, time, timestamp, hostname) 
+VALUES ({suite['id']}, {self._escape_sql_string(suite['name'])}, {suite['component']}, {suite['tests']}, 
         {suite['failures']}, {suite['errors']}, {suite['skipped']}, {suite['time']}, 
         {timestamp_val}, {hostname_val});"""
             sql_statements.append(sql)
@@ -248,11 +250,13 @@ def main():
                        help='Include CREATE TABLE statements')
     parser.add_argument('--summary', action='store_true',
                        help='Include summary queries')
+    parser.add_argument('--component', action='store_true',
+                       help='Viper Component (AstroViper/GraphViper)')
     
     args = parser.parse_args()
     
     converter = JUnitToSQL()
-    converter.parse_junit_xml(args.xml_file)
+    converter.parse_junit_xml(args.xml_file, args.component)
     
     output_content = []
     
