@@ -47,7 +47,7 @@ class JUnitToSQL:
         """Parse a single testsuite element."""
         suite_data = {
             'name': testsuite_elem.get('name', ''),
-            'component': "'{component}'" if component else "'testviper'",
+            'component': '{component}' if component else 'testviper',
             'tests': int(testsuite_elem.get('tests', '0')),
             'failures': int(testsuite_elem.get('failures', '0')),
             'errors': int(testsuite_elem.get('errors', '0')),
