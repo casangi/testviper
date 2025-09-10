@@ -47,7 +47,7 @@ class JUnitToSQL:
         """Parse a single testsuite element."""
         suite_data = {
             'name': testsuite_elem.get('name', ''),
-            'component': component,
+            'component': "'{component}'" if component else "'testviper'",
             'tests': int(testsuite_elem.get('tests', '0')),
             'failures': int(testsuite_elem.get('failures', '0')),
             'errors': int(testsuite_elem.get('errors', '0')),
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS test_cases (
             hostname_val = self._escape_sql_string(suite['hostname']) if suite['hostname'] else 'NULL'
             
             sql = f"""INSERT OR IGNORE INTO test_suites (id, name, component, tests, failures, errors, skipped, time, timestamp, hostname) 
-VALUES ({suite['id']}, {self._escape_sql_string(suite['name'])}, {suite['component']}, {suite['tests']}, 
+VALUES ({suite['id']}, {self._escape_sql_string(suite['name'])}, {self._escape_sql_string(suite['component'])}, {suite['tests']}, 
         {suite['failures']}, {suite['errors']}, {suite['skipped']}, {suite['time']}, 
         {timestamp_val}, {hostname_val});"""
             sql_statements.append(sql)
