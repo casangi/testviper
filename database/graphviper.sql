@@ -42,16 +42,16 @@ CREATE TABLE IF NOT EXISTS test_cases (
 
 -- INSERT statements
 INSERT OR IGNORE INTO test_suites (id, name, component, tests, failures, errors, skipped, time, timestamp, hostname) 
-VALUES (235320072546349492, 'pytest', '{component}', 2, 
-        0, 0, 0, 15.273, 
-        '2025-09-10T18:22:50.980577+00:00', 'runnervmf4ws1');
+VALUES (149476056931958043, 'pytest', 'graphviper', 2, 
+        0, 0, 0, 16.71, 
+        '2025-09-10T18:28:30.317905+00:00', 'runnervmf4ws1');
 
 INSERT OR IGNORE INTO test_cases (id, suite_id, classname, name, time, file, line, status, 
                      failure_message, failure_type, failure_text, error_message, error_type, 
                      error_text, skip_message, skip_reason, system_out, system_err) 
-VALUES (235320072546349493, 235320072546349492, 'tests.test_graph_tools', 'test_map_reduce', 13.042, '', '', 'PASSED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+VALUES (149476056931958044, 149476056931958043, 'tests.test_graph_tools', 'test_map_reduce', 13.117, '', '', 'PASSED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 INSERT OR IGNORE INTO test_cases (id, suite_id, classname, name, time, file, line, status, 
                      failure_message, failure_type, failure_text, error_message, error_type, 
                      error_text, skip_message, skip_reason, system_out, system_err) 
-VALUES (235320072546349494, 235320072546349492, 'tests.test_graph_tools', 'test_ps_partition', 2.205, '', '', 'PASSED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+VALUES (149476056931958045, 149476056931958043, 'tests.test_graph_tools', 'test_ps_partition', 3.566, '', '', 'PASSED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
