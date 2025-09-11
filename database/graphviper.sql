@@ -45,18 +45,18 @@ CREATE TABLE IF NOT EXISTS test_cases (
 
 -- INSERT statements
 INSERT OR IGNORE INTO test_suites (id, name, component, runid, runnumber, branch, tests, failures, errors, skipped, time, timestamp, hostname) 
-VALUES (337063985235405361, 'pytest', 'graphviper',
-'17624217326','11',
+VALUES (308286759918431439, 'pytest', 'graphviper',
+'17647686230','13',
  '23-grafana-dashboard', 2, 
-        0, 0, 0, 16.137, 
-        '2025-09-10T19:10:36.738002+00:00', 'runnervmf4ws1');
+        0, 0, 0, 15.087, 
+        '2025-09-11T14:27:03.904399+00:00', 'runnervmf4ws1');
 
 INSERT OR IGNORE INTO test_cases (id, suite_id, classname, name, time, file, line, status, 
                      failure_message, failure_type, failure_text, error_message, error_type, 
                      error_text, skip_message, skip_reason, system_out, system_err) 
-VALUES (337063985235405362, 337063985235405361, 'tests.test_graph_tools', 'test_map_reduce', 13.512, '', '', 'PASSED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+VALUES (308286759918431440, 308286759918431439, 'tests.test_graph_tools', 'test_map_reduce', 13.074, '', '', 'PASSED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 INSERT OR IGNORE INTO test_cases (id, suite_id, classname, name, time, file, line, status, 
                      failure_message, failure_type, failure_text, error_message, error_type, 
                      error_text, skip_message, skip_reason, system_out, system_err) 
-VALUES (337063985235405363, 337063985235405361, 'tests.test_graph_tools', 'test_ps_partition', 2.6, '', '', 'PASSED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+VALUES (308286759918431441, 308286759918431439, 'tests.test_graph_tools', 'test_ps_partition', 1.985, '', '', 'PASSED', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
