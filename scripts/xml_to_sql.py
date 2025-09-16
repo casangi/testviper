@@ -50,10 +50,10 @@ class JUnitToSQL:
             'name': testsuite_elem.get('name', ''),
             'component': f'{component}' if component else 'testviper',
             'branch': f'{branch}' if branch else 'NULL',
-            'job_identification': f'{job_identification}' if job_identification else 'NULL',
-            'run_identification': f'{run_identification}' if run_identification else 'NULL',
-            'run_number': f'{run_number}' if run_number else 'NULL',
-            'run_attempt': f'{run_attempt}' if run_attempt else 'NULL',
+            'job_identification': int(f'{job_identification}' if job_identification else '0'),
+            'run_identification': int(f'{run_identification}' if run_identification else '0'),
+            'run_number': int(f'{run_number}' if run_number else '0'),
+            'run_attempt': int(f'{run_attempt}' if run_attempt else '0'),
             'tests': int(testsuite_elem.get('tests', '0')),
             'failures': int(testsuite_elem.get('failures', '0')),
             'errors': int(testsuite_elem.get('errors', '0')),
@@ -122,10 +122,10 @@ CREATE TABLE IF NOT EXISTS test_suites (
     id INTEGER PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     component VARCHAR(255) NOT NULL,
-    jobid VARCHAR(255) NOT NULL,
-    runid VARCHAR(255) NOT NULL,
-    runnumber VARCHAR(255) NOT NULL,
-    runattempt VARCHAR(255) NOT NULL,
+    jobid INTEGER DEFAULT 0,
+    runid INTEGER DEFAULT 0,,
+    runnumber INTEGER DEFAULT 0,
+    runattempt INTEGER DEFAULT 0,
     branch VARCHAR(255) NOT NULL,
     tests INTEGER DEFAULT 0,
     failures INTEGER DEFAULT 0,
@@ -180,8 +180,8 @@ CREATE TABLE IF NOT EXISTS test_cases (
             
             sql = f"""INSERT OR IGNORE INTO test_suites (id, name, component, jobid, runid, runnumber,runattempt, branch, tests, failures, errors, skipped, time, timestamp, hostname) 
 VALUES ({suite['id']}, {self._escape_sql_string(suite['name'])}, {self._escape_sql_string(suite['component'])},
-{self._escape_sql_string(suite['job_identification'])}
-{self._escape_sql_string(suite['run_identification'])},{self._escape_sql_string(suite['run_number'])},{self._escape_sql_string(suite['run_attempt'])},
+{suite['job_identification']}
+{suite['run_identification']},{suite['run_number']},{suite['run_attempt']},
  {self._escape_sql_string(suite['branch'])}, {suite['tests']}, 
         {suite['failures']}, {suite['errors']}, {suite['skipped']}, {suite['time']}, 
         {timestamp_val}, {hostname_val});"""
