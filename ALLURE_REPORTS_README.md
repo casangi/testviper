@@ -1,4 +1,4 @@
-# Enhanced Allure Reporting System 
+# Enhanced Allure Reporting System
 
 This enhanced system provides comprehensive test reporting for Integration tests of the VIPER eco-system and its individual components with historical tracking and CodeCov integration.
 
