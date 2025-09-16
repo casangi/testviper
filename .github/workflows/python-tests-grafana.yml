@@ -71,16 +71,20 @@ jobs:
        
         echo "#### Running Tests ####"
         mkdir -p pytestreport
+        mkdir -p sqlitedb
 
         python -m pytest astroviper/tests/ -v --junitxml=pytestreport/astroviper-pytest-report.xml
-        python scripts/xml_to_sql.py pytestreport/astroviper-pytest-report.xml --run-identification="${{ github.run_id }}" --run-number="${{ github.run_number }}" --branch="${{ github.ref_name }}" --component=astroviper --create-tables --output database/astroviper.sql
+        python scripts/xml_to_sql.py pytestreport/astroviper-pytest-report.xml --job-identification="${{ github.job }}" --run-identification="${{ github.run_id }}" --run-number="${{ github.run_number }}" --run-attempt="${{ github.run_attempt }}" --branch="${{ github.ref_name }}" --component=astroviper --create-tables --output sqlitedb/astroviper.sql
+        python scripts/create_database.py --sql_file sqlitedb/astroviper.sql --db_file database/mydatabase.db
 
         python -m pytest graphviper/tests/ -v --junitxml=pytestreport/graphviper-pytest-report.xml
-        python scripts/xml_to_sql.py pytestreport/graphviper-pytest-report.xml --run-identification="${{ github.run_id }}" --run-number="${{ github.run_number }}" --branch="${{ github.ref_name }}" --component=graphviper --create-tables --output database/graphviper.sql
+        python scripts/xml_to_sql.py pytestreport/graphviper-pytest-report.xml --job-identification="${{ github.job }}" --run-identification="${{ github.run_id }}" --run-number="${{ github.run_number }}" --run-attempt="${{ github.run_attempt }}" --branch="${{ github.ref_name }}"  --component=graphviper --create-tables --output sqlitedb/graphviper.sql
+        python scripts/create_database.py --sql_file sqlitedb/graphviper.sql --db_file database/mydatabase.db
 
         python -m pytest xradio/tests/unit -v --junitxml=pytestreport/xradio-pytest-report.xml
-        python scripts/xml_to_sql.py pytestreport/xradio-pytest-report.xml --run-identification="${{ github.run_id }}" --run-number="${{ github.run_number }}" --branch="${{ github.ref_name }}" --component=xradio --create-tables --output database/xradio.sql
-          
+        python scripts/xml_to_sql.py pytestreport/xradio-pytest-report.xml --job-identification="${{ github.job }}" --run-identification="${{ github.run_id }}" --run-number="${{ github.run_number }}" --run-attempt="${{ github.run_attempt }}" --branch="${{ github.ref_name }}" --component=xradio --create-tables --output sqlitedb/xradio.sql
+        python scripts/create_database.py --sql_file sqlitedb/xradio.sql --db_file database/mydatabase.db
+
     #- name: Generate enhanced summary report with CodeCov links
     #  run: python scripts/enhanced_summary_generator.py
       
