@@ -3,13 +3,60 @@ name: Integration Tests with Allure Report
 
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      source_repository:
+        description: 'Source repository that triggered the dispatch'
+        required: false
+        type: string
+      source_ref:
+        description: 'Source branch/ref that triggered the dispatch'
+        required: false
+        type: string
+      source_sha:
+        description: 'Source commit SHA that triggered the dispatch'
+        required: false
+        type: string
+      source_actor:
+        description: 'Source actor that triggered the dispatch'
+        required: false
+        type: string
+      source_workflow:
+        description: 'Source workflow that triggered the dispatch'
+        required: false
+        type: string
+      source_run_id:
+        description: 'Source run ID that triggered the dispatch'
+        required: false
+        type: string
+      source_run_number:
+        description: 'Source run number that triggered the dispatch'
+        required: false
+        type: string
+      triggered_by:
+        description: 'How this workflow was triggered'
+        required: false
+        type: string
 
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Log dispatch information
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        echo "Workflow triggered by repository dispatch"
+        echo "Source repository: ${{ github.event.inputs.source_repository }}"
+        echo "Source ref: ${{ github.event.inputs.source_ref }}"
+        echo "Source SHA: ${{ github.event.inputs.source_sha }}"
+        echo "Source actor: ${{ github.event.inputs.source_actor }}"
+        echo "Source workflow: ${{ github.event.inputs.source_workflow }}"
+        echo "Source run ID: ${{ github.event.inputs.source_run_id }}"
+        echo "Source run number: ${{ github.event.inputs.source_run_number }}"
+        echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
+    
     - name: Checkout repository
       uses: actions/checkout@v4
       
@@ -23,18 +70,10 @@ jobs:
         pwd
         make build-testviper
         
-    - name: Clone component repositories
-      run: |
-        git clone https://github.com/casangi/toolviper.git
-        git clone https://github.com/casangi/xradio.git
-        git clone https://github.com/casangi/graphviper.git
-        git clone https://github.com/casangi/astroviper.git
-        ls -l
-        
-    - name: Install components
+    - name: Clone and install component repositories
       run: |
         make build-main
-        ls -l
+        ls -l external/
         
     - name: Install Allure CLI
       run: |
@@ -67,89 +106,33 @@ jobs:
     # - name: Run tests and generate coverage
     #   run: |
     #     python scripts/test_runner_with_coverage.py
-
-    - name: SetUp Grafana Alloy
-      env:
-          GCLOUD_HOSTED_METRICS_ID: "2641355" 
-          GCLOUD_HOSTED_METRICS_URL: "https://prometheus-prod-56-prod-us-east-2.grafana.net/api/prom/push" 
-          GCLOUD_HOSTED_LOGS_ID: "1316354" 
-          GCLOUD_HOSTED_LOGS_URL: "https://logs-prod-036.grafana.net/loki/api/v1/push" 
-          GCLOUD_FM_URL: "https://fleet-management-prod-008.grafana.net" 
-          GCLOUD_FM_POLL_FREQUENCY: "30s" 
-          GCLOUD_FM_HOSTED_ID: "1358560" 
-          ARCH: "amd64" 
-          GCLOUD_RW_API_KEY: ${{ secrets.PROMETHEUS_REMOTE_PASSWORD }}    
-      run: |
-          sudo mkdir -p /etc/apt/keyrings/
-          wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | sudo tee /etc/apt/keyrings/grafana.gpg > /dev/null
-          echo "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
-
-          sudo apt-get update
-          sudo apt-get install alloy
-          sudo rm -rf /etc/alloy/config.alloy
-          sudo cp config/config.alloy /etc/alloy/config.alloy
-          echo "#### Config Updated ####"
-          sudo cat /etc/alloy/config.alloy
-          /bin/sh -c "$(curl -fsSL https://storage.googleapis.com/cloud-onboarding/alloy/scripts/install-linux.sh)"
-
+      
     - name: Run tests and generate Allure reports with history
-      run: |           
+      run: python scripts/enhanced_report_generator.py
       
-        echo "#### Starting Alloy ####"
-        sudo systemctl start alloy
-        sudo systemctl start alloy.service
-        sudo systemctl status alloy
-        sudo systemctl status alloy.service
-        
-        python scripts/enhanced_report_generator.py
+    - name: Generate enhanced summary report with CodeCov links
+      run: python scripts/enhanced_summary_generator.py
       
-    #- name: Generate enhanced summary report with CodeCov links
-    #  run: python scripts/enhanced_summary_generator.py
-      
-    #- name: Upload Allure Reports
-    #  uses: actions/upload-artifact@v4
-    #  if: always()
-    #  with:
-    #    name: allure-reports
-    #    path: allure-report/
-    #    retention-days: 30
+    - name: Upload Allure Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: allure-reports
+        path: allure-report/
+        retention-days: 30
         
     - name: Generate Test Summary
       uses: test-summary/action@v2
       with:
         paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
-    
-    - name: Generate JUnit DataBase
-      if: always()
-      run: |
-        for FILE in /home/runner/work/testviper/testviper/tests/*.xml; do
-          echo "Processing file: $FILE"
-          testfile=$(basename $FILE); 
-          testprefix=${testfile%.*};
-          python scripts/xml_to_sql.py $FILE --create-tables --output database/$testprefix.sql
-        done
         
-        for FILE in database/*.sql; do
-          echo "Processing file: $FILE"
-          testfile=$(basename $FILE); 
-          testprefix=${testfile%.*};
-          python scripts/create_database.py --sql_file $FILE --db_file database/mydatabase.db
-        done
-
-        python scripts/sqldb_to_json.py --db_file database/mydatabase.db --myjson_testcases database/test_cases.json --myjson_testsuites database/test_suites.json
-    
-    - name: Commit Results
-      uses: stefanzweifel/git-auto-commit-action@v4
+    - name: Deploy to gh-pages
+      uses: peaceiris/actions-gh-pages@v4
+      if: always()
       with:
-        file_pattern: database/*
-        commit_message: Updated test db
-  #  - name: Deploy to gh-pages
-  #    uses: peaceiris/actions-gh-pages@v4
-  #    if: always()
-  #    with:
-  #      github_token: ${{ secrets.GITHUB_TOKEN }}
-  #      publish_dir: allure-report
-  #      publish_branch: gh-pages
-  #      destination_dir: main
-  #      keep_files: true
-  #      force_orphan: false
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: allure-report
+        publish_branch: gh-pages
+        destination_dir: main
+        keep_files: true
+        force_orphan: false
