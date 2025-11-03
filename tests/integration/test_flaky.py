@@ -10,7 +10,7 @@ def test_random_failure():
     
 def test_random_segfault():
     "Random Seg Fault triggered (0.1% chance)"
-    if random.random() < 0.001:
+    if random.random() > 0.001: # Force Seg Fault
         ctypes.string_at(0)
     assert True
 

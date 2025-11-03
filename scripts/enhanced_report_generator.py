@@ -168,6 +168,9 @@ def run_component_tests(component):
         result = subprocess.run(test_command, capture_output=True, text=True)  
         print(f"Tests completed for {component_name}")
         print(f"Exit code: {result.returncode}")
+        output_file = "subprocess_return_code.txt"
+        with open(output_file, "a") as f:
+            f.write(str(result.returncode)+"\n")
         if result.stdout:
             print("STDOUT (last 200 chars):", result.stdout[-200:])
         if result.stderr and result.stderr.strip():
