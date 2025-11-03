@@ -227,22 +227,6 @@ def create_minimal_result(results_dir, component_name, error_message):
  
     with open(f"{results_dir}/minimal-test-result.json", "w") as f:
         json.dump(minimal_result, f, indent=2)
-def create_minimal_result(results_dir, component_name, error_message):
-    """Create a minimal test result for components with issues"""
-    minimal_result = {
-        "uuid": f"test-{component_name}",
-        "historyId": f"test-{component_name}", 
-        "testCaseId": f"test-{component_name}",
-        "name": f"Tests for {component_name}",
-        "status": "broken",
-        "statusMessage": error_message,
-        "stage": "finished",
-        "start": 0,
-        "stop": 0
-    }
- 
-    with open(f"{results_dir}/minimal-test-result.json", "w") as f:
-        json.dump(minimal_result, f, indent=2)
 
 def generate_allure_report(component):
     """Generate Allure HTML report for a component"""
