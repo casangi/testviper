@@ -12,6 +12,9 @@ import shutil
 from pathlib import Path
 import tomllib  # Python 3.11+ supports tomllib natively
 from bs4 import BeautifulSoup
+import datetime
+import socket
+import xml.etree.ElementTree as ET
 
 # Component configurations
 COMPONENTS = [
@@ -175,7 +178,55 @@ def run_component_tests(component):
     except Exception as e:
         print(f"Error running tests for {component_name}: {e}")
         create_minimal_result(results_dir, component_name, f"Failed to run tests: {e}")
+    finally:
+        if not os.path.isfile(f"{component['test_path']}/{component_name}-pytest-report.xml"):
+            fMessage=f"{component_name} Test execution failed, no report generated: Exit code: {result.returncode if 'result' in locals() else 'N/A'}"
+            create_static_xml_report(component['test_path'], component_name, f"{component['test_path']}/{component_name}-pytest-report.xml", fMessage)
+        print(f"Finished test execution for {component_name}")
 
+def create_static_xml_report(test_path, component_name, filename, fMessage="Test execution failed, no report generated"):
+    """Create a static JUnit XML report if pytest did not generate one"""
+
+    e = datetime.datetime.now()
+    timestamp = e.strftime('%Y-%m-%dT%H:%M:%S.%f')
+    data = ET.Element('testsuites')
+    element1 = ET.SubElement(data, 'testsuite')
+    element1.set('name', "'{}'".format(component_name))
+    element1.set('errors', "0")
+    element1.set('failures', "1")
+    element1.set('skipped', "0")
+    element1.set('tests', "1")
+    element1.set('time', "0.01")
+    element1.set('timestamp', timestamp)
+    element1.set('hostname', socket.gethostname())
+    s_elem1 = ET.SubElement(element1, 'testcase')
+    s_elem1.set('classname', "{}.ScriptFailure".format(component_name))
+    s_elem1.set('name', "{}".format(component_name))
+    s_elem1.set('time', "0.01")
+    ss_elem1 = ET.SubElement(s_elem1, 'failure')
+    ss_elem1.set('message', fMessage)
+    ss_elem1.text = fMessage
+    b_xml = ET.tostring(data)
+
+    with open(filename, "wb") as f:
+        f.write(b_xml)
+
+def create_minimal_result(results_dir, component_name, error_message):
+    """Create a minimal test result for components with issues"""
+    minimal_result = {
+        "uuid": f"test-{component_name}",
+        "historyId": f"test-{component_name}", 
+        "testCaseId": f"test-{component_name}",
+        "name": f"Tests for {component_name}",
+        "status": "broken",
+        "statusMessage": error_message,
+        "stage": "finished",
+        "start": 0,
+        "stop": 0
+    }
+ 
+    with open(f"{results_dir}/minimal-test-result.json", "w") as f:
+        json.dump(minimal_result, f, indent=2)
 def create_minimal_result(results_dir, component_name, error_message):
     """Create a minimal test result for components with issues"""
     minimal_result = {
