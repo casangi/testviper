@@ -4,13 +4,13 @@ import ctypes
 
 
 def test_random_failure():
-    if random.random() < 0.15:
+    if random.random() > 0.01: # Force Failure Fault
         assert False, "Random failure triggered (15% chance)"
     assert True
     
 def test_random_segfault():
     "Random Seg Fault triggered (0.1% chance)"
-    if random.random() > 0.001: # Force Seg Fault
+    if random.random() < 0.001: 
         ctypes.string_at(0)
     assert True
 
