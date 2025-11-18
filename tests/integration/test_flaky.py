@@ -17,4 +17,3 @@ def test_random_segfault():
 @pytest.mark.skipif(random.random() < 0.5, reason="Randomly Skipped")
 def test_skipped_feature():
     assert True
-

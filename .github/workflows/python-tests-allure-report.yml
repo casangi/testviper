@@ -136,3 +136,14 @@ jobs:
         destination_dir: main
         keep_files: true
         force_orphan: false
+    - name: Check subprocess return codes
+      run: |
+        FILE="subprocess_return_code.txt"
+        TARGET_STRING="0"
+        while IFS= read -r line; do
+          if [ "$line" != "$TARGET_STRING" ]; then
+            echo "Found non-zero return code: $line"
+            exit 1
+          fi
+        done < "$FILE"
+        echo "All Component subprocesses returned zero exit code."
