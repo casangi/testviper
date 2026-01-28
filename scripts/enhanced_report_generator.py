@@ -245,11 +245,19 @@ def generate_allure_report(component):
     # (Removed buggy block that copied allure-results/history to each component)
     
     # Generate report
-    generate_command = [
+    allure_path = shutil.which("allure")
+    allure_version = subprocess.run([allure_path,"--version"], capture_output=True, text=True, check=True)
+    if "2." in allure_version.stdout.strip():
+        generate_command = [
         "allure", "generate", results_dir,
         "--output", report_dir,
         "--clean"
     ]
+    else:
+        generate_command = [
+        "allure", "generate", results_dir,
+        "--output", report_dir
+        ]
     
     try:
         result = subprocess.run(generate_command, capture_output=True, text=True)
