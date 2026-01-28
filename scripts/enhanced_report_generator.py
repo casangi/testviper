@@ -248,12 +248,14 @@ def generate_allure_report(component):
     allure_path = shutil.which("allure")
     allure_version = subprocess.run([allure_path,"--version"], capture_output=True, text=True, check=True)
     if "2." in allure_version.stdout.strip():
+        allure2_version = True
         generate_command = [
         "allure", "generate", results_dir,
         "--output", report_dir,
         "--clean"
     ]
     else:
+        allure2_version = False
         generate_command = [
         "allure", "generate", results_dir,
         "--output", report_dir
@@ -273,7 +275,10 @@ def generate_allure_report(component):
             shutil.copytree(f"{report_dir}/history", history_output, dirs_exist_ok=True)
 
         # Update summary.json with component name and version
-        json_file = os.path.join(report_dir, 'widgets', 'summary.json')
+        if allure2_version: 
+            json_file = os.path.join(report_dir, 'widgets', 'summary.json')
+        else: 
+            json_file = os.path.join(report_dir,'summary.json')
         with open(json_file, "r") as file:
             data = json.load(file)
         data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
