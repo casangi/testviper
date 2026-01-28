@@ -32,6 +32,10 @@ build-main: sync-components
 	pip install -r requirements/main.txt
 	pip install -r requirements/base.txt
 
+build-stable:
+	pip install -r requirements/stable.txt
+	pip install -r requirements/base.txt
+
 test-main: 
 	python -m pytest -v external/toolviper/tests --junitxml=toolviper-test-results.xml
 	python -m pytest -v external/xradio/tests --junitxml=xradio-test-results.xml
