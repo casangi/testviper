@@ -281,7 +281,7 @@ def generate_allure_report(component):
             json_file = os.path.join(report_dir,'summary.json')
         with open(json_file, "r") as file:
             data = json.load(file)
-        data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
+        data["name"] = f'{component_name} {component_version} - {data["reportName"]}'
         with open(json_file, "w") as file:
             json.dump(data, file, indent=4)
        
