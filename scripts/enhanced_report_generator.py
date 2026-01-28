@@ -256,11 +256,15 @@ def generate_allure_report(component):
     ]
     else:
         allure2_version = False
+        #generate_command = [
+        #"allure", "generate", results_dir,
+        #"--output", report_dir
+        #]
+
         generate_command = [
-        "allure", "generate", results_dir,
-        "--output", report_dir
+        "allure", "awesome", results_dir, "--single-file"
         ]
-    
+
     try:
         result = subprocess.run(generate_command, capture_output=True, text=True)
         print(f"Allure report generated for {component_name}")
