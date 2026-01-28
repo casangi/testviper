@@ -277,11 +277,13 @@ def generate_allure_report(component):
         # Update summary.json with component name and version
         if allure2_version: 
             json_file = os.path.join(report_dir, 'widgets', 'summary.json')
+            data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
         else: 
             json_file = os.path.join(report_dir,'summary.json')
+            data["name"] = f'{component_name} {component_version} - {data["name"]}'
+
         with open(json_file, "r") as file:
             data = json.load(file)
-        data["name"] = f'{component_name} {component_version} - {data["reportName"]}'
         with open(json_file, "w") as file:
             json.dump(data, file, indent=4)
        
