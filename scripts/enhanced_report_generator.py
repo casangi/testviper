@@ -260,9 +260,15 @@ def generate_allure_report(component):
         "allure", "generate", results_dir,
         "--output", report_dir
         ]
-
     try:
         result = subprocess.run(generate_command, capture_output=True, text=True)
+        if not allure2_version:
+            history = subprocess.run(["allure",
+                                      results_dir,
+                                       "--history-path", 
+                                       os.path.join(report_dir, f"history-{component_name}.jsonl") ],
+                                capture_output=True, text=True)
+
         print(f"Allure report generated for {component_name}")
         
         """
