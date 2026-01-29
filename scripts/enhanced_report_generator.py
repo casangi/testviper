@@ -231,6 +231,18 @@ def create_minimal_result(results_dir, component_name, error_message):
     with open(f"{results_dir}/minimal-test-result.json", "w") as f:
         json.dump(minimal_result, f, indent=2)
 
+def write_config_file(component):
+    """Write Allure configuration file"""
+    testpath = f"{os.getcwd()}/gh-pages-staging/main/allure3-history/{component['name']}"
+    config = {
+        "historyPath": f"{testpath}/allure-history-{component['name']}.jsonl",
+        "appendHistory": True
+        }
+    os.makedirs(testpath, exist_ok=True)
+    with open(f"{testpath}/allure-config-{component['name']}.json", "w") as f:
+        json.dump(config, f, indent=2)
+    return f"{testpath}"
+
 def generate_allure_report(component):
     """Generate Allure HTML report for a component"""
     component_name = component['name']
@@ -256,18 +268,26 @@ def generate_allure_report(component):
     ]
     else:
         allure2_version = False
+        cpath = write_config_file(component)
+        config_path = os.path.join(cpath, f"allure-config-{component['name']}.json")
+        history_path = os.path.join(cpath, f"allure-history-{component['name']}.jsonl")
         generate_command = [
         "allure", "generate", results_dir,
-        "--output", report_dir
+        "--output", report_dir, "--config", config_path
         ]
     try:
         result = subprocess.run(generate_command, capture_output=True, text=True)
-        if not allure2_version:
-            history = subprocess.run(["allure",
-                                      results_dir,
-                                       "--history-path", 
-                                       os.path.join(report_dir, f"history-{component_name}.jsonl") ],
-                                capture_output=True, text=True)
+        #if not allure2_version:
+        #    try:
+        #        print(f"Generating Allure history for {component_name}...")
+        #        history = subprocess.run(["allure","history",
+        #                              results_dir,
+        #                               "--history-path", 
+        #                               history_path ],
+        #                        capture_output=True, text=True)
+        #        print(f"Allure history generated for {component_name}")
+        #    except Exception as e:
+        #        print(f"Warning: Could not generate history for {component_name}: {e}")
 
         print(f"Allure report generated for {component_name}")
         

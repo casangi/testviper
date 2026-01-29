@@ -91,27 +91,46 @@ jobs:
         #sudo mv allure-2.24.1 /opt/allure
         #sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
         
-    - name: Checkout gh-pages for history
+    - name: Checkout gh-pages-staging for history
       uses: actions/checkout@v4
       if: always()
       continue-on-error: true
       with:
-        ref: gh-pages
-        path: gh-pages
+        ref: gh-pages-staging
+        path: gh-pages-staging
         
     - name: Copy Allure history for each component
       if: always()
       continue-on-error: true
       run: |
-        for comp in testviper toolviper xradio graphviper astroviper; do
-          if [ -d "gh-pages/main/allure-history/$comp" ]; then
-            mkdir -p "allure-results-$comp/history"
-            cp -r "gh-pages/main/allure-history/$comp/." "allure-results-$comp/history/"
-            echo "Copied history for $comp"
+        ALLURE_VERSION="$(allure --version)"
+        if [[ $ALLURE_VERSION == 2* ]]; then
+          echo "Allure version 2 detected: $ALLURE_VERSION"
+          for comp in testviper toolviper xradio graphviper astroviper; do
+            if [ -d "gh-pages/main/allure-history/$comp" ]; then
+              mkdir -p "allure-results-$comp/history"
+              cp -r "gh-pages/main/allure-history/$comp/." "allure-results-$comp/history/"
+              echo "Copied history for $comp"
+            else
+              echo "No previous history for $comp"
+            fi
+          done
+        elif [[ $ALLURE_VERSION == 3* ]]; then
+          echo "Allure version 3 detected: $ALLURE_VERSION"
+          for comp in testviper toolviper xradio graphviper astroviper; do
+          if [ -d "gh-pages-staging/main/allure3-history/$comp" ]; then
+            echo "history exists for $comp, copying..."
+            ls "gh-pages-staging/main/allure3-history/$comp"
           else
-            echo "No previous history for $comp"
+            echo "creating history directory for $comp..."
+            mkdir -p "gh-pages-staging/main/allure3-history/$comp"
           fi
-        done
+          done
+          ls gh-pages-staging/main/allure3-history/
+        else
+          echo "Unknown Allure version: $ALLURE_VERSION"
+          exit 1
+        fi
       
     # - name: Run tests and generate coverage
     #   run: |
@@ -136,16 +155,16 @@ jobs:
       with:
         paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
         
-    #- name: Deploy to gh-pages
-    #  uses: peaceiris/actions-gh-pages@v4
-    #  if: always()
-    #  with:
-    #    github_token: ${{ secrets.GITHUB_TOKEN }}
-    #    publish_dir: allure-report
-    #    publish_branch: gh-pages
-    #    destination_dir: main
-    #    keep_files: true
-    #    force_orphan: false
+    - name: Deploy to gh-pages-staging
+      uses: peaceiris/actions-gh-pages@v4
+      if: always()
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: allure-report
+        publish_branch: gh-pages-staging
+        destination_dir: main
+        keep_files: true
+        force_orphan: false
     - name: Check subprocess return codes
       run: |
         FILE="subprocess_return_code.txt"
