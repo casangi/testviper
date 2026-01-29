@@ -256,19 +256,16 @@ def generate_allure_report(component):
     ]
     else:
         allure2_version = False
-        #generate_command = [
-        #"allure", "generate", results_dir,
-        #"--output", report_dir
-        #]
-
         generate_command = [
-        "allure", "awesome", results_dir, "--single-file"
+        "allure", "generate", results_dir,
+        "--output", report_dir
         ]
 
     try:
         result = subprocess.run(generate_command, capture_output=True, text=True)
         print(f"Allure report generated for {component_name}")
         
+        """
         # Add back link to the report
         add_back_link_to_report(report_dir, component_name)
         
@@ -304,7 +301,8 @@ def generate_allure_report(component):
             title_tag.string = f'{component_name} Allure Report'
         with open(index_file, "w") as file:
             file.write(str(soup))
-  
+        """
+        pass
     except Exception as e:
         print(f"Error generating Allure report for {component_name}: {e}")
         # Create a minimal HTML report
