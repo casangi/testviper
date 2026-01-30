@@ -3,7 +3,7 @@ name: Integration Tests with Allure Report
 
 on:
   push:
-    branches: ["**"]
+    branches: ["main"]
   workflow_dispatch:
     inputs:
       source_repository:
@@ -72,13 +72,8 @@ jobs:
         
     - name: Clone and install component repositories
       run: |
-        make build-stable
-        mkdir external
-        cd external
-        git clone https://github.com/casangi/xradio.git
-        git clone https://github.com/casangi/toolviper.git
-        git clone https://github.com/casangi/astroviper.git
-        git clone https://github.com/casangi/graphviper.git
+        make build-main
+        ls -l external/
 
     - name: Install Allure CLI
       run: |
@@ -87,17 +82,18 @@ jobs:
         npm install -g allure
         which allure
         allure --version
+        # Leaving Allure 2 installation commented out for reference
         #wget -qO- https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz | tar -xz
         #sudo mv allure-2.24.1 /opt/allure
         #sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
         
-    - name: Checkout gh-pages-staging for history
+    - name: Checkout gh-pages for history
       uses: actions/checkout@v4
       if: always()
       continue-on-error: true
       with:
-        ref: gh-pages-staging
-        path: gh-pages-staging
+        ref: gh-pages
+        path: gh-pages
         
     - name: Copy Allure history for each component
       if: always()
@@ -118,15 +114,15 @@ jobs:
         elif [[ $ALLURE_VERSION == 3* ]]; then
           echo "Allure version 3 detected: $ALLURE_VERSION"
           for comp in testviper toolviper xradio graphviper astroviper; do
-          if [ -d "gh-pages-staging/main/allure3-history/$comp" ]; then
+          if [ -d "gh-pages/main/allure3-history/$comp" ]; then
             echo "history exists for $comp, copying..."
-            ls "gh-pages-staging/main/allure3-history/$comp"
+            ls "gh-pages/main/allure3-history/$comp"
           else
             echo "creating history directory for $comp..."
-            mkdir -p "gh-pages-staging/main/allure3-history/$comp"
+            mkdir -p "gh-pages/main/allure3-history/$comp"
           fi
           done
-          ls gh-pages-staging/main/allure3-history/
+          ls gh-pages/main/allure3-history/
         else
           echo "Unknown Allure version: $ALLURE_VERSION"
           exit 1
@@ -155,24 +151,24 @@ jobs:
       with:
         paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
         
-    - name: Deploy history to gh-pages-staging
+    - name: Deploy history to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       if: always()
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: gh-pages-staging/main/
-        publish_branch: gh-pages-staging
+        publish_dir: gh-pages/main/
+        publish_branch: gh-pages
         destination_dir: main
         keep_files: true
         force_orphan: false
         
-    - name: Deploy report to gh-pages-staging
+    - name: Deploy report to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       if: always()
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: allure-report
-        publish_branch: gh-pages-staging
+        publish_branch: gh-pages
         destination_dir: main
         keep_files: true
         force_orphan: false

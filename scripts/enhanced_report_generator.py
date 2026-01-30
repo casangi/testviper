@@ -240,7 +240,9 @@ def create_minimal_result(results_dir, component_name, error_message):
 
 def write_config_file(component):
     """Write Allure configuration file"""
-    testpath = f"{os.getcwd()}/gh-pages-staging/main/allure3-history/{component['name']}"
+    # This can be changed to point to a shared history location if desired
+    # Currently using allure 2 history stored in gh-pages/main
+    testpath = f"{os.getcwd()}/gh-pages/main/allure3-history/{component['name']}"
     config = {
         "historyPath": f"{testpath}/allure-history-{component['name']}.jsonl",
         "appendHistory": True
