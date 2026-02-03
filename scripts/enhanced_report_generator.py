@@ -80,7 +80,7 @@ Repository=casangi/{component_name}
     env_file.parent.mkdir(parents=True, exist_ok=True)
     env_file.write_text(env_content)
 
-def add_back_link_to_report(report_path, component_name):
+def add_back_link_to_report(report_path, component_name, allure2=True):
     """Add back link to summary page in Allure report"""
     
     # Create a custom JavaScript file to add back link
@@ -124,11 +124,18 @@ window.addEventListener('load', function() {
         content = index_file.read_text()
         if "back-link.js" not in content:
             # Add script before closing body tag
-            content = content.replace(
-                "</body>",
-                f'<script src="plugins/back-link.js"></script></body>'
-            )
+            if allure2:
+                content = content.replace(
+                    "</body>",
+                    f'<script src="plugins/back-link.js"></script></body>'
+                )
+            else:
+                content = content.replace(
+                    "</body>",
+                    f'<script src="plugins/back-link.js"></script></body>'
+                ).replace("</title>", "</title><a href=\"../index.html\" class=\"back-link\">← Back to Summary</a>")
             index_file.write_text(content)
+    
 
 def run_component_tests(component):
     """Run tests for a specific component and generate Allure results"""
@@ -231,6 +238,20 @@ def create_minimal_result(results_dir, component_name, error_message):
     with open(f"{results_dir}/minimal-test-result.json", "w") as f:
         json.dump(minimal_result, f, indent=2)
 
+def write_config_file(component):
+    """Write Allure configuration file"""
+    # This can be changed to point to a shared history location if desired
+    # Currently using allure 2 history stored in gh-pages/main
+    testpath = f"{os.getcwd()}/gh-pages/main/allure3-history/{component['name']}"
+    config = {
+        "historyPath": f"{testpath}/allure-history-{component['name']}.jsonl",
+        "appendHistory": True
+        }
+    os.makedirs(testpath, exist_ok=True)
+    with open(f"{testpath}/allure-config-{component['name']}.json", "w") as f:
+        json.dump(config, f, indent=2)
+    return f"{testpath}"
+
 def generate_allure_report(component):
     """Generate Allure HTML report for a component"""
     component_name = component['name']
@@ -245,30 +266,53 @@ def generate_allure_report(component):
     # (Removed buggy block that copied allure-results/history to each component)
     
     # Generate report
-    generate_command = [
+    allure_path = shutil.which("allure")
+    allure_version = subprocess.run([allure_path,"--version"], capture_output=True, text=True, check=True)
+    if "2." in allure_version.stdout.strip():
+        allure2_version = True
+        generate_command = [
         "allure", "generate", results_dir,
         "--output", report_dir,
         "--clean"
     ]
-    
+    else:
+        allure2_version = False
+        cpath = write_config_file(component)
+        config_path = os.path.join(cpath, f"allure-config-{component['name']}.json")
+        history_path = os.path.join(cpath, f"allure-history-{component['name']}.jsonl")
+        generate_command = [
+        "allure", "generate", results_dir,
+        "--output", report_dir, "--config", config_path
+        ]
     try:
         result = subprocess.run(generate_command, capture_output=True, text=True)
-        print(f"Allure report generated for {component_name}")
-        
-        # Add back link to the report
-        add_back_link_to_report(report_dir, component_name)
-        
-        # Copy history for next run
-        history_output = f"allure-report/allure-history/{component_name}"
-        if os.path.exists(f"{report_dir}/history"):
-            os.makedirs(history_output, exist_ok=True)
-            shutil.copytree(f"{report_dir}/history", history_output, dirs_exist_ok=True)
 
-        # Update summary.json with component name and version
-        json_file = os.path.join(report_dir, 'widgets', 'summary.json')
+        print(f"Allure report generated for {component_name}")
+      
+        # Add back link to the report
+        add_back_link_to_report(report_dir, component_name, allure2=allure2_version)
+      
+        # Copy history for next run
+        if allure2_version:
+            history_output = f"allure-report/allure-history/{component_name}"
+            if os.path.exists(f"{report_dir}/history"):
+                os.makedirs(history_output, exist_ok=True)
+                shutil.copytree(f"{report_dir}/history", history_output, dirs_exist_ok=True)
+
+            # Update summary.json with component name and version
+        
+            json_file = os.path.join(report_dir, 'widgets', 'summary.json')
+        else: 
+            json_file = os.path.join(report_dir,'summary.json')
+
         with open(json_file, "r") as file:
             data = json.load(file)
-        data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
+
+        if allure2_version:
+            data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
+        else: 
+            data["name"] = f'{component_name} {component_version} - {data["name"]}'
+            
         with open(json_file, "w") as file:
             json.dump(data, file, indent=4)
        
@@ -281,7 +325,7 @@ def generate_allure_report(component):
             title_tag.string = f'{component_name} Allure Report'
         with open(index_file, "w") as file:
             file.write(str(soup))
-  
+
     except Exception as e:
         print(f"Error generating Allure report for {component_name}: {e}")
         # Create a minimal HTML report

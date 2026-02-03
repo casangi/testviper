@@ -74,12 +74,18 @@ jobs:
       run: |
         make build-main
         ls -l external/
-        
+
     - name: Install Allure CLI
       run: |
-        wget -qO- https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz | tar -xz
-        sudo mv allure-2.24.1 /opt/allure
-        sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
+        wget -qO- https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.xz | tar -xJ
+        export PATH=$HOME/node-v24.12.0-linux-x64/bin:$PATH
+        npm install -g allure
+        which allure
+        allure --version
+        # Leaving Allure 2 installation commented out for reference
+        #wget -qO- https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz | tar -xz
+        #sudo mv allure-2.24.1 /opt/allure
+        #sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
         
     - name: Checkout gh-pages for history
       uses: actions/checkout@v4
@@ -93,15 +99,34 @@ jobs:
       if: always()
       continue-on-error: true
       run: |
-        for comp in testviper toolviper xradio graphviper astroviper; do
-          if [ -d "gh-pages/main/allure-history/$comp" ]; then
-            mkdir -p "allure-results-$comp/history"
-            cp -r "gh-pages/main/allure-history/$comp/." "allure-results-$comp/history/"
-            echo "Copied history for $comp"
+        ALLURE_VERSION="$(allure --version)"
+        if [[ $ALLURE_VERSION == 2* ]]; then
+          echo "Allure version 2 detected: $ALLURE_VERSION"
+          for comp in testviper toolviper xradio graphviper astroviper; do
+            if [ -d "gh-pages/main/allure-history/$comp" ]; then
+              mkdir -p "allure-results-$comp/history"
+              cp -r "gh-pages/main/allure-history/$comp/." "allure-results-$comp/history/"
+              echo "Copied history for $comp"
+            else
+              echo "No previous history for $comp"
+            fi
+          done
+        elif [[ $ALLURE_VERSION == 3* ]]; then
+          echo "Allure version 3 detected: $ALLURE_VERSION"
+          for comp in testviper toolviper xradio graphviper astroviper; do
+          if [ -d "gh-pages/main/allure3-history/$comp" ]; then
+            echo "history exists for $comp, copying..."
+            ls "gh-pages/main/allure3-history/$comp"
           else
-            echo "No previous history for $comp"
+            echo "creating history directory for $comp..."
+            mkdir -p "gh-pages/main/allure3-history/$comp"
           fi
-        done
+          done
+          ls gh-pages/main/allure3-history/
+        else
+          echo "Unknown Allure version: $ALLURE_VERSION"
+          exit 1
+        fi
       
     # - name: Run tests and generate coverage
     #   run: |
@@ -126,7 +151,18 @@ jobs:
       with:
         paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
         
-    - name: Deploy to gh-pages
+    - name: Deploy history to gh-pages
+      uses: peaceiris/actions-gh-pages@v4
+      if: always()
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: gh-pages/main/
+        publish_branch: gh-pages
+        destination_dir: main
+        keep_files: true
+        force_orphan: false
+        
+    - name: Deploy report to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       if: always()
       with:
