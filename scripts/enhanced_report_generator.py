@@ -244,6 +244,7 @@ def write_config_file(component):
     # Currently using allure 2 history stored in gh-pages/main
     testpath = f"{os.getcwd()}/gh-pages/main/allure3-history/{component['name']}"
     config = {
+        "name" : f"component['name']} Allure Report",
         "historyPath": f"{testpath}/allure-history-{component['name']}.jsonl",
         "appendHistory": True
         }
