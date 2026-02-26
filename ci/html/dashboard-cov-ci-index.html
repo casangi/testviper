@@ -1,0 +1,2220 @@
+<!DOCTYPE html>
+<!--
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                        VIPER ECOSYSTEM DASHBOARD                             ║
+║                          Single-file HTML dashboard                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  STRUCTURE OF THIS FILE                                                      ║
+║  ─────────────────────────────────────────────────────────────────────────   ║
+║  1. <head>         Fonts, meta tags                                          ║
+║  2. <style>        All CSS — themes, layout, components                      ║
+║     2a. THEMES     CSS variables per theme (dark/light/slate/system)         ║
+║     2b. LAYOUT     App shell, project bar, category bar, frame area          ║
+║     2c. LANDING    Hero rectangle, clock, project shortcut cards             ║
+║     2d. LAUNCH     Non-embeddable URL panel                                  ║
+║  3. <body>         HTML structure                                             ║
+║  4. <script>       All JavaScript                                             ║
+║     4a. CONFIG     PROJECTS array — the only section you normally edit       ║
+║     4b. ENGINE     Routing, tab building, iframe loading, theme switching    ║
+║                                                                              ║
+║  HOW TO ADD A PROJECT                                                        ║
+║  ─────────────────────────────────────────────────────────────────────────   ║
+║  Copy the TEMPLATE block inside the PROJECTS array (section 4a) and fill    ║
+║  in the id, name, and categories. That's it — no other changes needed.      ║
+║                                                                              ║
+║  HOW TO CHANGE THE DASHBOARD TITLE                                           ║
+║  ─────────────────────────────────────────────────────────────────────────   ║
+║  Search for LANDING_TITLE and LANDING_SUBTITLE below (in the CONFIG block). ║
+║                                                                              ║
+║  NAVIGATION MODEL                                                            ║
+║  ─────────────────────────────────────────────────────────────────────────   ║
+║  URL hash encodes the current view:                                          ║
+║    (no hash)           → Landing page                                        ║
+║    #projectId/catId    → Project tab + category loaded in iframe             ║
+║  The browser Back button and clicking "DASHBOARD" both return to landing.   ║
+║                                                                              ║
+║  EMBEDDABILITY                                                                ║
+║  ─────────────────────────────────────────────────────────────────────────   ║
+║  Categories with type "repo", or whose URL hostname matches LAUNCH_PANEL_   ║
+║  URLS, skip the iframe and show a launch panel instead. GitHub and GitLab   ║
+║  block embedding with X-Frame-Options: DENY.                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+-->
+<html lang="en" data-theme="dark">
+<!-- NOTE: the data-theme value above is overwritten immediately by initTheme()
+     in JS. The real default is controlled by DEFAULT_THEME in the CONFIG block.
+     It is set here only to avoid a brief flash of un-themed content before JS runs.
+     If you change DEFAULT_THEME in JS, also change this attribute to match. -->
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ── PAGE TITLE (shown in browser tab) ───────────────────────────────── -->
+  <title>VIPER Dashboard</title>
+
+  <!-- ── FONTS ────────────────────────────────────────────────────────────── -->
+  <!-- IBM Plex Mono  : used for the brand label, category names, monospace details -->
+  <!-- IBM Plex Sans  : used for all general UI text                               -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ══════════════════════════════════════════════════════════════════════
+       RESET
+       Zero out browser default spacing and make box-sizing consistent.
+    ══════════════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2a. THEMES
+       ─────────────────────────────────────────────────────────────────────
+       All colours are defined as CSS custom properties on [data-theme="..."]
+       selectors. The JS theme-switcher simply sets data-theme on <html>.
+       To add a new theme: add a new [data-theme="yourtheme"] block here,
+       then add an entry in the #theme-menu HTML and the THEME_LABELS object.
+
+       Variable reference:
+         --bg           Page/content background
+         --surface      Navbar and card backgrounds (slightly lighter than bg)
+         --surface2     Category bar background (slightly darker than surface)
+         --border       Primary border colour (nav separators, card edges)
+         --border2      Secondary border colour (category bar, subtler elements)
+         --accent       Highlight colour (active tabs, buttons, spinner)
+         --accent-dim   Translucent accent for hover backgrounds
+         --text         Primary readable text
+         --muted        De-emphasised text (labels, hints)
+         --muted2       Slightly more visible muted text (inactive tabs)
+         --hover-bg     Background on tab/row hover
+         --cat-hover-bg Background on category tab hover
+         --spinner-bg   The non-spinning part of the loading spinner ring
+         --panel-btn-bg Background of the launch panel icon container
+         --landing-card Card background on the landing page
+    ══════════════════════════════════════════════════════════════════════ */
+
+    /* ── DARK theme (default) ─────────────────────────────────────────── */
+    [data-theme="dark"] {
+      --bg:            #0d0f12;
+      --surface:       #141720;
+      --surface2:      #0f1219;
+      --border:        #252b38;
+      --border2:       #1c2230;
+      --accent:        #00d4aa;
+      --accent-dim:    #00d4aa22;
+      --text:          #e2e8f0;
+      --muted:         #52607a;
+      --muted2:        #7a8ba8;
+      --hover-bg:      rgba(255,255,255,0.025);
+      --cat-hover-bg:  rgba(255,255,255,0.03);
+      --spinner-bg:    #252b38;
+      --panel-btn-bg:  #1e2533;
+      --landing-card:  #141e2e;
+      --landing-glow:  rgba(0,212,170,0.08);
+    }
+
+    /* ── LIGHT theme ──────────────────────────────────────────────────── */
+    [data-theme="light"] {
+      --bg:            #f4f6f9;
+      --surface:       #ffffff;
+      --surface2:      #f0f2f6;
+      --border:        #d8dde8;
+      --border2:       #e4e8f0;
+      --accent:        #0066cc;
+      --accent-dim:    #0066cc18;
+      --text:          #1a202c;
+      --muted:         #8896aa;
+      --muted2:        #5a6a80;
+      --hover-bg:      rgba(0,0,0,0.03);
+      --cat-hover-bg:  rgba(0,0,0,0.03);
+      --spinner-bg:    #d8dde8;
+      --panel-btn-bg:  #eef1f7;
+      --landing-card:  #e8edf7;
+      --landing-glow:  rgba(0,102,204,0.06);
+    }
+
+    /* ── SLATE theme ──────────────────────────────────────────────────── */
+    [data-theme="slate"] {
+      --bg:            #1e2433;
+      --surface:       #252d42;
+      --surface2:      #1a2030;
+      --border:        #323d56;
+      --border2:       #2a3448;
+      --accent:        #7c9ef5;
+      --accent-dim:    #7c9ef522;
+      --text:          #cdd6f4;
+      --muted:         #45506b;
+      --muted2:        #6b7ea0;
+      --hover-bg:      rgba(255,255,255,0.04);
+      --cat-hover-bg:  rgba(255,255,255,0.04);
+      --spinner-bg:    #323d56;
+      --panel-btn-bg:  #2a3450;
+      --landing-card:  #1e2840;
+      --landing-glow:  rgba(124,158,245,0.07);
+    }
+
+    /* ── SYSTEM theme ─────────────────────────────────────────────────── */
+    /* Default to light; media query overrides to dark when OS is in dark mode */
+    [data-theme="system"] {
+      --bg:            #f4f6f9;    --surface:       #ffffff;
+      --surface2:      #f0f2f6;   --border:        #d8dde8;
+      --border2:       #e4e8f0;   --accent:        #0066cc;
+      --accent-dim:    #0066cc18; --text:          #1a202c;
+      --muted:         #8896aa;   --muted2:        #5a6a80;
+      --hover-bg:      rgba(0,0,0,0.03);
+      --cat-hover-bg:  rgba(0,0,0,0.03);
+      --spinner-bg:    #d8dde8;   --panel-btn-bg:  #eef1f7;
+      --landing-card:  #e8edf7;   --landing-glow:  rgba(0,102,204,0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      [data-theme="system"] {
+        --bg:            #0d0f12;   --surface:       #141720;
+        --surface2:      #0f1219;   --border:        #252b38;
+        --border2:       #1c2230;   --accent:        #00d4aa;
+        --accent-dim:    #00d4aa22; --text:          #e2e8f0;
+        --muted:         #52607a;   --muted2:        #7a8ba8;
+        --hover-bg:      rgba(255,255,255,0.025);
+        --cat-hover-bg:  rgba(255,255,255,0.03);
+        --spinner-bg:    #252b38;   --panel-btn-bg:  #1e2533;
+        --landing-card:  #141e2e;   --landing-glow:  rgba(0,212,170,0.08);
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       GLOBAL CONSTANTS (not theme-specific)
+    ══════════════════════════════════════════════════════════════════════ */
+    :root {
+      --proj-h:    44px;   /* Height of the top project navigation bar   */
+      --cat-h:     40px;   /* Height of the second category bar          */
+      --font-mono: 'IBM Plex Mono', monospace;
+      --font-sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2b. LAYOUT — APP SHELL
+    ══════════════════════════════════════════════════════════════════════ */
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      /* overflow:hidden prevents outer scrollbars — content scrolls inside the iframe */
+      overflow: hidden;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* Main flex column that fills the viewport */
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── PROJECT BAR (top navigation strip) ────────────────────────────
+       Contains: brand/logo, project tabs, theme switcher.
+       overflow-x:auto allows horizontal scrolling when many projects exist.
+       NOTE: because overflow-x is set, overflow-y is implicitly clipped —
+       that's why the theme dropdown menu must live OUTSIDE this element
+       (it is placed after </nav> in the HTML and positioned via JS).
+    ── */
+    #projbar {
+      display: flex;
+      align-items: stretch;
+      height: var(--proj-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      overflow-x: auto;
+      scrollbar-width: none;        /* Firefox: hide scrollbar */
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #projbar::-webkit-scrollbar { display: none; } /* Chrome/Safari: hide scrollbar */
+
+    /* ── Brand / logo (left side of project bar) ─────────────────────── */
+    /* Clicking this returns to the landing page — see JS goHome() */
+    #brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 18px 0 14px;
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;                  /* indicates it's clickable */
+      user-select: none;
+      transition: opacity 0.15s;
+    }
+    #brand:hover { opacity: 0.75; }
+    #brand svg { width: 16px; height: 16px; }
+
+    /* ── Project tabs container ───────────────────────────────────────── */
+    /* Individual tabs are created dynamically in JS (buildProjectTabs) */
+    #proj-tabs { display: flex; align-items: stretch; flex: 1; }
+
+    .proj-tab {
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted2);
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .proj-tab:hover  { color: var(--text); background: var(--hover-bg); }
+    /* Active tab gets the accent underline */
+    .proj-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+    /* ── Theme switcher button (right side of project bar) ────────────── */
+    #theme-switcher {
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
+      position: relative; /* anchor for the dropdown positioning calculation */
+    }
+
+    #theme-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--muted2);
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    #theme-btn:hover { color: var(--text); border-color: var(--accent); background: var(--accent-dim); }
+    #theme-btn svg   { width: 12px; height: 12px; }
+
+    /* ── Theme dropdown menu ──────────────────────────────────────────── */
+    /* IMPORTANT: This element is placed OUTSIDE #projbar in the HTML so it
+       is not clipped by projbar's overflow:auto. Its position:fixed and
+       coordinates are set dynamically by toggleThemeMenu() in JS.         */
+    #theme-menu {
+      display: none;
+      position: fixed;            /* fixed so it overlays everything */
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      z-index: 1000;              /* high z-index to appear above all other elements */
+      min-width: 150px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    #theme-menu.open { display: block; }
+
+    .theme-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--muted2);
+      transition: background 0.1s, color 0.1s;
+      white-space: nowrap;
+    }
+    .theme-option:hover  { background: var(--hover-bg); color: var(--text); }
+    .theme-option.active { color: var(--accent); font-weight: 600; } /* current theme */
+
+    /* Small colour swatch circle shown next to each theme name */
+    .theme-option .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ── CATEGORY BAR (second strip, below project bar) ────────────────
+       Shows the categories of the currently selected project.
+       The .empty class is added when no project is selected (e.g. on the
+       landing page), making it visually dimmed and non-interactive.
+    ── */
+    #catbar {
+      display: flex;
+      align-items: stretch;
+      height: var(--cat-h);
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      transition: opacity 0.2s, background 0.2s, border-color 0.2s;
+    }
+    #catbar::-webkit-scrollbar { display: none; }
+    #catbar.empty { opacity: 0.35; pointer-events: none; }
+
+    /* Project name label at the left of the category bar */
+    #cat-label {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+      border-right: 1px solid var(--border2);
+      flex-shrink: 0;
+      white-space: nowrap;
+      min-width: 110px;
+    }
+
+    /* Category tabs row */
+    #cat-tabs { display: flex; align-items: stretch; flex: 1; padding: 0 6px; }
+
+    .cat-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 16px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted2);
+      white-space: nowrap;
+      transition: color 0.15s, background 0.15s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px; /* overlap the catbar's bottom border with the active underline */
+    }
+    .cat-tab:hover  { color: var(--text); background: var(--cat-hover-bg); }
+    .cat-tab.active { color: var(--text); font-weight: 600; }
+
+    /* Each category type gets its own accent underline colour */
+    .cat-tab[data-type="report"].active { border-bottom-color: #4ade80; } /* green  */
+    .cat-tab[data-type="bench"].active  { border-bottom-color: #60a5fa; } /* blue   */
+    .cat-tab[data-type="docs"].active   { border-bottom-color: #c084fc; } /* purple */
+    .cat-tab[data-type="repo"].active   { border-bottom-color: #fb923c; } /* orange */
+    .cat-tab[data-type="custom"].active    { border-bottom-color: #f87171; } /* red    */
+    .cat-tab[data-type="coverage"].active  { border-bottom-color: #fbbf24; } /* yellow */
+    .cat-tab[data-type="ci"].active        { border-bottom-color: #38bdf8; } /* sky    */
+
+    /* SVG icon inside each category tab */
+    .cat-icon { width: 13px; height: 13px; flex-shrink: 0; opacity: 0.65; }
+    .cat-tab.active .cat-icon { opacity: 1; }
+    /* Icon colour matches the tab's accent underline */
+    .cat-tab[data-type="report"]   .cat-icon { color: #4ade80; }
+    .cat-tab[data-type="bench"]    .cat-icon { color: #60a5fa; }
+    .cat-tab[data-type="docs"]     .cat-icon { color: #c084fc; }
+    .cat-tab[data-type="repo"]     .cat-icon { color: #fb923c; }
+    .cat-tab[data-type="custom"]   .cat-icon { color: #f87171; }
+    .cat-tab[data-type="coverage"] .cat-icon { color: #fbbf24; }
+    .cat-tab[data-type="ci"]       .cat-icon { color: #38bdf8; }
+
+    /* "open ↗" button at the far right of the category bar */
+    #open-full {
+      margin-left: auto;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      align-self: center;
+      flex-shrink: 0;
+      padding: 4px 11px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--muted2);
+      white-space: nowrap;
+      cursor: pointer;
+      background: transparent;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    #open-full:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+    #open-full svg   { width: 11px; height: 11px; }
+
+    /* ── FRAME AREA ─────────────────────────────────────────────────────
+       flex:1 makes it fill all remaining vertical space below the two nav bars.
+       position:relative is needed so the absolute-positioned #loader overlay works.
+       overflow:hidden clips the iframe — prevents iframe scrollbars bleeding out.
+    ── */
+    #frame-wrap { flex: 1; position: relative; overflow: hidden; }
+
+    /* The iframe that renders embedded content (Allure reports, ASV benchmarks, etc.) */
+    #main-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;  /* white fallback before the page loads */
+      display: none;      /* hidden until a category is selected */
+    }
+
+    /* ── Loading spinner overlay ─────────────────────────────────────── */
+    /* Covers the frame-wrap while the iframe is loading */
+    #loader {
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.3s;
+      pointer-events: none; /* allow clicks through once faded out */
+    }
+    #loader.hidden { opacity: 0; }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--spinner-bg);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2c. LANDING PAGE
+       ─────────────────────────────────────────────────────────────────────
+       Shown at first load (no hash) and when the user clicks "DASHBOARD".
+       Contains a centred hero card with the dashboard title and a live
+       UTC clock, plus a row of project shortcut cards below it.
+    ══════════════════════════════════════════════════════════════════════ */
+
+    #landing {
+      display: flex;               /* shown by default; hidden when a project is loaded */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      height: 100%;
+      background: var(--bg);
+      transition: background 0.2s;
+      padding: 24px;
+    }
+
+    /* ── Hero rectangle ─────────────────────────────────────────────── */
+    /* The main visual centrepiece of the landing page.                  */
+    #hero-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 52px 80px;
+      background: var(--landing-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+      max-width: 680px;
+      width: 100%;
+      /* Subtle inner glow using box-shadow */
+      box-shadow: 0 0 0 1px var(--border),
+                  inset 0 1px 0 rgba(255,255,255,0.04),
+                  0 24px 64px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    /* Decorative top accent bar along the top edge of the hero card */
+    #hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.6;
+    }
+
+    /* Subtle radial glow in the background of the hero card */
+    #hero-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, var(--landing-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Dashboard main title ─────────────────────────────────────────── */
+    /* To change this text, edit LANDING_TITLE in the CONFIG section below */
+    #hero-title {
+      font-family: var(--font-sans);
+      font-size: 28px;           /* large, prominent */
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      line-height: 1.2;
+      position: relative;        /* above the ::after pseudo-element */
+      z-index: 1;
+    }
+
+    /* ── Divider line between title and clock ─────────────────────────── */
+    .hero-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Live UTC clock and date ──────────────────────────────────────── */
+    /* Updated every second by the startClock() function in JS             */
+    #hero-clock {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Large time display */
+    #clock-time {
+      font-family: var(--font-mono);
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    /* UTC label badge beside the time */
+    #clock-time::after {
+      content: ' UTC';
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0.5;
+      letter-spacing: 0.08em;
+    }
+
+    /* Date line below the time */
+    #clock-date {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted2);
+      letter-spacing: 0.06em;
+    }
+
+    /* ── CI panel (Panel 5 — type "ci") ─────────────────────────────── */
+    #ci-panel {
+      display: none;   /* toggled to flex by showCIPanel() */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: var(--bg);
+      overflow-y: auto;
+      padding: 32px 24px;
+      transition: background 0.2s;
+    }
+    #ci-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 32px 36px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    #ci-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+      opacity: 0.6;
+    }
+    #ci-box-header { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
+    #ci-repo-name  { font-size: 16px; font-weight: 600; color: var(--text); }
+    #ci-repo-sub   { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+                     letter-spacing: 0.08em; text-transform: uppercase; }
+    .ci-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      position: relative;
+      z-index: 1;
+    }
+    .ci-dot    { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+    .ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; }
+    .ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); }
+    .ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    #ci-open {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 16px;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; color: var(--muted2); text-decoration: none;
+      background: var(--surface2);
+      transition: border-color 0.15s, color 0.15s;
+      align-self: flex-start; position: relative; z-index: 1;
+    }
+    #ci-open:hover { border-color: var(--accent); color: var(--accent); }
+    #ci-open svg   { width: 13px; height: 13px; flex-shrink: 0; }
+
+    /* ── Project shortcut cards ───────────────────────────────────────── */
+    /* A row of clickable cards, one per project, for quick navigation.    */
+    /* They are generated dynamically by buildLandingCards() in JS.        */
+    #landing-projects {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 760px;
+    }
+
+    /* Subtitle above the shortcut cards */
+    #landing-hint {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+      text-align: center;
+      margin-bottom: -4px; /* tighten gap between hint and cards */
+    }
+
+    .landing-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 14px 20px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      background: var(--surface);
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      min-width: 160px;
+    }
+    .landing-card:hover {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      transform: translateY(-2px);
+    }
+
+    /* Project name on the card */
+    .landing-card-name {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Small list of category names shown under the project name */
+    .landing-card-cats {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2d. LAUNCH PANEL
+       ─────────────────────────────────────────────────────────────────────
+       Shown instead of the iframe when a URL cannot be embedded.
+       GitHub/GitLab set X-Frame-Options: DENY which causes Firefox (and
+       others) to refuse to display the page inside an iframe.
+       The launch panel shows the URL and a button to open it in a new tab.
+    ══════════════════════════════════════════════════════════════════════ */
+
+    #launch-panel {
+      display: none;  /* toggled to flex by showLaunchPanel() */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      height: 100%;
+      background: var(--bg);
+      font-family: var(--font-sans);
+      text-align: center;
+      transition: background 0.2s;
+    }
+
+    /* Icon container square */
+    .launch-icon-wrap {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--panel-btn-bg);
+      border: 1px solid var(--border);
+    }
+    .launch-icon-wrap svg { width: 28px; height: 28px; }
+
+    #launch-title  { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: 0.02em; }
+    #launch-url    { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+                     max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #launch-reason { font-size: 12px; color: var(--muted2); max-width: 380px; line-height: 1.6; }
+
+    /* Primary CTA button */
+    #launch-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 28px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    #launch-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    #launch-btn svg   { width: 14px; height: 14px; }
+
+    .launch-note { font-size: 11px; font-family: var(--font-mono); color: var(--muted); }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2e. COVERAGE PANEL
+       ─────────────────────────────────────────────────────────────────────
+       Shown when a category has type "coverage". Calls the Codecov v2 repo
+       endpoint (not /commits/) to get authoritative merged totals for the
+       default branch, and the GitHub Actions API for the latest CI status.
+       Renders a summary card: percentage circle, line/hit/miss stats, CI row.
+    ══════════════════════════════════════════════════════════════════════ */
+
+    #coverage-panel {
+      display: none;   /* toggled to flex by showCoveragePanel() */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      height: 100%;
+      background: var(--bg);
+      overflow-y: auto;
+      padding: 32px 24px;
+      transition: background 0.2s;
+    }
+
+    /* Main card container */
+    #cov-box {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 36px;
+      max-width: 580px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    /* Decorative yellow accent bar at the top of the card */
+    #cov-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+      border-radius: 12px 12px 0 0;
+      opacity: 0.7;
+    }
+
+    /* Header row: circle + meta text */
+    #cov-header { display: flex; align-items: center; gap: 24px; }
+
+    /* Circular percentage display */
+    #cov-circle {
+      flex-shrink: 0;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.3s;
+    }
+    #cov-pct       { font-family: var(--font-mono); font-size: 22px; font-weight: 600; line-height: 1; }
+    #cov-pct-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+                     color: var(--muted); text-transform: uppercase; margin-top: 3px; }
+
+    /* Repo name, branch, updated timestamp */
+    #cov-meta    { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+    #cov-name    { font-size: 14px; font-weight: 600; color: var(--text); }
+    #cov-branch  { font-family: var(--font-mono); font-size: 11px; color: var(--muted2); }
+    #cov-updated { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+    /* Stats row: lines / hits / misses / partials */
+    #cov-stats { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .cov-stat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 8px;
+      border-right: 1px solid var(--border);
+    }
+    .cov-stat:last-child { border-right: none; }
+    .cov-stat-val { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--text); }
+    .cov-stat-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+                    color: var(--muted); text-transform: uppercase; }
+
+    /* CI status row */
+    #cov-ci {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+    }
+    #cov-ci-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+    #cov-ci-text { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; }
+    #cov-ci-time { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+    /* Inline error message */
+    #cov-error { display: none; font-family: var(--font-mono); font-size: 11px;
+                 color: var(--muted2); line-height: 1.6; }
+
+    /* "Open full report" button */
+    #cov-open {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      text-decoration: none;
+      align-self: flex-start;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    #cov-open:hover { opacity: 0.88; transform: translateY(-1px); }
+    #cov-open svg   { width: 13px; height: 13px; }
+
+    /* Shimmer loading skeleton */
+    .shimmer {
+      background: linear-gradient(90deg, var(--border) 25%, var(--surface2) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       PROJECT BAR (top navigation)
+       ─────────────────────────────────────────────────────────────────
+       Brand | Project tabs … | Theme switcher
+  ════════════════════════════════════════════════════════════════════ -->
+  <nav id="projbar">
+
+    <!-- Brand/logo — clicking returns to the landing page via goHome() -->
+    <div id="brand" onclick="goHome()" title="Return to landing page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </div>
+
+    <!-- Project tabs — populated dynamically by buildProjectTabs() in JS -->
+    <div id="proj-tabs"></div>
+
+    <!-- Theme switcher button -->
+    <div id="theme-switcher">
+      <button id="theme-btn" onclick="toggleThemeMenu()" title="Switch colour theme">
+        <!-- Sun icon -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <!-- Current theme name — updated by setTheme() -->
+        <span id="theme-label">Dark</span>
+        <!-- Chevron down -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             style="width:10px;height:10px;opacity:0.5">
+          <polyline points="6,9 12,15 18,9"/>
+        </svg>
+      </button>
+    </div>
+
+  </nav><!-- end #projbar -->
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       THEME DROPDOWN MENU
+       ─────────────────────────────────────────────────────────────────
+       MUST be outside #projbar. See CSS comment on #theme-menu above.
+       Position is set dynamically by toggleThemeMenu() in JS.
+       To add a new theme: add a .theme-option div here, then add the
+       matching CSS variables block and THEME_LABELS entry in JS.
+  ════════════════════════════════════════════════════════════════════ -->
+  <div id="theme-menu">
+    <div class="theme-option" data-theme="dark"   onclick="setTheme('dark')">
+      <span class="swatch" style="background:#141720; border-color:#252b38"></span>
+      Dark
+    </div>
+    <div class="theme-option" data-theme="light"  onclick="setTheme('light')">
+      <span class="swatch" style="background:#ffffff; border-color:#d8dde8"></span>
+      Light
+    </div>
+    <div class="theme-option" data-theme="slate"  onclick="setTheme('slate')">
+      <span class="swatch" style="background:#252d42; border-color:#323d56"></span>
+      Slate
+    </div>
+    <div class="theme-option" data-theme="system" onclick="setTheme('system')">
+      <!-- Split swatch: half white, half dark — represents OS auto-switch -->
+      <span class="swatch"
+            style="background:linear-gradient(135deg,#fff 50%,#0d0f12 50%); border-color:#999">
+      </span>
+      System
+    </div>
+  </div><!-- end #theme-menu -->
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       CATEGORY BAR (second navigation strip)
+       ─────────────────────────────────────────────────────────────────
+       Repopulated by selectProject() whenever the active project changes.
+       "empty" class dims it while on the landing page or before a project
+       is selected.
+  ════════════════════════════════════════════════════════════════════ -->
+  <div id="catbar" class="empty">
+
+    <!-- Current project name label (left side) -->
+    <div id="cat-label">—</div>
+
+    <!-- Category tabs — populated dynamically by selectProject() -->
+    <div id="cat-tabs"></div>
+
+    <!-- "Open in new tab" button (far right) — always visible, opens the
+         current category URL directly regardless of embed status -->
+    <button id="open-full" onclick="openFull()" title="Open current page in a new browser tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15,3 21,3 21,9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      open ↗
+    </button>
+
+  </div><!-- end #catbar -->
+
+  <!-- ════════════════════════════════════════════════════════════════════
+       MAIN CONTENT AREA
+       ─────────────────────────────────────────────────────────────────
+       Four mutually exclusive panels are inside #frame-wrap.
+       Only one is visible at a time; the others have display:none.
+
+       Panel 1: #landing         — shown on first load and after goHome()
+       Panel 2: #main-frame      — the iframe for embeddable content
+       Panel 3: #launch-panel    — shown for non-embeddable URLs (e.g. GitHub)
+       Panel 4: #coverage-panel  — codecov summary card (type "coverage")
+       Panel 5: #loader          — loading spinner overlay (position:absolute)
+  ════════════════════════════════════════════════════════════════════ -->
+  <div id="frame-wrap">
+
+    <!-- ── PANEL 4: Loading spinner (absolute overlay) ─────────────── -->
+    <!-- Starts with class="hidden" so it is invisible on page load.     -->
+    <!-- loadUrl() removes "hidden" to show it, frame.onload adds it back. -->
+    <div id="loader" class="hidden">
+      <div class="spinner"></div>
+    </div>
+
+    <!-- ── PANEL 1: LANDING PAGE ────────────────────────────────────── -->
+    <div id="landing">
+
+      <!-- Hero rectangle: main title + live UTC clock -->
+      <div id="hero-card">
+
+        <!-- Main dashboard title.
+             To change: edit LANDING_TITLE in the JS CONFIG section. -->
+        <div id="hero-title">Dashboard for VIPER Ecosystem</div>
+
+        <!-- Visual separator -->
+        <div class="hero-divider"></div>
+
+        <!-- Live UTC date and time — updated every second by startClock() -->
+        <div id="hero-clock">
+          <div id="clock-time">00:00:00</div>
+          <div id="clock-date">—</div>
+        </div>
+
+      </div><!-- end #hero-card -->
+
+      <!-- Hint label above the project shortcut cards -->
+      <div>
+        <div id="landing-hint">Select a project to get started</div>
+
+        <!-- Project shortcut cards — populated by buildLandingCards() in JS.
+             Each card shows the project name and its category list. -->
+        <div id="landing-projects" style="margin-top:14px"></div>
+      </div>
+
+    </div><!-- end #landing -->
+
+    <!-- ── PANEL 2: Iframe for embeddable content ───────────────────── -->
+    <!-- src is set dynamically by loadUrl() in JS.
+         The title attribute is required for accessibility.           -->
+    <iframe id="main-frame" title="Project content"></iframe>
+
+    <!-- ── PANEL 3: Launch panel for non-embeddable URLs ───────────── -->
+    <!-- Shown by showLaunchPanel() when a URL blocks iframe embedding. -->
+    <div id="launch-panel">
+      <!-- Icon box — filled dynamically with the category's typed SVG icon -->
+      <div class="launch-icon-wrap" id="launch-icon"></div>
+      <!-- Category label, e.g. "Repo" -->
+      <div id="launch-title">Opening external page</div>
+      <!-- The actual URL displayed in monospace -->
+      <div id="launch-url"></div>
+      <!-- Human-readable explanation of why it can't be embedded -->
+      <div id="launch-reason"></div>
+      <!-- Primary button — href set dynamically -->
+      <a id="launch-btn" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15,3 21,3 21,9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        Open in new tab
+      </a>
+      <div class="launch-note" id="launch-note">Opens in a new tab</div>
+    </div><!-- end #launch-panel -->
+
+    <!-- ── PANEL 4: Coverage panel ──────────────────────────────────── -->
+    <!-- Shown by showCoveragePanel() for categories with type "coverage".
+         Fetches authoritative totals from the Codecov v2 repo endpoint
+         (GET /api/v2/{service}/{owner}/repos/{repo}/) and CI status from
+         the GitHub Actions API. Never embedded in an iframe.            -->
+    <div id="coverage-panel">
+      <div id="cov-box">
+
+        <!-- Header: percentage circle + repo meta -->
+        <div id="cov-header">
+          <div id="cov-circle">
+            <!-- Shimmer placeholder until data loads -->
+            <div id="cov-pct" class="shimmer" style="min-width:52px;min-height:26px">&nbsp;</div>
+            <div id="cov-pct-label">coverage</div>
+          </div>
+          <div id="cov-meta">
+            <div id="cov-name"    class="shimmer" style="min-width:130px;min-height:16px">&nbsp;</div>
+            <div id="cov-branch"  class="shimmer" style="min-width:100px;min-height:12px;margin-top:4px">&nbsp;</div>
+            <div id="cov-updated" class="shimmer" style="min-width:120px;min-height:11px;margin-top:4px">&nbsp;</div>
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div id="cov-stats">
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-lines">&#8212;</div>
+            <div class="cov-stat-lbl">Lines</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-hits" style="color:#4ade80">&#8212;</div>
+            <div class="cov-stat-lbl">Hits</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-misses" style="color:#f87171">&#8212;</div>
+            <div class="cov-stat-lbl">Misses</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-parts" style="color:#fbbf24">&#8212;</div>
+            <div class="cov-stat-lbl">Partials</div>
+          </div>
+        </div>
+
+        <!-- CI status row -->
+        <div id="cov-ci">
+          <div id="cov-ci-dot"></div>
+          <div id="cov-ci-text">Fetching CI status&#8230;</div>
+          <div id="cov-ci-time"></div>
+        </div>
+
+        <!-- Error message (hidden by default) -->
+        <div id="cov-error"></div>
+
+        <!-- Link to full Codecov report -->
+        <a id="cov-open" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15,3 21,3 21,9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          Open full report &#x2197;
+        </a>
+
+      </div>
+    </div><!-- end #coverage-panel -->
+
+    <!-- ── PANEL 5: CI status panel (type "ci") ────────────────────── -->
+    <!-- Shown by showCIPanel() for categories with type "ci".
+         Fetches the latest run for each workflow via the GitHub Actions API.
+         Never uses an iframe — always renders the in-page card.          -->
+    <div id="ci-panel">
+      <div id="ci-box">
+
+        <div id="ci-box-header">
+          <div id="ci-repo-name">&nbsp;</div>
+          <div id="ci-repo-sub">GitHub Actions &mdash; latest run per workflow</div>
+        </div>
+
+        <!-- Workflow rows injected dynamically by showCIPanel() -->
+        <div id="ci-rows"></div>
+
+        <a id="ci-open" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15,3 21,3 21,9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          View all runs &#x2197;
+        </a>
+
+      </div>
+    </div><!-- end #ci-panel -->
+
+  </div><!-- end #frame-wrap -->
+
+</div><!-- end #app -->
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   4a. CONFIGURATION
+   ────────────────────────────────────────────────────────────────────────
+   This is the section you edit to add/remove/rename projects.
+   Everything else in the file is infrastructure — you should not need to
+   touch it for routine maintenance.
+
+   PROJECT OBJECT STRUCTURE
+   ─────────────────────────────────────────────────────────────────────────
+   {
+     id:         String — unique identifier used in the URL hash
+     name:       String — displayed in the project tab and landing card
+     categories: Array  — list of category objects (see below)
+   }
+
+   CATEGORY OBJECT STRUCTURE
+   ─────────────────────────────────────────────────────────────────────────
+   {
+     id:    String — unique within the project, used in the URL hash
+     label: String — displayed in the category tab
+     type:  String — controls icon and accent colour:
+                     "report"   → green   (Allure reports, test results)
+                     "bench"    → blue    (ASV benchmarks, perf plots)
+                     "docs"     → purple  (ReadTheDocs, documentation sites)
+                     "repo"     → orange  (GitHub/GitLab repositories)
+                     "coverage" → yellow  (live Codecov summary card)
+                     "custom"   → red     (anything else)
+     url:   String — the URL to open (or show in the coverage card)
+   }
+
+   EXTRA FIELDS required for type "coverage":
+   ─────────────────────────────────────────────────────────────────────
+     codecov: { service: "github", owner: "org", repo: "name" }
+                — calls the Codecov v2 repo endpoint:
+                  GET /api/v2/{service}/{owner}/repos/{repo}/
+                  Returns: { totals: { coverage, lines, hits, misses, partials },
+                             branch, updatestamp, … }
+                  This gives the authoritative merged totals for the default
+                  branch (same as the Codecov dashboard badge). Do NOT use
+                  the /commits/ sub-endpoint — it returns per-upload partial
+                  totals which can have wrong line counts when coverage is
+                  uploaded in multiple flags or CI steps.
+
+     github:  { owner: "org", repo: "name" }   (optional)
+                — calls the GitHub Actions API:
+                  GET /repos/{owner}/{repo}/actions/runs?per_page=5
+                  Picks the most-recent completed run and shows its status.
+   }
+
+   NOTE on embeddability:
+   Categories with type "repo" or "coverage", or whose URL hostname matches
+   an entry in LAUNCH_PANEL_URLS, bypass the iframe entirely. GitHub, GitLab,
+   Bitbucket, and app.codecov.io all block embedding via X-Frame-Options.
+   ReadTheDocs is generally embeddable but may vary by project settings.
+   ─────────────────────────────────────────────────────────────────────── */
+
+const PROJECTS = [
+ {
+    id: "testviper",
+    name: "testviper",
+    categories: [
+    { id: "ci", label: "CI", type: "ci", url: "https://github.com/casangi/testviper/actions",
+      github: { owner: "casangi", repo: "testviper" },
+      workflows: [
+        { file: "integration_tests_linux.yml",    label: "Integration Tests (Linux)" },
+        { file: "dispatch-receiver.yml",          label: "Dispatch Receiver" },
+        { file: "python-tests-allure-report.yml", label: "Python Tests & Allure Report" },
+      ] },
+      { id: "report", label: "Reports",    type: "report", url: "https://casangi.github.io/testviper/main/testviper/index.html" },
+//      { id: "bench",  label: "Benchmarks", type: "bench",  url: "https://github.com/casangi/testviper/README.md" },
+      { id: "docs",   label: "Docs",       type: "docs",   url: "https://github.com/casangi/testviper/README.md" },
+      { id: "repo",   label: "Repo",       type: "repo",   url: "https://github.com/casangi/testviper" },
+    ]
+  },
+  {
+    id: "xradio",
+    name: "xradio",
+    categories: [
+      { id: "ci", label: "CI", type: "ci", url: "https://github.com/casangi/xradio/actions",
+        github: { owner: "casangi", repo: "xradio" },
+        workflows: [
+          { file: "black.yml",                               label: "Code Format (Black)" },
+          { file: "python-testing-linux.yml",                label: "Tests (Linux)" },
+          { file: "python-testing-macos.yml",                label: "Tests (macOS)" },
+          { file: "python-testing-basic-schema-install.yml", label: "Schema Install" },
+          { file: "python-testing-casatools.yml",            label: "Tests (casatools)" },
+          { file: "python-testing-integration.yml",          label: "Integration Tests" },
+          { file: "run-ipynb.yml",                           label: "Notebooks" },
+        ] },
+      {
+        id:    "report",
+        label: "Reports",
+        type:  "report",
+        url:   "https://casangi.github.io/testviper/main/xradio/index.html"
+      },
+      {
+        id:    "bench",
+        label: "Benchmarks",
+        type:  "bench",
+        url:   "https://casangi.github.io/benchviper/xradio/#/"
+      },
+      {
+        id:      "coverage",
+        label:   "Coverage",
+        type:    "coverage",
+        url:     "https://app.codecov.io/gh/casangi/xradio",
+        codecov: { service: "github", owner: "casangi", repo: "xradio" },
+        github:  { owner: "casangi", repo: "xradio" }
+      },
+      {
+        id:    "docs",
+        label: "Docs",
+        type:  "docs",
+        url:   "https://xradio.readthedocs.io"   // ← replace with real URL if different
+      },
+      {
+        id:    "repo",
+        label: "Repo",
+        type:  "repo",
+        url:   "https://github.com/casangi/xradio"
+      },
+    ]
+  },
+  {
+    id: "astroviper",
+    name: "astroviper",
+    categories: [
+      { id: "ci", label: "CI", type: "ci", url: "https://github.com/casangi/astroviper/actions",
+        github: { owner: "casangi", repo: "astroviper" },
+        workflows: [
+          { file: "black.yml",                      label: "Code Format (Black)" },
+          { file: "python-testing-linux.yml",        label: "Tests (Linux)" },
+          { file: "python-testing-macos.yml",        label: "Tests (macOS)" },
+          { file: "python-testing-integration.yml",  label: "Integration Tests" },
+          { file: "run-ipynb.yml",                   label: "Notebooks" },
+        ] },
+      { id: "report", label: "Reports",    type: "report", url: "https://casangi.github.io/testviper/main/astroviper/index.html" },
+      { id: "bench",  label: "Benchmarks", type: "bench",  url: "https://casangi.github.io/benchviper/" },
+      {
+        id:      "coverage",
+        label:   "Coverage",
+        type:    "coverage",
+        url:     "https://app.codecov.io/gh/casangi/astroviper",
+        codecov: { service: "github", owner: "casangi", repo: "astroviper" },
+        github:  { owner: "casangi", repo: "astroviper" }
+      },
+      { id: "docs",   label: "Docs",       type: "docs",   url: "https://github.com/casangi/astroviper/README.md" },
+      { id: "repo",   label: "Repo",       type: "repo",   url: "https://github.com/casangi/astroviper" },
+    ]
+  },
+  {
+    id: "graphviper ",
+    name: "graphviper",
+    categories: [
+      { id: "ci", label: "CI", type: "ci", url: "https://github.com/casangi/graphviper/actions",
+        github: { owner: "casangi", repo: "graphviper" },
+        workflows: [
+          { file: "black.yml",                      label: "Code Format (Black)" },
+          { file: "python-testing-linux.yml",        label: "Tests (Linux)" },
+          { file: "python-testing-macos.yml",        label: "Tests (macOS)" },
+          { file: "python-testing-integration.yml",  label: "Integration Tests" },
+          { file: "run-ipynb.yml",                   label: "Notebooks" },
+        ] },
+      { id: "report", label: "Reports",    type: "report", url: "https://casangi.github.io/testviper/main/graphviper/index.html" },
+//      { id: "bench",  label: "Benchmarks", type: "bench",  url: "https://github.com/casangi/graphviper/actions/workflows/python-testing-linux.yml?query=branch%3Amain" },
+      { id: "coverage",label: "Coverage",type: "coverage", url: "https://app.codecov.io/gh/casangi/graphviper",
+        codecov: { service: "github", owner: "casangi", repo: "graphviper" },
+        github:  { owner: "casangi", repo: "graphviper" }
+      }, 
+      { id: "docs",   label: "Docs",       type: "docs",   url: "https://graphviper.readthedocs.io/en/latest/" },
+      { id: "repo",   label: "Repo",       type: "repo",   url: "https://github.com/casangi/graphviper" },
+    ]
+  },
+  {
+    id: "toolviper",
+    name: "toolviper",
+    categories: [
+      { id: "ci", label: "CI", type: "ci", url: "https://github.com/casangi/toolviper/actions",
+        github: { owner: "casangi", repo: "toolviper" },
+        workflows: [
+          { file: "black.yml",                      label: "Code Format (Black)" },
+          { file: "python-testing-linux.yml",        label: "Tests (Linux)" },
+          { file: "python-testing-macos.yml",        label: "Tests (macOS)" },
+          { file: "python-testing-integration.yml",  label: "Integration Tests" },
+          { file: "run-ipynb.yml",                   label: "Notebooks" },
+        ] },
+      { id: "report", label: "Reports",    type: "report", url: "https://casangi.github.io/testviper/main/toolviper/index.html" },
+//      { id: "bench",  label: "Benchmarks", type: "bench",  url: "https://github.com/casangi/toolviper/actions/workflows/python-testing-linux.yml?query=branch%3Amain" },
+      { id: "coverage",label: "Coverage",type: "coverage", url: "https://app.codecov.io/gh/casangi/toolviper",
+        codecov: { service: "github", owner: "casangi", repo: "toolviper" },
+        github:  { owner: "casangi", repo: "toolviper" }
+      },
+      { id: "docs",   label: "Docs",       type: "docs",   url: "https://github.com/casangi" },
+      { id: "repo",   label: "Repo",       type: "repo",   url: "https://github.com/casangi/toolviper" },
+    ]
+  },
+
+  // ── ADD NEW PROJECTS BY COPYING THIS TEMPLATE ─────────────────────────
+  // Duplicate the block, change the id/name/urls, and it will appear
+  // automatically in the project bar and on the landing page.
+  // {
+  //   id: "myproject",
+  //   name: "MyProject",
+  //   categories: [
+  //     { id: "report", label: "Reports",    type: "report", url: "https://…/allure-report/" },
+  //     { id: "bench",  label: "Benchmarks", type: "bench",  url: "https://…/benchmarks/#/" },
+  //     { id: "docs",   label: "Docs",       type: "docs",   url: "https://myproject.readthedocs.io" },
+  //     { id: "repo",   label: "Repo",       type: "repo",   url: "https://github.com/org/myproject" },
+  //     // Optional additional category:
+  //     // { id: "extra", label: "Coverage", type: "custom", url: "https://…/coverage/" },
+  //   ]
+  // },
+];
+
+/* ── Landing page text ──────────────────────────────────────────────────
+   To rename the dashboard, change LANDING_TITLE here.
+   LANDING_SUBTITLE is currently unused but reserved for a future tagline. */
+const LANDING_TITLE    = 'Dashboard for <a href="https://github.com/casangi" target="_blank" rel="noopener noreferrer">VIPER</a> Ecosystem';
+// const LANDING_SUBTITLE = "Your optional subtitle here";
+
+/* ── Non-embeddable types ───────────────────────────────────────────────
+   Any category whose `type` is in this list will always show the launch
+   panel instead of an iframe, regardless of the URL.                     */
+const LAUNCH_PANEL_TYPES = ['repo'];
+
+/* ── Non-embeddable URL hostnames ───────────────────────────────────────
+   Any category whose URL hostname matches (or is a subdomain of) an entry
+   in this list will show the launch panel instead of an iframe.
+   Use this for sites that block embedding even when type is not "repo". */
+const LAUNCH_PANEL_URLS = [
+  'github.com',
+  'gitlab.com',
+  'bitbucket.org',
+];
+
+/* ── Default theme ──────────────────────────────────────────────────────
+   Controls which theme is used when the user has no saved preference.
+   Also update the data-theme attribute on the <html> tag at the top of
+   the file to match — that prevents a brief flash before JS runs.
+   Valid values: 'dark' | 'light' | 'slate' | 'system'              */
+const DEFAULT_THEME = 'light';
+const THEME_LABELS = {
+  dark:   'Dark',
+  light:  'Light',
+  slate:  'Slate',
+  system: 'System',
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   4b. ENGINE — Routing, UI, iframe loading, clock
+   (You should not need to edit below this line for routine maintenance)
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── SVG icons for each category type ────────────────────────────────── */
+const ICONS = {
+  /* Pulse/waveform icon for test reports */
+  report: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+           </svg>`,
+  /* Bar chart icon for benchmarks */
+  bench:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <line x1="18" y1="20" x2="18" y2="10"/>
+             <line x1="12" y1="20" x2="12" y2="4"/>
+             <line x1="6" y1="20" x2="6" y2="14"/>
+           </svg>`,
+  /* Document icon for documentation */
+  docs:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+             <polyline points="14,2 14,8 20,8"/>
+             <line x1="16" y1="13" x2="8" y2="13"/>
+             <line x1="16" y1="17" x2="8" y2="17"/>
+           </svg>`,
+  /* Git branch icon for repositories */
+  repo:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61
+                      c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77
+                      5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0
+                      C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77
+                      a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7
+                      A3.37 3.37 0 0 0 9 18.13V22"/>
+           </svg>`,
+  /* Shield-check icon for coverage */
+  coverage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+               <polyline points="9,12 11,14 15,10"/>
+             </svg>`,
+  /* Signal/radio icon for custom types */
+  custom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <circle cx="12" cy="12" r="3"/>
+             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+           </svg>`,
+  /* Gear icon for CI/workflow types */
+  ci: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+         <circle cx="12" cy="12" r="3"/>
+         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                  a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+                  A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
+                  l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                  A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
+                  l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                  a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
+                  l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+                  a1.65 1.65 0 0 0-1.51 1z"/>
+       </svg>`,
+};
+
+/* ── Accent colours per category type ────────────────────────────────── */
+/* Must stay in sync with the CSS .cat-tab[data-type="..."].active rules  */
+const TYPE_COLORS = {
+  report:   '#4ade80',  /* green  */
+  bench:    '#60a5fa',  /* blue   */
+  docs:     '#c084fc',  /* purple */
+  repo:     '#fb923c',  /* orange */
+  coverage: '#fbbf24',  /* yellow   */
+  custom:   '#f87171',  /* red      */
+  ci:       '#38bdf8',  /* sky blue */
+};
+
+/* ── Human-readable explanations for the launch panel ────────────────── */
+const LAUNCH_REASONS = {
+  repo:    'Git hosting services like GitHub and GitLab block embedding for security reasons.',
+  docs:    'This documentation site does not allow embedding in other pages.',
+  default: 'This page cannot be embedded due to security restrictions set by the host.',
+};
+
+/* ── Runtime state ────────────────────────────────────────────────────── */
+let activeProject  = null;  /* the currently selected project object  */
+let activeCategory = null;  /* the currently selected category object */
+let clockInterval  = null;  /* setInterval handle for the UTC clock   */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LANDING PAGE
+══════════════════════════════════════════════════════════════════════════ */
+
+/* Apply the LANDING_TITLE text to the hero card element */
+function applyLandingTitle() {
+  document.getElementById('hero-title').innerHTML = LANDING_TITLE;
+}
+
+/* Build the shortcut cards row on the landing page.
+   One card per project, showing name + comma-separated category labels.
+   Clicking a card selects that project and its first category. */
+function buildLandingCards() {
+  const container = document.getElementById('landing-projects');
+  container.innerHTML = ''; /* clear in case this is called more than once */
+
+  PROJECTS.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'landing-card';
+
+    /* Project name */
+    const nameEl = document.createElement('div');
+    nameEl.className   = 'landing-card-name';
+    nameEl.textContent = p.name;
+
+    /* Category list  e.g. "Reports · Benchmarks · Docs · Repo" */
+    const catsEl = document.createElement('div');
+    catsEl.className   = 'landing-card-cats';
+    catsEl.textContent = p.categories.map(c => c.label).join(' · ');
+
+    card.appendChild(nameEl);
+    card.appendChild(catsEl);
+    card.addEventListener('click', () => selectProject(p.id));
+    container.appendChild(card);
+  });
+}
+
+/* Navigate to the landing page.
+   Clears the URL hash, deactivates all project/category tabs, resets the
+   category bar to its empty/dimmed state, and shows the landing panel. */
+function goHome() {
+  /* Clear URL hash without adding a history entry */
+  history.replaceState(null, '', window.location.pathname);
+
+  /* Reset state */
+  activeProject  = null;
+  activeCategory = null;
+
+  /* Hide the loader in case it was spinning when the user clicked home */
+  document.getElementById('loader').classList.add('hidden');
+
+  /* Deactivate all project tabs */
+  document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
+
+  /* Reset category bar to empty state */
+  document.getElementById('cat-label').textContent = '—';
+  document.getElementById('cat-tabs').innerHTML    = '';
+  document.getElementById('catbar').classList.add('empty');
+
+  showPanel('landing');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UTC CLOCK
+   ─────────────────────────────────────────────────────────────────────────
+   Updates #clock-time and #clock-date every second.
+   Uses UTC methods to show coordinated universal time regardless of the
+   user's local timezone.
+══════════════════════════════════════════════════════════════════════════ */
+
+function startClock() {
+  /* Helper: zero-pad a number to 2 digits */
+  const pad = n => String(n).padStart(2, '0');
+
+  /* Day-of-week and month names for formatting the date line */
+  const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun',
+                  'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function tick() {
+    const now = new Date();
+
+    /* Time string: HH:MM:SS */
+    const timeStr = `${pad(now.getUTCHours())}:${pad(now.getUTCMinutes())}:${pad(now.getUTCSeconds())}`;
+
+    /* Date string: e.g. "Thu, 26 Feb 2026" */
+    const dateStr = `${DAYS[now.getUTCDay()]}, ${pad(now.getUTCDate())} `
+                  + `${MONTHS[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
+
+    document.getElementById('clock-time').textContent = timeStr;
+    document.getElementById('clock-date').textContent = dateStr;
+  }
+
+  tick();                                     /* render immediately */
+  clockInterval = setInterval(tick, 1000);    /* then every second */
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PANEL VISIBILITY
+   ─────────────────────────────────────────────────────────────────────────
+   Only one content panel should be visible at a time. showPanel() hides all
+   panels then shows the requested one.
+
+   Panel IDs: 'landing' | 'frame' | 'launch-panel'
+   (The loader overlay is handled separately since it can appear over any panel)
+══════════════════════════════════════════════════════════════════════════ */
+
+function showPanel(name) {
+  /* Hide everything */
+  document.getElementById('landing').style.display          = 'none';
+  document.getElementById('main-frame').style.display       = 'none';
+  document.getElementById('launch-panel').style.display     = 'none';
+  document.getElementById('coverage-panel').style.display   = 'none';
+  document.getElementById('ci-panel').style.display         = 'none';
+
+  /* Show the requested panel */
+  if (name === 'landing') {
+    document.getElementById('landing').style.display = 'flex';
+  } else if (name === 'frame') {
+    document.getElementById('main-frame').style.display = 'block';
+  } else if (name === 'launch-panel') {
+    document.getElementById('launch-panel').style.display = 'flex';
+  } else if (name === 'coverage-panel') {
+    document.getElementById('coverage-panel').style.display = 'flex';
+  } else if (name === 'ci-panel') {
+    document.getElementById('ci-panel').style.display = 'flex';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THEME SWITCHER
+══════════════════════════════════════════════════════════════════════════ */
+
+/* Apply a theme by name. Persists choice to localStorage. */
+function setTheme(name) {
+  /* Apply theme to the root element — all CSS variables update automatically */
+  document.documentElement.dataset.theme = name;
+
+  /* Persist so the same theme is used on next visit */
+  localStorage.setItem('dashboard-theme', name);
+
+  /* Update the button label */
+  document.getElementById('theme-label').textContent = THEME_LABELS[name] || name;
+
+  /* Mark the active option in the menu */
+  document.querySelectorAll('.theme-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.theme === name);
+  });
+
+  /* Close the dropdown */
+  document.getElementById('theme-menu').classList.remove('open');
+}
+
+/* Toggle the theme dropdown and position it below the button.
+   The menu uses position:fixed with coordinates derived from the button's
+   bounding rect — this avoids clipping by #projbar's overflow:auto.     */
+function toggleThemeMenu() {
+  const menu   = document.getElementById('theme-menu');
+  const btn    = document.getElementById('theme-btn');
+  const rect   = btn.getBoundingClientRect();
+  const isOpen = menu.classList.contains('open');
+
+  menu.classList.toggle('open');
+
+  if (!isOpen) {
+    /* Align bottom of button → top of menu, right-edge-aligned */
+    menu.style.top   = (rect.bottom + 4) + 'px';
+    menu.style.right = (window.innerWidth - rect.right) + 'px';
+    menu.style.left  = 'auto';
+  }
+}
+
+/* Close the theme menu when clicking anywhere outside it */
+document.addEventListener('click', e => {
+  const btn  = document.getElementById('theme-btn');
+  const menu = document.getElementById('theme-menu');
+  if (!btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+
+/* Read saved theme from localStorage (falls back to DEFAULT_THEME) */
+function initTheme() {
+  setTheme(localStorage.getItem('dashboard-theme') || DEFAULT_THEME);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PROJECT & CATEGORY TAB BUILDING
+══════════════════════════════════════════════════════════════════════════ */
+
+/* Create one .proj-tab element per project and append them to #proj-tabs. */
+function buildProjectTabs() {
+  const projTabs = document.getElementById('proj-tabs');
+  projTabs.innerHTML = ''; /* clear on rebuild */
+
+  PROJECTS.forEach(p => {
+    const t = document.createElement('div');
+    t.className      = 'proj-tab';
+    t.dataset.id     = p.id;
+    t.textContent    = p.name;
+    t.title          = `Open ${p.name} project`;
+    t.addEventListener('click', () => selectProject(p.id));
+    projTabs.appendChild(t);
+  });
+}
+
+/* ── selectProject ───────────────────────────────────────────────────────
+   Called when a project tab or landing card is clicked.
+   - Marks the clicked project tab as active
+   - Rebuilds the category bar for the new project
+   - Selects the first category (or a specific one if catId is provided)
+   ─────────────────────────────────────────────────────────────────────── */
+function selectProject(projId, catId) {
+  const p = PROJECTS.find(x => x.id === projId);
+  if (!p) return;
+  activeProject = p;
+
+  /* Activate the matching project tab */
+  document.querySelectorAll('.proj-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.id === projId);
+  });
+
+  /* Rebuild category bar */
+  const catTabs  = document.getElementById('cat-tabs');
+  const catLabel = document.getElementById('cat-label');
+  catTabs.innerHTML    = '';
+  catLabel.textContent = p.name;
+  document.getElementById('catbar').classList.remove('empty');
+
+  p.categories.forEach(cat => {
+    /* Inject class="cat-icon" into the icon SVG string */
+    const iconHtml = (ICONS[cat.type] || ICONS.custom)
+                       .replace('<svg ', '<svg class="cat-icon" ');
+
+    const t = document.createElement('div');
+    t.className    = 'cat-tab';
+    t.dataset.id   = cat.id;
+    t.dataset.type = cat.type;
+    t.title        = cat.label;
+    t.innerHTML    = iconHtml + cat.label;
+    t.addEventListener('click', () => selectCategory(projId, cat.id));
+    catTabs.appendChild(t);
+  });
+
+  /* Select the specified category, or default to the first one */
+  const defaultCat = catId || p.categories[0]?.id;
+  if (defaultCat) selectCategory(projId, defaultCat);
+}
+
+/* ── selectCategory ──────────────────────────────────────────────────────
+   Called when a category tab is clicked, or by selectProject().
+   - Marks the clicked category tab as active
+   - Updates the URL hash for bookmarking
+   - Decides whether to show the iframe or the launch panel
+   ─────────────────────────────────────────────────────────────────────── */
+function selectCategory(projId, catId) {
+  const p   = PROJECTS.find(x => x.id === projId);
+  const cat = p?.categories.find(c => c.id === catId);
+  if (!p || !cat) return;
+  activeCategory = cat;
+
+  /* Highlight the active category tab */
+  document.querySelectorAll('.cat-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.id === catId);
+  });
+
+  /* Update the URL hash so the view is bookmarkable.
+     Format: #projectId/categoryId  e.g. #xradio/report           */
+  history.replaceState(null, '', `#${projId}/${catId}`);
+
+  /* Route to the appropriate panel */
+  if (cat.type === 'ci') {
+    showCIPanel(cat);
+  } else if (cat.type === 'coverage') {
+    showCoveragePanel(cat);
+  } else if (shouldUseLaunchPanel(cat)) {
+    showLaunchPanel(cat);
+  } else {
+    loadUrl(cat.url);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EMBEDDABILITY CHECK
+   ─────────────────────────────────────────────────────────────────────────
+   Returns true if this category should show the launch panel instead of
+   loading in an iframe.
+   Two rules are checked:
+     1. The category's `type` is in LAUNCH_PANEL_TYPES (e.g. "repo")
+     2. The URL's hostname matches an entry in LAUNCH_PANEL_URLS
+══════════════════════════════════════════════════════════════════════════ */
+function shouldUseLaunchPanel(cat) {
+  /* Rule 1: type-based block */
+  if (LAUNCH_PANEL_TYPES.includes(cat.type)) return true;
+
+  /* Rule 2: hostname-based block */
+  try {
+    const host = new URL(cat.url).hostname;
+    return LAUNCH_PANEL_URLS.some(h => host === h || host.endsWith('.' + h));
+  } catch (e) {
+    return false; /* malformed URL — try to embed anyway */
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LAUNCH PANEL
+   ─────────────────────────────────────────────────────────────────────────
+   Populates the launch panel with the category's details and shows it.
+   Called when shouldUseLaunchPanel() returns true.
+══════════════════════════════════════════════════════════════════════════ */
+function showLaunchPanel(cat) {
+  document.getElementById('loader').classList.add('hidden');
+  showPanel('launch-panel');
+
+  const color  = TYPE_COLORS[cat.type] || TYPE_COLORS.custom;
+  const icon   = (ICONS[cat.type] || ICONS.custom);
+  const reason = LAUNCH_REASONS[cat.type] || LAUNCH_REASONS.default;
+
+  /* Inject the icon with explicit size and colour attributes */
+  document.getElementById('launch-icon').innerHTML =
+    icon.replace('<svg ', `<svg width="28" height="28" stroke="${color}" `);
+
+  document.getElementById('launch-title').textContent  = cat.label;
+  document.getElementById('launch-url').textContent    = cat.url;
+  document.getElementById('launch-reason').textContent = reason;
+  document.getElementById('launch-btn').href           = cat.url;
+  document.getElementById('launch-note').textContent   = 'Opens in a new tab';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   COVERAGE PANEL  —  showCoveragePanel(cat)
+   ─────────────────────────────────────────────────────────────────────────
+   Renders a live summary card for categories with type "coverage".
+   Never uses an iframe — always shows the in-page card.
+
+   Codecov API  (repo endpoint — NOT the commits sub-endpoint):
+     GET https://api.codecov.io/api/v2/{service}/{owner}/repos/{repo}/
+     Reads:  data.totals.{ coverage, lines, hits, misses, partials }
+             data.branch        — default branch name
+             data.updatestamp   — ISO timestamp of last coverage upload
+     NOTE: The /commits/ sub-endpoint was deliberately avoided. It returns
+           per-upload partial totals, which give wrong line counts when a
+           repo uploads coverage in multiple flags or CI steps. The repo
+           endpoint returns the merged, authoritative totals (same as the
+           Codecov dashboard badge).
+
+   GitHub Actions API  (optional — for the CI status row):
+     GET https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=5
+     Picks the most-recent completed run; shows its name and conclusion.
+
+   Required fields on the category object:
+     codecov: { service, owner, repo }   — drives the Codecov fetch
+     github:  { owner, repo }            — optional, drives CI status
+══════════════════════════════════════════════════════════════════════════ */
+function showCoveragePanel(cat) {
+  document.getElementById('loader').classList.add('hidden');
+  showPanel('coverage-panel');
+
+  /* Reset all shimmer placeholders */
+  const pctEl = document.getElementById('cov-pct');
+  pctEl.innerHTML = '&nbsp;';
+  pctEl.style.color = '';
+  pctEl.style.minWidth  = '52px';
+  pctEl.style.minHeight = '26px';
+  pctEl.classList.add('shimmer');
+  document.getElementById('cov-circle').style.borderColor = '';
+
+  ['cov-name', 'cov-branch', 'cov-updated'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '&nbsp;';
+    el.classList.add('shimmer');
+  });
+  ['cov-lines', 'cov-hits', 'cov-misses', 'cov-parts'].forEach(id => {
+    document.getElementById(id).textContent = '\u2014';
+  });
+
+  document.getElementById('cov-ci-dot').style.background = 'var(--border)';
+  document.getElementById('cov-ci-text').textContent     = 'Fetching CI status\u2026';
+  document.getElementById('cov-ci-time').textContent     = '';
+  document.getElementById('cov-ci').style.display        = '';
+  document.getElementById('cov-error').style.display     = 'none';
+  document.getElementById('cov-open').href               = cat.url;
+
+  /* ── Codecov API ────────────────────────────────────────────────────── */
+  if (cat.codecov) {
+    const cc = cat.codecov;
+    // Repo endpoint — authoritative merged totals for the default branch.
+    // See the COVERAGE PANEL block comment above for why /commits/ is not used.
+    const apiUrl = `https://api.codecov.io/api/v2/${cc.service}/${cc.owner}/repos/${cc.repo}/`;
+
+    fetch(apiUrl)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        const totals = data.totals;
+
+        if (totals) {
+          const pct   = parseFloat(totals.coverage);
+          const color = pct >= 80 ? '#4ade80' : pct >= 60 ? '#fbbf24' : '#f87171';
+          pctEl.textContent     = isNaN(pct) ? '\u2014' : pct.toFixed(1) + '%';
+          pctEl.style.color     = color;
+          pctEl.style.minWidth  = '';
+          pctEl.style.minHeight = '';
+          pctEl.classList.remove('shimmer');
+          document.getElementById('cov-circle').style.borderColor = color;
+
+          document.getElementById('cov-lines').textContent  = totals.lines    != null ? totals.lines    : '\u2014';
+          document.getElementById('cov-hits').textContent   = totals.hits     != null ? totals.hits     : '\u2014';
+          document.getElementById('cov-misses').textContent = totals.misses   != null ? totals.misses   : '\u2014';
+          document.getElementById('cov-parts').textContent  = totals.partials != null ? totals.partials : '\u2014';
+        }
+
+        clearShimmer('cov-name',    cc.owner + ' / ' + cc.repo);
+        clearShimmer('cov-branch',  'branch: ' + (data.branch || 'main'));
+        clearShimmer('cov-updated', data.updatestamp
+          ? 'Updated ' + relTime(new Date(data.updatestamp)) : '');
+      })
+      .catch(err => {
+        pctEl.textContent     = '\u2014';
+        pctEl.style.minWidth  = '';
+        pctEl.style.minHeight = '';
+        pctEl.classList.remove('shimmer');
+        clearShimmer('cov-name',    cc.owner + ' / ' + cc.repo);
+        clearShimmer('cov-branch',  '');
+        clearShimmer('cov-updated', '');
+        const errEl = document.getElementById('cov-error');
+        errEl.style.display = 'block';
+        errEl.textContent   = 'Could not load Codecov data (' + err.message + '). Use the button below to view directly.';
+      });
+  }
+
+  /* ── GitHub Actions API (CI status) ─────────────────────────────────── */
+  if (cat.github) {
+    const gh = cat.github;
+    fetch(`https://api.github.com/repos/${gh.owner}/${gh.repo}/actions/runs?per_page=5`,
+          { headers: { 'Accept': 'application/vnd.github+json' } })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        const runs = data.workflow_runs || [];
+        const run  = runs.find(r => r.status === 'completed') || runs[0];
+        if (run) {
+          const map = {
+            success:    ['#4ade80', 'passing'],
+            failure:    ['#f87171', 'failing'],
+            cancelled:  ['#fbbf24', 'cancelled'],
+            timed_out:  ['#f87171', 'timed out'],
+          };
+          const [color, label] = map[run.conclusion] || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
+          document.getElementById('cov-ci-dot').style.background = color;
+          document.getElementById('cov-ci-text').textContent = 'CI: ' + (run.name || 'Workflow') + ' \u2014 ' + label;
+          document.getElementById('cov-ci-time').textContent = relTime(new Date(run.updated_at));
+        } else {
+          document.getElementById('cov-ci-text').textContent = 'No CI runs found';
+        }
+      })
+      .catch(() => {
+        document.getElementById('cov-ci-dot').style.background = 'var(--border)';
+        document.getElementById('cov-ci-text').textContent = 'CI status unavailable';
+      });
+  } else {
+    document.getElementById('cov-ci').style.display = 'none';
+  }
+}
+
+/* Remove shimmer from an element and set its text content */
+function clearShimmer(id, text) {
+  const el = document.getElementById(id);
+  el.classList.remove('shimmer');
+  el.style.minWidth  = '';
+  el.style.minHeight = '';
+  el.textContent = text;
+}
+
+/* Human-readable relative time: "5m ago", "2h ago", "3d ago" */
+function relTime(date) {
+  const s = Math.floor((Date.now() - date) / 1000);
+  if (s < 60)    return s + 's ago';
+  if (s < 3600)  return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   IFRAME LOADER
+   ─────────────────────────────────────────────────────────────────────────
+   Sets the iframe src and shows the loading spinner while it loads.
+   After load, a brief check detects if the frame is empty (a sign of a
+   silent block) and falls back to the launch panel.
+══════════════════════════════════════════════════════════════════════════ */
+function loadUrl(url) {
+  const frame  = document.getElementById('main-frame');
+  const loader = document.getElementById('loader');
+
+  showPanel(null);               /* hide all content panels */
+  loader.classList.remove('hidden'); /* show spinner */
+
+  frame.onload = () => {
+    loader.classList.add('hidden');
+    showPanel('frame');
+
+    /* Silent block detection: some browsers render a blank document instead
+       of showing an error when X-Frame-Options blocks the content.
+       If the body is empty 600ms after load, fall back to the launch panel. */
+    setTimeout(() => {
+      try {
+        const doc = frame.contentDocument;
+        if (doc && doc.body && doc.body.innerHTML.trim() === '') {
+          showLaunchPanel(activeCategory);
+        }
+      } catch (e) {
+        /* A cross-origin security error is the EXPECTED case for successfully
+           loaded cross-origin pages — it means the iframe loaded fine.       */
+      }
+    }, 600);
+  };
+
+  frame.src = url;
+}
+
+/* ── openFull ────────────────────────────────────────────────────────────
+   Opens the currently active category URL directly in a new browser tab.
+   Useful for getting a shareable link or for pages that don't embed. */
+function openFull() {
+  if (activeCategory) window.open(activeCategory.url, '_blank');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   URL HASH ROUTING
+   ─────────────────────────────────────────────────────────────────────────
+   On page load, reads the URL hash to restore the last-viewed state.
+   Formats:
+     (empty)            → show landing page
+     #projectId         → select project, show its first category
+     #projectId/catId   → select project and specific category
+══════════════════════════════════════════════════════════════════════════ */
+function loadFromHash() {
+  const hash = location.hash.slice(1); /* remove leading '#' */
+
+  if (!hash) {
+    /* No hash → show landing page */
+    showPanel('landing');
+    return;
+  }
+
+  const [projId, catId] = hash.split('/');
+
+  if (projId) {
+    selectProject(projId, catId || undefined);
+  } else {
+    showPanel('landing');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INITIALISATION
+   ─────────────────────────────────────────────────────────────────────────
+   Called once when the page loads. Order matters:
+   1. Apply saved theme immediately (avoids flash of wrong theme)
+   2. Set the landing page title text
+   3. Build the project tabs in the navbar
+   4. Build the shortcut cards on the landing page
+   5. Start the UTC clock
+   6. Restore state from URL hash (may replace the landing page view)
+══════════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════════
+   CI PANEL  —  showCIPanel(cat)
+   ─────────────────────────────────────────────────────────────────────────
+   Renders a live CI status card for any category with type "ci".
+   One fetch per workflow file — uses the specific per-file endpoint which
+   works without auth for public repos. The general /actions/runs and
+   /actions/workflows list endpoints both return 403 without a token.
+
+     GET /repos/{owner}/{repo}/actions/workflows/{file}/runs?per_page=1
+
+   Workflow files are listed explicitly in each CI category's `workflows` array
+   in the PROJECTS config. This is the same approach that worked originally for
+   testviper before the dynamic-discovery attempt introduced the 403 errors.
+
+   Required fields on the category object:
+     github: { owner, repo }   — drives all fetches
+══════════════════════════════════════════════════════════════════════════ */
+function showCIPanel(cat) {
+  document.getElementById('loader').classList.add('hidden');
+  showPanel('ci-panel');
+
+  if (!cat.github) return;
+  const { owner, repo } = cat.github;
+
+  const nameEl  = document.getElementById('ci-repo-name');
+  const rowsEl  = document.getElementById('ci-rows');
+  const openEl  = document.getElementById('ci-open');
+
+  nameEl.textContent = owner + ' / ' + repo;
+  openEl.href        = `https://github.com/${owner}/${repo}/actions`;
+
+  /* Show a single shimmer row while the fetch is in flight */
+  rowsEl.innerHTML =
+    `<div class="ci-row">
+       <div class="ci-dot"></div>
+       <div class="ci-label shimmer" style="min-width:220px;min-height:13px">&nbsp;</div>
+       <div class="ci-status shimmer" style="min-width:60px;min-height:13px">&nbsp;</div>
+     </div>`;
+
+  const workflows = cat.workflows || [];
+  if (workflows.length === 0) {
+    rowsEl.innerHTML =
+      '<div class="ci-row"><div class="ci-label">No workflows configured</div></div>';
+    return;
+  }
+
+  const conclusionMap = {
+    success:   ['#4ade80', 'passing'],
+    failure:   ['#f87171', 'failing'],
+    cancelled: ['#fbbf24', 'cancelled'],
+    timed_out: ['#f87171', 'timed out'],
+    skipped:   ['#7a8ba8',  'skipped'],
+  };
+
+  /* One request per workflow — the specific per-file endpoint works without
+     auth for public repos, unlike the general /actions/runs or /actions/workflows
+     list endpoints which require a token.                                    */
+  rowsEl.innerHTML = '';
+  workflows.forEach(wf => {
+    const row = document.createElement('div');
+    row.className = 'ci-row';
+    row.innerHTML =
+      `<div class="ci-dot"></div>
+       <div class="ci-label">${wf.label}</div>
+       <div class="ci-status">Fetching&#8230;</div>
+       <div class="ci-time"></div>`;
+    rowsEl.appendChild(row);
+
+    const dot    = row.querySelector('.ci-dot');
+    const status = row.querySelector('.ci-status');
+    const time   = row.querySelector('.ci-time');
+
+    fetch(
+      `https://api.github.com/repos/${owner}/${repo}/actions/workflows/${wf.file}/runs?per_page=1`,
+      { headers: { 'Accept': 'application/vnd.github+json' } }
+    )
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        const run = (data.workflow_runs || [])[0];
+        if (run) {
+          const [color, label] = conclusionMap[run.conclusion]
+            || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
+          dot.style.background = color;
+          status.textContent   = label;
+          status.style.color   = color;
+          time.textContent     = relTime(new Date(run.updated_at));
+        } else {
+          status.textContent = 'no runs found';
+        }
+      })
+      .catch(err => {
+        dot.style.background = 'var(--border)';
+        status.textContent   = 'unavailable (' + err.message + ')';
+      });
+  });
+}
+
+(function init() {
+  initTheme();          /* 1 */
+  applyLandingTitle();  /* 2 */
+  buildProjectTabs();   /* 3 */
+  buildLandingCards();  /* 4 */
+  startClock();         /* 5 */
+  loadFromHash();       /* 6 */
+})();
+
+</script>
+</body>
+</html>
