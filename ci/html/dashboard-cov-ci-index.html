@@ -35,9 +35,10 @@
 ║                                                                              ║
 ║  EMBEDDABILITY                                                                ║
 ║  ─────────────────────────────────────────────────────────────────────────   ║
-║  Categories with type "repo", or whose URL hostname matches LAUNCH_PANEL_   ║
-║  URLS, skip the iframe and show a launch panel instead. GitHub and GitLab   ║
-║  block embedding with X-Frame-Options: DENY.                                 ║
+║  Categories with type "repo" open their repository URL directly in a new    ║
+║  browser tab without changing the centre panel. Categories whose URL host-  ║
+║  name matches LAUNCH_PANEL_URLS skip the iframe and show a launch panel     ║
+║  instead. GitHub and GitLab block embedding with X-Frame-Options: DENY.     ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 -->
 <html lang="en" data-theme="dark">
@@ -414,6 +415,22 @@
     .cat-tab[data-type="custom"]   .cat-icon { color: #f87171; }
     .cat-tab[data-type="coverage"] .cat-icon { color: #fbbf24; }
     .cat-tab[data-type="ci"]       .cat-icon { color: #38bdf8; }
+
+    /* Repo category link inside the tab: clickable "Repo" text + external icon */
+    .cat-repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: inherit;
+      text-decoration: none;
+    }
+    .cat-repo-link:hover {
+      text-decoration: underline;
+    }
+    .cat-repo-external {
+      font-size: 11px;
+      opacity: 0.8;
+    }
 
     /* "open ↗" button at the far right of the category bar */
     #open-full {
@@ -1041,14 +1058,16 @@
   <!-- ════════════════════════════════════════════════════════════════════
        MAIN CONTENT AREA
        ─────────────────────────────────────────────────────────────────
-       Four mutually exclusive panels are inside #frame-wrap.
-       Only one is visible at a time; the others have display:none.
+       Five mutually exclusive content panels are inside #frame-wrap plus
+       a loading overlay. Only one content panel is visible at a time;
+       the others have display:none.
 
        Panel 1: #landing         — shown on first load and after goHome()
        Panel 2: #main-frame      — the iframe for embeddable content
        Panel 3: #launch-panel    — shown for non-embeddable URLs (e.g. GitHub)
-       Panel 4: #coverage-panel  — codecov summary card (type "coverage")
-       Panel 5: #loader          — loading spinner overlay (position:absolute)
+       Panel 4: #coverage-panel  — Codecov summary card (type "coverage")
+       Panel 5: #ci-panel        — GitHub Actions summary card (type "ci")
+       Overlay: #loader          — loading spinner overlay (position:absolute)
   ════════════════════════════════════════════════════════════════════ -->
   <div id="frame-wrap">
 
@@ -1265,11 +1284,14 @@
                   Picks the most-recent completed run and shows its status.
    }
 
-   NOTE on embeddability:
-   Categories with type "repo" or "coverage", or whose URL hostname matches
-   an entry in LAUNCH_PANEL_URLS, bypass the iframe entirely. GitHub, GitLab,
-   Bitbucket, and app.codecov.io all block embedding via X-Frame-Options.
-   ReadTheDocs is generally embeddable but may vary by project settings.
+  NOTE on embeddability:
+  Categories with type "repo" or "coverage", or whose URL hostname matches
+  an entry in LAUNCH_PANEL_URLS, bypass the iframe entirely. "repo" tabs
+  open the repository URL directly in a new browser tab and leave the
+  centre panel unchanged. "coverage" tabs render the in-page coverage panel.
+  Other non-embeddable URLs (for example some docs hosted on GitHub) use
+  the launch panel. ReadTheDocs is generally embeddable but may vary by
+  project settings.
    ─────────────────────────────────────────────────────────────────────── */
 
 const PROJECTS = [
@@ -1438,8 +1460,10 @@ const LANDING_TITLE    = 'Dashboard for <a href="https://github.com/casangi" tar
 
 /* ── Non-embeddable types ───────────────────────────────────────────────
    Any category whose `type` is in this list will always show the launch
-   panel instead of an iframe, regardless of the URL.                     */
-const LAUNCH_PANEL_TYPES = ['repo'];
+   panel instead of an iframe, regardless of the URL. Currently the list
+   is empty; "repo" categories open directly in a new tab, and "coverage"
+   categories render the dedicated coverage panel.                        */
+const LAUNCH_PANEL_TYPES = [];
 
 /* ── Non-embeddable URL hostnames ───────────────────────────────────────
    Any category whose URL hostname matches (or is a subdomain of) an entry
@@ -1534,7 +1558,9 @@ const TYPE_COLORS = {
   ci:       '#38bdf8',  /* sky blue */
 };
 
-/* ── Human-readable explanations for the launch panel ────────────────── */
+/* ── Human-readable explanations for the launch panel ──────────────────
+   Used for categories that fall back to the launch panel (for example
+   docs hosted on GitHub). "repo" categories open directly in a new tab. */
 const LAUNCH_REASONS = {
   repo:    'Git hosting services like GitHub and GitLab block embedding for security reasons.',
   docs:    'This documentation site does not allow embedding in other pages.',
@@ -1784,9 +1810,28 @@ function selectProject(projId, catId) {
     t.className    = 'cat-tab';
     t.dataset.id   = cat.id;
     t.dataset.type = cat.type;
-    t.title        = cat.label;
-    t.innerHTML    = iconHtml + cat.label;
-    t.addEventListener('click', () => selectCategory(projId, cat.id));
+
+    let labelHtml;
+    if (cat.type === 'repo') {
+      /* "Repo" category: clickable label that opens in a new tab, with an inline external icon */
+      labelHtml =
+        `<a href="${cat.url}" target="_blank" rel="noopener noreferrer" ` +
+        `class="cat-repo-link" title="Open in a new tab">` +
+        `${cat.label}<span class="cat-repo-external" aria-hidden="true">&#x2197;</span></a>`;
+      t.title = 'Open repository in a new tab';
+    } else {
+      labelHtml = cat.label;
+      t.title   = cat.label;
+    }
+
+    t.innerHTML = iconHtml + labelHtml;
+    t.addEventListener('click', (event) => {
+      if (cat.type === 'repo') {
+        /* Prevent the inner <a> default navigation; routing logic below will open the tab. */
+        event.preventDefault();
+      }
+      selectCategory(projId, cat.id);
+    });
     catTabs.appendChild(t);
   });
 
@@ -1816,11 +1861,21 @@ function selectCategory(projId, catId) {
      Format: #projectId/categoryId  e.g. #xradio/report           */
   history.replaceState(null, '', `#${projId}/${catId}`);
 
-  /* Route to the appropriate panel */
+  /* Route to the appropriate panel or behaviour */
   if (cat.type === 'ci') {
     showCIPanel(cat);
   } else if (cat.type === 'coverage') {
     showCoveragePanel(cat);
+  } else if (cat.type === 'repo') {
+    /* Repo tabs open the repository URL directly in a new browser tab and
+       leave the existing centre panel content unchanged. */
+    if (cat.url) {
+      const win = window.open(cat.url, '_blank');
+      if (win) {
+        /* Ensure no access back to this window in supporting browsers. */
+        win.opener = null;
+      }
+    }
   } else if (shouldUseLaunchPanel(cat)) {
     showLaunchPanel(cat);
   } else {
@@ -1895,6 +1950,10 @@ function showLaunchPanel(cat) {
    GitHub Actions API  (optional — for the CI status row):
      GET https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=5
      Picks the most-recent completed run; shows its name and conclusion.
+     NOTE: This call is made directly from the browser without authentication
+           and is therefore subject to GitHub’s unauthenticated rate limit
+           (currently 60 requests/hour per IP). Hitting that limit will cause
+           HTTP 403 responses even though the runs are visible in the GitHub UI.
 
    Required fields on the category object:
      codecov: { service, owner, repo }   — drives the Codecov fetch
@@ -2116,6 +2175,11 @@ function loadFromHash() {
    One fetch per workflow file — uses the specific per-file endpoint which
    works without auth for public repos. The general /actions/runs and
    /actions/workflows list endpoints both return 403 without a token.
+
+   IMPORTANT: All of these requests are also subject to GitHub’s
+   unauthenticated rate limit (currently 60 requests/hour per IP). If that
+   limit is exceeded, the Responses will be HTTP 403 (rate limit exceeded)
+   even though the workflows are accessible in the GitHub UI.
 
      GET /repos/{owner}/{repo}/actions/workflows/{file}/runs?per_page=1
 
