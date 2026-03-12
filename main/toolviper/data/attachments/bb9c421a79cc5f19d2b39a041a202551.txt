@@ -1,0 +1,66 @@
+2026-03-12 03:11:29,418 - distributed.worker - ERROR - Failed to communicate with scheduler during heartbeat.
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/core.py", line 1485, in connect
+    return await self._connect(addr=addr, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/core.py", line 1429, in _connect
+    comm = await connect(
+           ^^^^^^^^^^^^^^
+    ...<4 lines>...
+    )
+    ^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/comm/core.py", line 342, in connect
+    comm = await wait_for(
+           ^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/utils.py", line 1928, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/comm/tcp.py", line 547, in connect
+    stream = await self.client.connect(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+        ip, port, max_buffer_size=MAX_BUFFER_SIZE, **kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/tornado/tcpclient.py", line 279, in connect
+    af, addr, stream = await connector.start(connect_timeout=timeout)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+asyncio.exceptions.CancelledError
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/core.py", line 1476, in connect
+    async with asyncio.timeout(math.inf) as scope:
+               ~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/asyncio/timeouts.py", line 116, in __aexit__
+    raise TimeoutError from exc_val
+TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/worker.py", line 1273, in heartbeat
+    response = await retry_operation(
+               ^^^^^^^^^^^^^^^^^^^^^^
+    ...<14 lines>...
+    )
+    ^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/utils_comm.py", line 416, in retry_operation
+    return await retry(
+           ^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/utils_comm.py", line 395, in retry
+    return await coro()
+           ^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/core.py", line 1256, in send_recv_from_rpc
+    comm = await self.pool.connect(self.addr)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.13.12/x64/lib/python3.13/site-packages/distributed/core.py", line 1497, in connect
+    raise CommClosedError(reason)
+distributed.comm.core.CommClosedError: ConnectionPool closing.
