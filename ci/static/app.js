@@ -181,7 +181,7 @@ function resizeBranchSelect(sel) {
     'font-family:monospace;font-size:11px;padding:0 22px 0 8px;';
   tmp.textContent = sel.options[sel.selectedIndex]?.text || 'main';
   document.body.appendChild(tmp);
-  sel.style.width = tmp.offsetWidth + 'px';
+  sel.style.width = (tmp.offsetWidth + 2) + 'px';
   document.body.removeChild(tmp);
 }
 
