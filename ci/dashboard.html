@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIPER Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ══════════════════════════════════════════════════════════════════════
+       RESET
+       Zero out browser default spacing and make box-sizing consistent.
+    ══════════════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2a. THEMES
+       ─────────────────────────────────────────────────────────────────────
+       All colours are defined as CSS custom properties on [data-theme="..."]
+       selectors. The JS theme-switcher simply sets data-theme on <html>.
+       To add a new theme: add a new [data-theme="yourtheme"] block here,
+       then add an entry in the #theme-menu HTML and the THEME_LABELS object.
+
+       Variable reference:
+         --bg           Page/content background
+         --surface      Navbar and card backgrounds (slightly lighter than bg)
+         --surface2     Category bar background (slightly darker than surface)
+         --border       Primary border colour (nav separators, card edges)
+         --border2      Secondary border colour (category bar, subtler elements)
+         --accent       Highlight colour (active tabs, buttons, spinner)
+         --accent-dim   Translucent accent for hover backgrounds
+         --text         Primary readable text
+         --muted        De-emphasised text (labels, hints)
+         --muted2       Slightly more visible muted text (inactive tabs)
+         --hover-bg     Background on tab/row hover
+         --cat-hover-bg Background on category tab hover
+         --spinner-bg   The non-spinning part of the loading spinner ring
+         --panel-btn-bg Background of the launch panel icon container
+         --landing-card Card background on the landing page
+    ══════════════════════════════════════════════════════════════════════ */
+
+    /* ── DARK theme (default) ─────────────────────────────────────────── */
+    [data-theme="dark"] {
+      --bg:            #0d0f12;
+      --surface:       #141720;
+      --surface2:      #0f1219;
+      --border:        #252b38;
+      --border2:       #1c2230;
+      --accent:        #00d4aa;
+      --accent-dim:    #00d4aa22;
+      --text:          #e2e8f0;
+      --muted:         #52607a;
+      --muted2:        #7a8ba8;
+      --hover-bg:      rgba(255,255,255,0.025);
+      --cat-hover-bg:  rgba(255,255,255,0.03);
+      --spinner-bg:    #252b38;
+      --panel-btn-bg:  #1e2533;
+      --landing-card:  #141e2e;
+      --landing-glow:  rgba(0,212,170,0.08);
+    }
+
+    /* ── LIGHT theme ──────────────────────────────────────────────────── */
+    [data-theme="light"] {
+      --bg:            #f4f6f9;
+      --surface:       #ffffff;
+      --surface2:      #f0f2f6;
+      --border:        #d8dde8;
+      --border2:       #e4e8f0;
+      --accent:        #0066cc;
+      --accent-dim:    #0066cc18;
+      --text:          #1a202c;
+      --muted:         #8896aa;
+      --muted2:        #5a6a80;
+      --hover-bg:      rgba(0,0,0,0.03);
+      --cat-hover-bg:  rgba(0,0,0,0.03);
+      --spinner-bg:    #d8dde8;
+      --panel-btn-bg:  #eef1f7;
+      --landing-card:  #e8edf7;
+      --landing-glow:  rgba(0,102,204,0.06);
+    }
+
+    /* ── SLATE theme ──────────────────────────────────────────────────── */
+    [data-theme="slate"] {
+      --bg:            #1e2433;
+      --surface:       #252d42;
+      --surface2:      #1a2030;
+      --border:        #323d56;
+      --border2:       #2a3448;
+      --accent:        #7c9ef5;
+      --accent-dim:    #7c9ef522;
+      --text:          #cdd6f4;
+      --muted:         #45506b;
+      --muted2:        #6b7ea0;
+      --hover-bg:      rgba(255,255,255,0.04);
+      --cat-hover-bg:  rgba(255,255,255,0.04);
+      --spinner-bg:    #323d56;
+      --panel-btn-bg:  #2a3450;
+      --landing-card:  #1e2840;
+      --landing-glow:  rgba(124,158,245,0.07);
+    }
+
+    /* ── SYSTEM theme ─────────────────────────────────────────────────── */
+    /* Default to light; media query overrides to dark when OS is in dark mode */
+    [data-theme="system"] {
+      --bg:            #f4f6f9;    --surface:       #ffffff;
+      --surface2:      #f0f2f6;   --border:        #d8dde8;
+      --border2:       #e4e8f0;   --accent:        #0066cc;
+      --accent-dim:    #0066cc18; --text:          #1a202c;
+      --muted:         #8896aa;   --muted2:        #5a6a80;
+      --hover-bg:      rgba(0,0,0,0.03);
+      --cat-hover-bg:  rgba(0,0,0,0.03);
+      --spinner-bg:    #d8dde8;   --panel-btn-bg:  #eef1f7;
+      --landing-card:  #e8edf7;   --landing-glow:  rgba(0,102,204,0.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      [data-theme="system"] {
+        --bg:            #0d0f12;   --surface:       #141720;
+        --surface2:      #0f1219;   --border:        #252b38;
+        --border2:       #1c2230;   --accent:        #00d4aa;
+        --accent-dim:    #00d4aa22; --text:          #e2e8f0;
+        --muted:         #52607a;   --muted2:        #7a8ba8;
+        --hover-bg:      rgba(255,255,255,0.025);
+        --cat-hover-bg:  rgba(255,255,255,0.03);
+        --spinner-bg:    #252b38;   --panel-btn-bg:  #1e2533;
+        --landing-card:  #141e2e;   --landing-glow:  rgba(0,212,170,0.08);
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       GLOBAL CONSTANTS (not theme-specific)
+    ══════════════════════════════════════════════════════════════════════ */
+    :root {
+      --proj-h:    44px;   /* Height of the top project navigation bar   */
+      --cat-h:     40px;   /* Height of the second category bar          */
+      --font-mono: 'IBM Plex Mono', monospace;
+      --font-sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2b. LAYOUT — APP SHELL
+    ══════════════════════════════════════════════════════════════════════ */
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      /* overflow:hidden prevents outer scrollbars — content scrolls inside the iframe */
+      overflow: hidden;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* Main flex column that fills the viewport */
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── PROJECT BAR (top navigation strip) ────────────────────────────
+       Contains: brand/logo, project tabs, theme switcher.
+       overflow-x:auto allows horizontal scrolling when many projects exist.
+       NOTE: because overflow-x is set, overflow-y is implicitly clipped —
+       that's why the theme dropdown menu must live OUTSIDE this element
+       (it is placed after </nav> in the HTML and positioned via JS).
+    ── */
+    #projbar {
+      display: flex;
+      align-items: stretch;
+      height: var(--proj-h);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      overflow-x: auto;
+      scrollbar-width: none;        /* Firefox: hide scrollbar */
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #projbar::-webkit-scrollbar { display: none; } /* Chrome/Safari: hide scrollbar */
+
+    /* ── Brand / logo (left side of project bar) ─────────────────────── */
+    /* Clicking this returns to the landing page — see JS goHome() */
+    #brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 18px 0 14px;
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+      white-space: nowrap;
+      cursor: pointer;                  /* indicates it's clickable */
+      user-select: none;
+      transition: opacity 0.15s;
+    }
+    #brand:hover { opacity: 0.75; }
+    #brand svg { width: 16px; height: 16px; }
+
+    /* ── Project tabs container ───────────────────────────────────────── */
+    /* Individual tabs are created dynamically in JS (buildProjectTabs) */
+    #proj-tabs { display: flex; align-items: stretch; flex: 1; }
+
+    .proj-tab {
+      display: flex;
+      align-items: center;
+      padding: 0 22px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--muted2);
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .proj-tab:hover  { color: var(--text); background: var(--hover-bg); }
+    /* Active tab gets the accent underline */
+    .proj-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+    /* ── Theme switcher button (right side of project bar) ────────────── */
+    #theme-switcher {
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
+      position: relative; /* anchor for the dropdown positioning calculation */
+    }
+
+    #theme-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--muted2);
+      white-space: nowrap;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    #theme-btn:hover { color: var(--text); border-color: var(--accent); background: var(--accent-dim); }
+    #theme-btn svg   { width: 12px; height: 12px; }
+
+    /* ── Theme dropdown menu ──────────────────────────────────────────── */
+    /* IMPORTANT: This element is placed OUTSIDE #projbar in the HTML so it
+       is not clipped by projbar's overflow:auto. Its position:fixed and
+       coordinates are set dynamically by toggleThemeMenu() in JS.         */
+    #theme-menu {
+      display: none;
+      position: fixed;            /* fixed so it overlays everything */
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      z-index: 1000;              /* high z-index to appear above all other elements */
+      min-width: 150px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    #theme-menu.open { display: block; }
+
+    .theme-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--muted2);
+      transition: background 0.1s, color 0.1s;
+      white-space: nowrap;
+    }
+    .theme-option:hover  { background: var(--hover-bg); color: var(--text); }
+    .theme-option.active { color: var(--accent); font-weight: 600; } /* current theme */
+
+    /* Small colour swatch circle shown next to each theme name */
+    .theme-option .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* ── CATEGORY BAR (second strip, below project bar) ────────────────
+       Shows the categories of the currently selected project.
+       The .empty class is added when no project is selected (e.g. on the
+       landing page), making it visually dimmed and non-interactive.
+    ── */
+    #catbar {
+      display: flex;
+      align-items: stretch;
+      height: var(--cat-h);
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      transition: opacity 0.2s, background 0.2s, border-color 0.2s;
+    }
+    #catbar::-webkit-scrollbar { display: none; }
+    #catbar.empty { opacity: 0.35; pointer-events: none; }
+
+    /* Project name label at the left of the category bar */
+    #cat-label {
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      text-transform: uppercase;
+      border-right: 1px solid var(--border2);
+      flex-shrink: 0;
+      white-space: nowrap;
+      min-width: 110px;
+    }
+
+    /* Category tabs row */
+    #cat-tabs { display: flex; align-items: stretch; flex: 1; padding: 0 6px; }
+
+    .cat-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 16px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--muted2);
+      white-space: nowrap;
+      transition: color 0.15s, background 0.15s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px; /* overlap the catbar's bottom border with the active underline */
+    }
+    .cat-tab:hover  { color: var(--text); background: var(--cat-hover-bg); }
+    .cat-tab.active { color: var(--text); font-weight: 600; }
+
+    /* Each category type gets its own accent underline colour */
+    .cat-tab[data-type="report"].active { border-bottom-color: #4ade80; } /* green  */
+    .cat-tab[data-type="bench"].active  { border-bottom-color: #60a5fa; } /* blue   */
+    .cat-tab[data-type="docs"].active   { border-bottom-color: #c084fc; } /* purple */
+    .cat-tab[data-type="repo"].active   { border-bottom-color: #fb923c; } /* orange */
+    .cat-tab[data-type="custom"].active    { border-bottom-color: #f87171; } /* red    */
+    .cat-tab[data-type="coverage"].active  { border-bottom-color: #fbbf24; } /* yellow */
+    .cat-tab[data-type="ci"].active        { border-bottom-color: #38bdf8; } /* sky    */
+
+    /* SVG icon inside each category tab */
+    .cat-icon { width: 13px; height: 13px; flex-shrink: 0; opacity: 0.65; }
+    .cat-tab.active .cat-icon { opacity: 1; }
+    /* Icon colour matches the tab's accent underline */
+    .cat-tab[data-type="report"]   .cat-icon { color: #4ade80; }
+    .cat-tab[data-type="bench"]    .cat-icon { color: #60a5fa; }
+    .cat-tab[data-type="docs"]     .cat-icon { color: #c084fc; }
+    .cat-tab[data-type="repo"]     .cat-icon { color: #fb923c; }
+    .cat-tab[data-type="custom"]   .cat-icon { color: #f87171; }
+    .cat-tab[data-type="coverage"] .cat-icon { color: #fbbf24; }
+    .cat-tab[data-type="ci"]       .cat-icon { color: #38bdf8; }
+
+    /* Repo category link inside the tab: clickable "Repo" text + external icon */
+    .cat-repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: inherit;
+      text-decoration: none;
+    }
+    .cat-repo-link:hover {
+      text-decoration: underline;
+    }
+    .cat-repo-external {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    /* "open ↗" button at the far right of the category bar */
+    #open-full {
+      margin-left: auto;
+      margin-right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      align-self: center;
+      flex-shrink: 0;
+      padding: 4px 11px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--muted2);
+      white-space: nowrap;
+      cursor: pointer;
+      background: transparent;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    #open-full:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+    #open-full svg   { width: 11px; height: 11px; }
+
+    /* ── FRAME AREA ─────────────────────────────────────────────────────
+       flex:1 makes it fill all remaining vertical space below the two nav bars.
+       position:relative is needed so the absolute-positioned #loader overlay works.
+       overflow:hidden clips the iframe — prevents iframe scrollbars bleeding out.
+    ── */
+    #frame-wrap { flex: 1; position: relative; overflow: hidden; }
+
+    /* The iframe that renders embedded content (Allure reports, ASV benchmarks, etc.) */
+    #main-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;  /* white fallback before the page loads */
+      display: none;      /* hidden until a category is selected */
+    }
+
+    /* ── Loading spinner overlay ─────────────────────────────────────── */
+    /* Covers the frame-wrap while the iframe is loading */
+    #loader {
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.3s;
+      pointer-events: none; /* allow clicks through once faded out */
+    }
+    #loader.hidden { opacity: 0; }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 2px solid var(--spinner-bg);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2c. LANDING PAGE
+       ─────────────────────────────────────────────────────────────────────
+       Shown at first load (no hash) and when the user clicks "DASHBOARD".
+       Contains a hero card with the dashboard title at the top, followed
+       by the CI overview table (#ci-overview) showing live GitHub Actions
+       status for all 5 VIPER projects.  The UTC clock and project shortcut
+       cards from v1 have been replaced by this table.
+    ══════════════════════════════════════════════════════════════════════ */
+
+    #landing {
+      display: flex;               /* shown by default; hidden when a project is loaded */
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start; /* table starts near the top, not vertically centred */
+      gap: 28px;
+      height: 100%;
+      background: var(--bg);
+      transition: background 0.2s;
+      padding: 28px 24px 40px;
+      overflow-y: auto;
+    }
+
+    /* ── Hero rectangle ─────────────────────────────────────────────── */
+    /* Compact header card — clock removed in v2, so padding is reduced  */
+    #hero-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 28px 80px;
+      background: var(--landing-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+      max-width: 680px;
+      width: 100%;
+      /* Subtle inner glow using box-shadow */
+      box-shadow: 0 0 0 1px var(--border),
+                  inset 0 1px 0 rgba(255,255,255,0.04),
+                  0 24px 64px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    /* Decorative top accent bar along the top edge of the hero card */
+    #hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.6;
+    }
+
+    /* Subtle radial glow in the background of the hero card */
+    #hero-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, var(--landing-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Dashboard main title ─────────────────────────────────────────── */
+    /* To change this text, edit LANDING_TITLE in the CONFIG section below */
+    #hero-title {
+      font-family: var(--font-sans);
+      font-size: 28px;           /* large, prominent */
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text);
+      line-height: 1.2;
+      position: relative;        /* above the ::after pseudo-element */
+      z-index: 1;
+    }
+
+    /* ── Divider line below the title ────────────────────────────────── */
+    .hero-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--border);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── CI Overview table (landing page, v2) ────────────────────────── */
+    /* Replaces the UTC clock and project shortcut cards from v1.         */
+    /* Fetches live GitHub Actions status for all 5 VIPER projects.       */
+    #ci-overview {
+      width: 80%;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .ci-ov-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    /* Column header row */
+    .ci-ov-table thead th {
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      padding: 8px 12px;
+      border-bottom: 2px solid var(--border);
+      text-align: left;
+    }
+
+    /* Project section header row (spans all columns) */
+    .ci-ov-proj-row td {
+      background: var(--surface);
+      padding: 9px 12px;
+      border-top: 2px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Flex container inside the project header cell */
+    .ci-ov-proj-inner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Project name label */
+    .ci-ov-proj-name {
+      flex: 1;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Branch selector dropdown (xradio / astroviper / graphviper / toolviper) */
+    .ci-ov-branch-select {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background: var(--surface2);
+      color: var(--muted2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 8px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .ci-ov-branch-select:hover,
+    .ci-ov-branch-select:focus { border-color: var(--accent); color: var(--accent); }
+
+    /* "Open in GitHub ↗" link in the project header */
+    .ci-ov-open-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted2);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 10px;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .ci-ov-open-link:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Workflow data rows */
+    .ci-ov-wf-row td {
+      padding: 8px 12px;
+      color: var(--muted2);
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .ci-ov-wf-row:last-of-type td { border-bottom: none; }
+    .ci-ov-wf-row:hover td { background: var(--hover-bg); }
+
+    /* Dot cell — fixed narrow width to keep the indicator compact */
+    .ci-ov-dot-cell { width: 28px; }
+
+    /* Status indicator dot */
+    .ci-ov-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    /* Status text (colour is set inline by JS after fetch) */
+    .ci-ov-status { font-size: 12px; }
+
+    /* Relative timestamp */
+    .ci-ov-time { font-size: 11px; color: var(--muted); }
+
+    /* ── Data status bar above the CI overview table ─────────────────── */
+    /* Shows "Snapshot from X ago · ↺ Refresh" or "Live data".           */
+    #ci-data-status {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Refresh link inside the status bar */
+    .ci-refresh-link {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted2);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 7px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .ci-refresh-link:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── CI panel (Panel 5 — type "ci") ─────────────────────────────── */
+    #ci-panel {
+      display: none;   /* toggled to flex by showCIPanel() */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      background: var(--bg);
+      overflow-y: auto;
+      padding: 32px 24px;
+      transition: background 0.2s;
+    }
+    #ci-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 32px 36px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+    #ci-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+      opacity: 0.6;
+    }
+    #ci-box-header { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
+    #ci-repo-name  { font-size: 16px; font-weight: 600; color: var(--text); }
+    #ci-repo-sub   { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+                     letter-spacing: 0.08em; text-transform: uppercase; }
+    .ci-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      position: relative;
+      z-index: 1;
+    }
+    .ci-dot    { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+    .ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; }
+    .ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); }
+    .ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    #ci-open {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 16px;
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 13px; color: var(--muted2); text-decoration: none;
+      background: var(--surface2);
+      transition: border-color 0.15s, color 0.15s;
+      align-self: flex-start; position: relative; z-index: 1;
+    }
+    #ci-open:hover { border-color: var(--accent); color: var(--accent); }
+    #ci-open svg   { width: 13px; height: 13px; flex-shrink: 0; }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2d. LAUNCH PANEL
+       ─────────────────────────────────────────────────────────────────────
+       Shown instead of the iframe when a URL cannot be embedded.
+       GitHub/GitLab set X-Frame-Options: DENY which causes Firefox (and
+       others) to refuse to display the page inside an iframe.
+       The launch panel shows the URL and a button to open it in a new tab.
+    ══════════════════════════════════════════════════════════════════════ */
+
+    #launch-panel {
+      display: none;  /* toggled to flex by showLaunchPanel() */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      height: 100%;
+      background: var(--bg);
+      font-family: var(--font-sans);
+      text-align: center;
+      transition: background 0.2s;
+    }
+
+    /* Icon container square */
+    .launch-icon-wrap {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--panel-btn-bg);
+      border: 1px solid var(--border);
+    }
+    .launch-icon-wrap svg { width: 28px; height: 28px; }
+
+    #launch-title  { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: 0.02em; }
+    #launch-url    { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+                     max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #launch-reason { font-size: 12px; color: var(--muted2); max-width: 380px; line-height: 1.6; }
+
+    /* Primary CTA button */
+    #launch-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 28px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    #launch-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    #launch-btn svg   { width: 14px; height: 14px; }
+
+    .launch-note { font-size: 11px; font-family: var(--font-mono); color: var(--muted); }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       2e. COVERAGE PANEL
+       ─────────────────────────────────────────────────────────────────────
+       Shown when a category has type "coverage". Calls the Codecov v2 repo
+       endpoint (not /commits/) to get authoritative merged totals for the
+       default branch, and the GitHub Actions API for the latest CI status.
+       Renders a summary card: percentage circle, line/hit/miss stats, CI row.
+    ══════════════════════════════════════════════════════════════════════ */
+
+    #coverage-panel {
+      display: none;   /* toggled to flex by showCoveragePanel() */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      height: 100%;
+      background: var(--bg);
+      overflow-y: auto;
+      padding: 32px 24px;
+      transition: background 0.2s;
+    }
+
+    /* Main card container */
+    #cov-box {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 36px;
+      max-width: 580px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    /* Decorative yellow accent bar at the top of the card */
+    #cov-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+      border-radius: 12px 12px 0 0;
+      opacity: 0.7;
+    }
+
+    /* Header row: circle + meta text */
+    #cov-header { display: flex; align-items: center; gap: 24px; }
+
+    /* Circular percentage display */
+    #cov-circle {
+      flex-shrink: 0;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.3s;
+    }
+    #cov-pct       { font-family: var(--font-mono); font-size: 22px; font-weight: 600; line-height: 1; }
+    #cov-pct-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+                     color: var(--muted); text-transform: uppercase; margin-top: 3px; }
+
+    /* Repo name, branch, updated timestamp */
+    #cov-meta    { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+    #cov-name    { font-size: 14px; font-weight: 600; color: var(--text); }
+    #cov-branch  { font-family: var(--font-mono); font-size: 11px; color: var(--muted2); }
+    #cov-updated { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+    /* Stats row: lines / hits / misses / partials */
+    #cov-stats { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .cov-stat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 12px 8px;
+      border-right: 1px solid var(--border);
+    }
+    .cov-stat:last-child { border-right: none; }
+    .cov-stat-val { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--text); }
+    .cov-stat-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+                    color: var(--muted); text-transform: uppercase; }
+
+    /* CI status row */
+    #cov-ci {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+    }
+    #cov-ci-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+    #cov-ci-text { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; }
+    #cov-ci-time { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+    /* Inline error message */
+    #cov-error { display: none; font-family: var(--font-mono); font-size: 11px;
+                 color: var(--muted2); line-height: 1.6; }
+
+    /* "Open full report" button */
+    #cov-open {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      text-decoration: none;
+      align-self: flex-start;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    #cov-open:hover { opacity: 0.88; transform: translateY(-1px); }
+    #cov-open svg   { width: 13px; height: 13px; }
+
+    /* Shimmer loading skeleton */
+    .shimmer {
+      background: linear-gradient(90deg, var(--border) 25%, var(--surface2) 50%, var(--border) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <nav id="projbar">
+    <div id="brand" onclick="goHome()" title="Return to landing page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </div>
+    <div id="proj-tabs"></div>
+    <div id="theme-switcher">
+      <button id="theme-btn" onclick="toggleThemeMenu()" title="Switch colour theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <span id="theme-label">Light</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             style="width:10px;height:10px;opacity:0.5">
+          <polyline points="6,9 12,15 18,9"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div id="theme-menu">
+    <div class="theme-option" data-theme="dark" onclick="setTheme('dark')">
+      <span class="swatch" style="background:#141720; border-color:#252b38"></span>
+      Dark
+    </div>
+    <div class="theme-option" data-theme="light" onclick="setTheme('light')">
+      <span class="swatch" style="background:#ffffff; border-color:#d8dde8"></span>
+      Light
+    </div>
+    <div class="theme-option" data-theme="slate" onclick="setTheme('slate')">
+      <span class="swatch" style="background:#252d42; border-color:#323d56"></span>
+      Slate
+    </div>
+    <div class="theme-option" data-theme="system" onclick="setTheme('system')">
+      <span class="swatch"
+            style="background:linear-gradient(135deg,#fff 50%,#0d0f12 50%); border-color:#999">
+      </span>
+      System
+    </div>
+  </div>
+
+  <div id="catbar" class="empty">
+    <div id="cat-label">&mdash;</div>
+    <div id="cat-tabs"></div>
+    <button id="open-full" onclick="openFull()" title="Open current page in a new browser tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15,3 21,3 21,9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      open ↗
+    </button>
+  </div>
+
+  <div id="frame-wrap">
+    <div id="loader" class="hidden">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="landing">
+      <div id="hero-card">
+        <div id="hero-title">Dashboard</div>
+        <div class="hero-divider"></div>
+      </div>
+      <div id="ci-data-status"></div>
+      <div id="ci-overview"></div>
+    </div>
+
+    <iframe id="main-frame" title="Project content"></iframe>
+
+    <div id="launch-panel">
+      <div class="launch-icon-wrap" id="launch-icon"></div>
+      <div id="launch-title">Opening external page</div>
+      <div id="launch-url"></div>
+      <div id="launch-reason"></div>
+      <a id="launch-btn" href="#" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15,3 21,3 21,9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        Open in new tab
+      </a>
+      <div class="launch-note" id="launch-note">Opens in a new tab</div>
+    </div>
+
+    <div id="coverage-panel">
+      <div id="cov-box">
+        <div id="cov-header">
+          <div id="cov-circle">
+            <div id="cov-pct" class="shimmer" style="min-width:52px;min-height:26px">&nbsp;</div>
+            <div id="cov-pct-label">coverage</div>
+          </div>
+          <div id="cov-meta">
+            <div id="cov-name" class="shimmer" style="min-width:130px;min-height:16px">&nbsp;</div>
+            <div id="cov-branch" class="shimmer" style="min-width:100px;min-height:12px;margin-top:4px">&nbsp;</div>
+            <div id="cov-updated" class="shimmer" style="min-width:120px;min-height:11px;margin-top:4px">&nbsp;</div>
+          </div>
+        </div>
+        <div id="cov-stats">
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-lines">&#8212;</div>
+            <div class="cov-stat-lbl">Lines</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-hits" style="color:#4ade80">&#8212;</div>
+            <div class="cov-stat-lbl">Hits</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-misses" style="color:#f87171">&#8212;</div>
+            <div class="cov-stat-lbl">Misses</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-parts" style="color:#fbbf24">&#8212;</div>
+            <div class="cov-stat-lbl">Partials</div>
+          </div>
+        </div>
+        <div id="cov-ci">
+          <div id="cov-ci-dot"></div>
+          <div id="cov-ci-text">Fetching CI status&#8230;</div>
+          <div id="cov-ci-time"></div>
+        </div>
+        <div id="cov-error"></div>
+        <a id="cov-open" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15,3 21,3 21,9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          Open full report &#x2197;
+        </a>
+      </div>
+    </div>
+
+    <div id="ci-panel">
+      <div id="ci-box">
+        <div id="ci-box-header">
+          <div id="ci-repo-name">&nbsp;</div>
+          <div id="ci-repo-sub">GitHub Actions &mdash; latest run per workflow</div>
+        </div>
+        <div id="ci-rows"></div>
+        <a id="ci-open" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15,3 21,3 21,9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          View all runs &#x2197;
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const PROJECTS = [{"id":"testviper","name":"testviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/testviper/actions","github":{"owner":"casangi","repo":"testviper"},"workflows":[{"file":"integration_tests_linux.yml","label":"Branch Python Integration Tests (Linux)"},{"file":"dispatch-receiver.yml","label":"Repository Dispatch Receiver"},{"file":"python-tests-allure-report.yml","label":"Python Integration Tests & Allure Reports"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/testviper/index.html"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/testviper"}]},{"id":"xradio","name":"xradio","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/xradio/actions","github":{"owner":"casangi","repo":"xradio"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-basic-schema-install.yml","label":"Python Tests Schema Install"},{"file":"python-testing-casatools.yml","label":"Python Tests with casatools"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/xradio/index.html"},{"id":"bench","label":"Benchmarks","type":"bench","url":"https://casangi.github.io/benchviper/xradio/#/"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/xradio","codecov":{"service":"github","owner":"casangi","repo":"xradio"},"github":{"owner":"casangi","repo":"xradio"}},{"id":"docs","label":"Docs","type":"docs","url":"https://xradio.readthedocs.io"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/xradio"}]},{"id":"astroviper","name":"astroviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/astroviper/actions","github":{"owner":"casangi","repo":"astroviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/astroviper/index.html"},{"id":"bench","label":"Benchmarks","type":"bench","url":"https://casangi.github.io/benchviper/astroviper/"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/astroviper","codecov":{"service":"github","owner":"casangi","repo":"astroviper"},"github":{"owner":"casangi","repo":"astroviper"}},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/astroviper"}]},{"id":"graphviper","name":"graphviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/graphviper/actions","github":{"owner":"casangi","repo":"graphviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/graphviper/index.html"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/graphviper","codecov":{"service":"github","owner":"casangi","repo":"graphviper"},"github":{"owner":"casangi","repo":"graphviper"}},{"id":"docs","label":"Docs","type":"docs","url":"https://graphviper.readthedocs.io/en/latest/"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/graphviper"}]},{"id":"toolviper","name":"toolviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/toolviper/actions","github":{"owner":"casangi","repo":"toolviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/toolviper/index.html"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/toolviper","codecov":{"service":"github","owner":"casangi","repo":"toolviper"},"github":{"owner":"casangi","repo":"toolviper"}},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/toolviper"}]}];
+const LANDING_TITLE = "Dashboard for <a href=\"https://github.com/casangi\" target=\"_blank\" rel=\"noopener noreferrer\">VIPER</a> Ecosystem";
+const LAUNCH_PANEL_TYPES = [];
+const LAUNCH_PANEL_URLS = ["github.com", "gitlab.com", "bitbucket.org"];
+const DEFAULT_THEME = "light";
+const THEME_LABELS = {"dark": "Dark", "light": "Light", "slate": "Slate", "system": "System"};
+const WORKER_URL = "https://viper-dashboard-proxy.scastro-287.workers.dev";
+const PREFETCHED_CI_DATA = {"baked_at":"2026-03-27T14:12:33Z","projects":{"testviper":{"workflows":{"integration_tests_linux.yml":{"conclusion":"in_progress","updated_at":"2026-03-27T14:12:12Z"},"dispatch-receiver.yml":{"conclusion":"success","updated_at":"2026-03-19T17:39:52Z"},"python-tests-allure-report.yml":{"conclusion":"in_progress","updated_at":"2026-03-27T14:12:13Z"}},"recent_branches":["39-create-global-dashboard-page","gh-pages"]},"xradio":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-26T19:50:43Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-26T19:49:33Z"}},"recent_branches":["559-api-documentation-missing","540-xradio-changes-needed-for-astroviper-demonstrator"]},"astroviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-18T14:40:22Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-18T14:40:31Z"}},"recent_branches":["215-multi_gaussian2d_fitpy-yx---xy-and-notebook-clarifications","copilot/fix-colab-link-and-imports"]},"graphviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-19T17:36:43Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-19T17:56:40Z"}},"recent_branches":["v0.0.40","refs/pull/55/head","50-graphviper-changes-needed-for-astroviper-demonstrator"]},"toolviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-25T07:16:17Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-25T07:17:52Z"}},"recent_branches":["42-documentation-and-single-dish-tools"]}}};
+const CI_OVERVIEW_PROJECTS = [{"id":"testviper","fixedBranch":false,"workflows":[{"file":"integration_tests_linux.yml","label":"Branch Python Tests (Linux)"},{"file":"dispatch-receiver.yml","label":"Repository Dispatch Receiver"},{"file":"python-tests-allure-report.yml","label":"Python Tests & Allure Reports"}]},{"id":"xradio","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"astroviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"graphviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"toolviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]}];
+
+/* ══════════════════════════════════════════════════════════════════════════
+   VIPER Ecosystem Dashboard — Engine
+   ──────────────────────────────────────────────────────────────────────────
+   This file contains all runtime logic: routing, tab building, iframe
+   loading, theme switching, CI/coverage panels, and the landing CI table.
+
+   CONFIGURATION CONSTANTS (injected by build_dashboard.py):
+     PROJECTS, LANDING_TITLE, LAUNCH_PANEL_TYPES, LAUNCH_PANEL_URLS,
+     DEFAULT_THEME, THEME_LABELS, WORKER_URL, PREFETCHED_CI_DATA,
+     CI_OVERVIEW_PROJECTS
+══════════════════════════════════════════════════════════════════════════ */
+
+/* ── API URL helpers ─────────────────────────────────────────────────────
+   When WORKER_URL is set, route all API calls through the Cloudflare
+   Worker proxy (authenticated, 5 000 req/hr). Otherwise fall back to
+   direct unauthenticated calls (60 req/hr).                              */
+
+function ghApiUrl(path) {
+  if (WORKER_URL) return WORKER_URL + '/github' + path;
+  return 'https://api.github.com' + path;
+}
+
+function ccApiUrl(path) {
+  if (WORKER_URL) return WORKER_URL + '/codecov' + path;
+  return 'https://api.codecov.io' + path;
+}
+
+/* ── SVG icons for each category type ────────────────────────────────── */
+const ICONS = {
+  report: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+           </svg>`,
+  bench:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <line x1="18" y1="20" x2="18" y2="10"/>
+             <line x1="12" y1="20" x2="12" y2="4"/>
+             <line x1="6" y1="20" x2="6" y2="14"/>
+           </svg>`,
+  docs:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+             <polyline points="14,2 14,8 20,8"/>
+             <line x1="16" y1="13" x2="8" y2="13"/>
+             <line x1="16" y1="17" x2="8" y2="17"/>
+           </svg>`,
+  repo:   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61
+                      c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77
+                      5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0
+                      C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77
+                      a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7
+                      A3.37 3.37 0 0 0 9 18.13V22"/>
+           </svg>`,
+  coverage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+               <polyline points="9,12 11,14 15,10"/>
+             </svg>`,
+  custom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+             <circle cx="12" cy="12" r="3"/>
+             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+           </svg>`,
+  ci: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+         <circle cx="12" cy="12" r="3"/>
+         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06
+                  a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09
+                  A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83
+                  l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09
+                  A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83
+                  l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09
+                  a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83
+                  l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09
+                  a1.65 1.65 0 0 0-1.51 1z"/>
+       </svg>`,
+};
+
+const TYPE_COLORS = {
+  report:   '#4ade80',
+  bench:    '#60a5fa',
+  docs:     '#c084fc',
+  repo:     '#fb923c',
+  coverage: '#fbbf24',
+  custom:   '#f87171',
+  ci:       '#38bdf8',
+};
+
+const LAUNCH_REASONS = {
+  repo:    'Git hosting services like GitHub and GitLab block embedding for security reasons.',
+  docs:    'This documentation site does not allow embedding in other pages.',
+  default: 'This page cannot be embedded due to security restrictions set by the host.',
+};
+
+let activeProject  = null;
+let activeCategory = null;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LANDING PAGE — CI OVERVIEW TABLE
+══════════════════════════════════════════════════════════════════════════ */
+
+function applyLandingTitle() {
+  document.getElementById('hero-title').innerHTML = LANDING_TITLE;
+}
+
+const CI_CONCLUSION_MAP = {
+  success:   ['#4ade80', 'passing'],
+  failure:   ['#f87171', 'failing'],
+  cancelled: ['#fbbf24', 'cancelled'],
+  timed_out: ['#f87171', 'timed out'],
+  skipped:   ['#7a8ba8', 'skipped'],
+};
+
+async function fetchRecentBranches(owner, repo) {
+  try {
+    const r = await fetch(
+      ghApiUrl(`/repos/${owner}/${repo}/actions/runs?per_page=30`),
+      { headers: { 'Accept': 'application/vnd.github+json' } }
+    );
+    if (!r.ok) return [];
+    const data = await r.json();
+    const seen     = new Set();
+    const branches = [];
+    for (const run of (data.workflow_runs || [])) {
+      const b = run.head_branch;
+      if (b && b !== 'main' && !seen.has(b)) {
+        seen.add(b);
+        branches.push(b);
+        if (branches.length >= 2) break;
+      }
+    }
+    return branches;
+  } catch {
+    return [];
+  }
+}
+
+function fetchWorkflowRow(owner, repo, file, branch, dotEl, statusEl, branchEl, timeEl) {
+  branchEl.textContent     = branch;
+  dotEl.style.background   = 'var(--border)';
+  statusEl.textContent     = 'Fetching\u2026';
+  statusEl.style.color     = '';
+  timeEl.textContent       = '';
+
+  fetch(
+    ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${file}/runs` +
+    `?branch=${encodeURIComponent(branch)}&per_page=1`),
+    { headers: { 'Accept': 'application/vnd.github+json' } }
+  )
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => {
+      const run = (data.workflow_runs || [])[0];
+      if (run) {
+        const [color, label] = CI_CONCLUSION_MAP[run.conclusion]
+          || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
+        dotEl.style.background = color;
+        statusEl.textContent   = label;
+        statusEl.style.color   = color;
+        timeEl.textContent     = relTime(new Date(run.updated_at));
+      } else {
+        statusEl.textContent = 'no runs found';
+      }
+    })
+    .catch(err => {
+      dotEl.style.background = 'var(--border)';
+      statusEl.textContent   = 'unavailable (' + err.message + ')';
+    });
+}
+
+function refreshProjectRows(tbody, owner, repo, projId, workflows, branch) {
+  workflows.forEach(wf => {
+    const row = tbody.querySelector(`tr[data-proj="${projId}"][data-wf="${wf.file}"]`);
+    if (!row) return;
+    const dotEl    = row.querySelector('.ci-ov-dot');
+    const statusEl = row.querySelector('.ci-ov-status');
+    const branchEl = row.querySelector('.ci-ov-branch');
+    const timeEl   = row.querySelector('.ci-ov-time');
+    fetchWorkflowRow(owner, repo, wf.file, branch, dotEl, statusEl, branchEl, timeEl);
+  });
+}
+
+function resizeBranchSelect(sel) {
+  const tmp = document.createElement('span');
+  tmp.style.cssText =
+    'visibility:hidden;position:fixed;white-space:nowrap;' +
+    'font-family:monospace;font-size:11px;padding:0 22px 0 8px;';
+  tmp.textContent = sel.options[sel.selectedIndex]?.text || 'main';
+  document.body.appendChild(tmp);
+  sel.style.width = tmp.offsetWidth + 'px';
+  document.body.removeChild(tmp);
+}
+
+function buildCIOverview(forceLive) {
+  const projects = CI_OVERVIEW_PROJECTS;
+  const usePrebaked = PREFETCHED_CI_DATA && !forceLive;
+
+  const statusBar = document.getElementById('ci-data-status');
+  if (usePrebaked) {
+    const age = relTime(new Date(PREFETCHED_CI_DATA.baked_at));
+    statusBar.innerHTML =
+      'Snapshot from ' + age +
+      '&ensp;<a href="#" class="ci-refresh-link" ' +
+      'onclick="buildCIOverview(true);return false;">&#x21BA; Refresh</a>';
+  } else {
+    statusBar.textContent = 'Live data';
+  }
+
+  const container = document.getElementById('ci-overview');
+  container.innerHTML = '';
+
+  const extSvg =
+    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" ` +
+    `style="width:11px;height:11px;flex-shrink:0">` +
+    `<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>` +
+    `<polyline points="15,3 21,3 21,9"/>` +
+    `<line x1="10" y1="14" x2="21" y2="3"/>` +
+    `</svg>`;
+
+  const table = document.createElement('table');
+  table.className = 'ci-ov-table';
+
+  const thead = document.createElement('thead');
+  thead.innerHTML =
+    `<tr>` +
+    `<th style="width:28px"></th>` +
+    `<th>CI Job Description</th>` +
+    `<th style="width:110px">Branch</th>` +
+    `<th style="width:110px">Status</th>` +
+    `<th style="width:120px">Last Run</th>` +
+    `</tr>`;
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+
+  projects.forEach(cfg => {
+    const proj  = PROJECTS.find(p => p.id.trim() === cfg.id);
+    if (!proj) return;
+    const ciCat = proj.categories.find(c => c.type === 'ci');
+    if (!ciCat || !ciCat.github) return;
+    const { owner, repo } = ciCat.github;
+    const actionsUrl      = ciCat.url;
+
+    const projBaked = usePrebaked ? (PREFETCHED_CI_DATA.projects || {})[cfg.id] : null;
+
+    const projRow  = document.createElement('tr');
+    projRow.className = 'ci-ov-proj-row';
+    const projCell = document.createElement('td');
+    projCell.colSpan = 5;
+
+    const inner = document.createElement('div');
+    inner.className = 'ci-ov-proj-inner';
+
+    const nameSpan       = document.createElement('span');
+    nameSpan.className   = 'ci-ov-proj-name';
+    nameSpan.textContent = proj.name;
+    inner.appendChild(nameSpan);
+
+    let selectEl = null;
+    if (!cfg.fixedBranch) {
+      selectEl = document.createElement('select');
+      selectEl.className = 'ci-ov-branch-select';
+      selectEl.title     = 'Select branch';
+
+      const mainOpt       = document.createElement('option');
+      mainOpt.value       = 'main';
+      mainOpt.textContent = 'main';
+      selectEl.appendChild(mainOpt);
+
+      requestAnimationFrame(() => resizeBranchSelect(selectEl));
+
+      if (projBaked && projBaked.recent_branches && projBaked.recent_branches.length) {
+        projBaked.recent_branches.forEach(b => {
+          const opt       = document.createElement('option');
+          opt.value       = b;
+          opt.textContent = b;
+          selectEl.appendChild(opt);
+        });
+        resizeBranchSelect(selectEl);
+      } else {
+        fetchRecentBranches(owner, repo).then(branches => {
+          branches.forEach(b => {
+            const opt       = document.createElement('option');
+            opt.value       = b;
+            opt.textContent = b;
+            selectEl.appendChild(opt);
+          });
+          resizeBranchSelect(selectEl);
+        });
+      }
+
+      selectEl.addEventListener('change', () => {
+        resizeBranchSelect(selectEl);
+        refreshProjectRows(tbody, owner, repo, cfg.id, cfg.workflows, selectEl.value);
+      });
+
+      inner.appendChild(selectEl);
+    }
+
+    const openLink     = document.createElement('a');
+    openLink.className = 'ci-ov-open-link';
+    openLink.href      = actionsUrl;
+    openLink.target    = '_blank';
+    openLink.rel       = 'noopener noreferrer';
+    openLink.innerHTML = extSvg + '&nbsp;Open in GitHub';
+    inner.appendChild(openLink);
+
+    projCell.appendChild(inner);
+    projRow.appendChild(projCell);
+    tbody.appendChild(projRow);
+
+    cfg.workflows.forEach(wf => {
+      const row       = document.createElement('tr');
+      row.className   = 'ci-ov-wf-row';
+      row.dataset.proj = cfg.id;
+      row.dataset.wf   = wf.file;
+
+      const dotTd  = document.createElement('td');
+      dotTd.className = 'ci-ov-dot-cell';
+      const dot    = document.createElement('span');
+      dot.className   = 'ci-ov-dot';
+      dotTd.appendChild(dot);
+
+      const labelTd       = document.createElement('td');
+      labelTd.textContent = wf.label;
+
+      const branchTd      = document.createElement('td');
+      const branchSpan    = document.createElement('span');
+      branchSpan.className   = 'ci-ov-branch';
+      branchSpan.textContent = 'main';
+      branchTd.appendChild(branchSpan);
+
+      const statusTd      = document.createElement('td');
+      const statusSpan    = document.createElement('span');
+      statusSpan.className   = 'ci-ov-status';
+      statusTd.appendChild(statusSpan);
+
+      const timeTd     = document.createElement('td');
+      const timeSpan   = document.createElement('span');
+      timeSpan.className = 'ci-ov-time';
+      timeTd.appendChild(timeSpan);
+
+      row.appendChild(dotTd);
+      row.appendChild(labelTd);
+      row.appendChild(branchTd);
+      row.appendChild(statusTd);
+      row.appendChild(timeTd);
+      tbody.appendChild(row);
+
+      const wfBaked = projBaked ? (projBaked.workflows || {})[wf.file] : null;
+      if (wfBaked) {
+        const [color, label] = CI_CONCLUSION_MAP[wfBaked.conclusion]
+          || ['#7a8ba8', wfBaked.conclusion || 'unknown'];
+        dot.style.background   = color;
+        statusSpan.textContent = label;
+        statusSpan.style.color = color;
+        branchSpan.textContent = 'main';
+        timeSpan.textContent   = relTime(new Date(wfBaked.updated_at));
+      } else {
+        statusSpan.textContent = 'Fetching\u2026';
+        fetchWorkflowRow(owner, repo, wf.file, 'main', dot, statusSpan, branchSpan, timeSpan);
+      }
+    });
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════════════════════════ */
+
+function goHome() {
+  history.replaceState(null, '', window.location.pathname);
+  activeProject  = null;
+  activeCategory = null;
+  document.getElementById('loader').classList.add('hidden');
+  document.querySelectorAll('.proj-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('cat-label').textContent = '\u2014';
+  document.getElementById('cat-tabs').innerHTML    = '';
+  document.getElementById('catbar').classList.add('empty');
+  showPanel('landing');
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PANEL VISIBILITY
+══════════════════════════════════════════════════════════════════════════ */
+
+function showPanel(name) {
+  document.getElementById('landing').style.display          = 'none';
+  document.getElementById('main-frame').style.display       = 'none';
+  document.getElementById('launch-panel').style.display     = 'none';
+  document.getElementById('coverage-panel').style.display   = 'none';
+  document.getElementById('ci-panel').style.display         = 'none';
+
+  if (name === 'landing') {
+    document.getElementById('landing').style.display = 'flex';
+  } else if (name === 'frame') {
+    document.getElementById('main-frame').style.display = 'block';
+  } else if (name === 'launch-panel') {
+    document.getElementById('launch-panel').style.display = 'flex';
+  } else if (name === 'coverage-panel') {
+    document.getElementById('coverage-panel').style.display = 'flex';
+  } else if (name === 'ci-panel') {
+    document.getElementById('ci-panel').style.display = 'flex';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THEME SWITCHER
+══════════════════════════════════════════════════════════════════════════ */
+
+function setTheme(name) {
+  document.documentElement.dataset.theme = name;
+  localStorage.setItem('dashboard-theme', name);
+  document.getElementById('theme-label').textContent = THEME_LABELS[name] || name;
+  document.querySelectorAll('.theme-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.theme === name);
+  });
+  document.getElementById('theme-menu').classList.remove('open');
+}
+
+function toggleThemeMenu() {
+  const menu   = document.getElementById('theme-menu');
+  const btn    = document.getElementById('theme-btn');
+  const rect   = btn.getBoundingClientRect();
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open');
+  if (!isOpen) {
+    menu.style.top   = (rect.bottom + 4) + 'px';
+    menu.style.right = (window.innerWidth - rect.right) + 'px';
+    menu.style.left  = 'auto';
+  }
+}
+
+document.addEventListener('click', e => {
+  const btn  = document.getElementById('theme-btn');
+  const menu = document.getElementById('theme-menu');
+  if (!btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.classList.remove('open');
+  }
+});
+
+function initTheme() {
+  setTheme(localStorage.getItem('dashboard-theme') || DEFAULT_THEME);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PROJECT & CATEGORY TAB BUILDING
+══════════════════════════════════════════════════════════════════════════ */
+
+function buildProjectTabs() {
+  const projTabs = document.getElementById('proj-tabs');
+  projTabs.innerHTML = '';
+  PROJECTS.forEach(p => {
+    const t = document.createElement('div');
+    t.className      = 'proj-tab';
+    t.dataset.id     = p.id;
+    t.textContent    = p.name;
+    t.title          = `Open ${p.name} project`;
+    t.addEventListener('click', () => selectProject(p.id));
+    projTabs.appendChild(t);
+  });
+}
+
+function selectProject(projId, catId) {
+  const p = PROJECTS.find(x => x.id === projId);
+  if (!p) return;
+  activeProject = p;
+
+  document.querySelectorAll('.proj-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.id === projId);
+  });
+
+  const catTabs  = document.getElementById('cat-tabs');
+  const catLabel = document.getElementById('cat-label');
+  catTabs.innerHTML    = '';
+  catLabel.textContent = p.name;
+  document.getElementById('catbar').classList.remove('empty');
+
+  p.categories.forEach(cat => {
+    const iconHtml = (ICONS[cat.type] || ICONS.custom)
+                       .replace('<svg ', '<svg class="cat-icon" ');
+    const t = document.createElement('div');
+    t.className    = 'cat-tab';
+    t.dataset.id   = cat.id;
+    t.dataset.type = cat.type;
+
+    let labelHtml;
+    if (cat.type === 'repo') {
+      labelHtml =
+        `<a href="${cat.url}" target="_blank" rel="noopener noreferrer" ` +
+        `class="cat-repo-link" title="Open in a new tab">` +
+        `${cat.label}<span class="cat-repo-external" aria-hidden="true">&#x2197;</span></a>`;
+      t.title = 'Open repository in a new tab';
+    } else {
+      labelHtml = cat.label;
+      t.title   = cat.label;
+    }
+
+    t.innerHTML = iconHtml + labelHtml;
+    t.addEventListener('click', (event) => {
+      if (cat.type === 'repo') {
+        event.preventDefault();
+      }
+      selectCategory(projId, cat.id);
+    });
+    catTabs.appendChild(t);
+  });
+
+  const defaultCat = catId || p.categories[0]?.id;
+  if (defaultCat) selectCategory(projId, defaultCat);
+}
+
+function selectCategory(projId, catId) {
+  const p   = PROJECTS.find(x => x.id === projId);
+  const cat = p?.categories.find(c => c.id === catId);
+  if (!p || !cat) return;
+  activeCategory = cat;
+
+  document.querySelectorAll('.cat-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.id === catId);
+  });
+
+  history.replaceState(null, '', `#${projId}/${catId}`);
+
+  if (cat.type === 'ci') {
+    showCIPanel(cat);
+  } else if (cat.type === 'coverage') {
+    showCoveragePanel(cat);
+  } else if (cat.type === 'repo') {
+    if (cat.url) {
+      const win = window.open(cat.url, '_blank');
+      if (win) win.opener = null;
+    }
+  } else if (shouldUseLaunchPanel(cat)) {
+    showLaunchPanel(cat);
+  } else {
+    loadUrl(cat.url);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   EMBEDDABILITY CHECK
+══════════════════════════════════════════════════════════════════════════ */
+
+function shouldUseLaunchPanel(cat) {
+  if (LAUNCH_PANEL_TYPES.includes(cat.type)) return true;
+  try {
+    const host = new URL(cat.url).hostname;
+    return LAUNCH_PANEL_URLS.some(h => host === h || host.endsWith('.' + h));
+  } catch (e) {
+    return false;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LAUNCH PANEL
+══════════════════════════════════════════════════════════════════════════ */
+
+function showLaunchPanel(cat) {
+  document.getElementById('loader').classList.add('hidden');
+  showPanel('launch-panel');
+
+  const color  = TYPE_COLORS[cat.type] || TYPE_COLORS.custom;
+  const icon   = (ICONS[cat.type] || ICONS.custom);
+  const reason = LAUNCH_REASONS[cat.type] || LAUNCH_REASONS.default;
+
+  document.getElementById('launch-icon').innerHTML =
+    icon.replace('<svg ', `<svg width="28" height="28" stroke="${color}" `);
+
+  document.getElementById('launch-title').textContent  = cat.label;
+  document.getElementById('launch-url').textContent    = cat.url;
+  document.getElementById('launch-reason').textContent = reason;
+  document.getElementById('launch-btn').href           = cat.url;
+  document.getElementById('launch-note').textContent   = 'Opens in a new tab';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   COVERAGE PANEL
+══════════════════════════════════════════════════════════════════════════ */
+
+function showCoveragePanel(cat) {
+  document.getElementById('loader').classList.add('hidden');
+  showPanel('coverage-panel');
+
+  const pctEl = document.getElementById('cov-pct');
+  pctEl.innerHTML = '&nbsp;';
+  pctEl.style.color = '';
+  pctEl.style.minWidth  = '52px';
+  pctEl.style.minHeight = '26px';
+  pctEl.classList.add('shimmer');
+  document.getElementById('cov-circle').style.borderColor = '';
+
+  ['cov-name', 'cov-branch', 'cov-updated'].forEach(id => {
+    const el = document.getElementById(id);
+    el.innerHTML = '&nbsp;';
+    el.classList.add('shimmer');
+  });
+  ['cov-lines', 'cov-hits', 'cov-misses', 'cov-parts'].forEach(id => {
+    document.getElementById(id).textContent = '\u2014';
+  });
+
+  document.getElementById('cov-ci-dot').style.background = 'var(--border)';
+  document.getElementById('cov-ci-text').textContent     = 'Fetching CI status\u2026';
+  document.getElementById('cov-ci-time').textContent     = '';
+  document.getElementById('cov-ci').style.display        = '';
+  document.getElementById('cov-error').style.display     = 'none';
+  document.getElementById('cov-open').href               = cat.url;
+
+  if (cat.codecov) {
+    const cc = cat.codecov;
+    const apiUrl = ccApiUrl(`/api/v2/${cc.service}/${cc.owner}/repos/${cc.repo}/`);
+
+    fetch(apiUrl)
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        const totals = data.totals;
+        if (totals) {
+          const pct   = parseFloat(totals.coverage);
+          const color = pct >= 80 ? '#4ade80' : pct >= 60 ? '#fbbf24' : '#f87171';
+          pctEl.textContent     = isNaN(pct) ? '\u2014' : pct.toFixed(1) + '%';
+          pctEl.style.color     = color;
+          pctEl.style.minWidth  = '';
+          pctEl.style.minHeight = '';
+          pctEl.classList.remove('shimmer');
+          document.getElementById('cov-circle').style.borderColor = color;
+
+          document.getElementById('cov-lines').textContent  = totals.lines    != null ? totals.lines    : '\u2014';
+          document.getElementById('cov-hits').textContent   = totals.hits     != null ? totals.hits     : '\u2014';
+          document.getElementById('cov-misses').textContent = totals.misses   != null ? totals.misses   : '\u2014';
+          document.getElementById('cov-parts').textContent  = totals.partials != null ? totals.partials : '\u2014';
+        }
+
+        clearShimmer('cov-name',    cc.owner + ' / ' + cc.repo);
+        clearShimmer('cov-branch',  'branch: ' + (data.branch || 'main'));
+        clearShimmer('cov-updated', data.updatestamp
+          ? 'Updated ' + relTime(new Date(data.updatestamp)) : '');
+      })
+      .catch(err => {
+        pctEl.textContent     = '\u2014';
+        pctEl.style.minWidth  = '';
+        pctEl.style.minHeight = '';
+        pctEl.classList.remove('shimmer');
+        clearShimmer('cov-name',    cc.owner + ' / ' + cc.repo);
+        clearShimmer('cov-branch',  '');
+        clearShimmer('cov-updated', '');
+        const errEl = document.getElementById('cov-error');
+        errEl.style.display = 'block';
+        errEl.textContent   = 'Could not load Codecov data (' + err.message + '). Use the button below to view directly.';
+      });
+  }
+
+  if (cat.github) {
+    const gh = cat.github;
+    fetch(ghApiUrl(`/repos/${gh.owner}/${gh.repo}/actions/runs?per_page=5`),
+          { headers: { 'Accept': 'application/vnd.github+json' } })
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        const runs = data.workflow_runs || [];
+        const run  = runs.find(r => r.status === 'completed') || runs[0];
+        if (run) {
+          const [color, label] = CI_CONCLUSION_MAP[run.conclusion] || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
+          document.getElementById('cov-ci-dot').style.background = color;
+          document.getElementById('cov-ci-text').textContent = 'CI: ' + (run.name || 'Workflow') + ' \u2014 ' + label;
+          document.getElementById('cov-ci-time').textContent = relTime(new Date(run.updated_at));
+        } else {
+          document.getElementById('cov-ci-text').textContent = 'No CI runs found';
+        }
+      })
+      .catch(() => {
+        document.getElementById('cov-ci-dot').style.background = 'var(--border)';
+        document.getElementById('cov-ci-text').textContent = 'CI status unavailable';
+      });
+  } else {
+    document.getElementById('cov-ci').style.display = 'none';
+  }
+}
+
+function clearShimmer(id, text) {
+  const el = document.getElementById(id);
+  el.classList.remove('shimmer');
+  el.style.minWidth  = '';
+  el.style.minHeight = '';
+  el.textContent = text;
+}
+
+function relTime(date) {
+  if (!date || isNaN(date)) return '?';
+  const s = Math.floor((Date.now() - date) / 1000);
+  if (s < 60)    return s + 's ago';
+  if (s < 3600)  return Math.floor(s / 60) + 'm ago';
+  if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+  return Math.floor(s / 86400) + 'd ago';
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   IFRAME LOADER
+══════════════════════════════════════════════════════════════════════════ */
+
+function loadUrl(url) {
+  const frame  = document.getElementById('main-frame');
+  const loader = document.getElementById('loader');
+
+  showPanel(null);
+  loader.classList.remove('hidden');
+
+  frame.onload = () => {
+    loader.classList.add('hidden');
+    showPanel('frame');
+    setTimeout(() => {
+      try {
+        const doc = frame.contentDocument;
+        if (doc && doc.body && doc.body.innerHTML.trim() === '') {
+          showLaunchPanel(activeCategory);
+        }
+      } catch (e) {
+        /* Cross-origin security error — iframe loaded fine */
+      }
+    }, 600);
+  };
+
+  frame.src = url;
+}
+
+function openFull() {
+  if (activeCategory) {
+    const win = window.open(activeCategory.url, '_blank');
+    if (win) win.opener = null;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   URL HASH ROUTING
+══════════════════════════════════════════════════════════════════════════ */
+
+function loadFromHash() {
+  const hash = location.hash.slice(1);
+  if (!hash) {
+    showPanel('landing');
+    return;
+  }
+  const [projId, catId] = hash.split('/');
+  if (projId) {
+    selectProject(projId, catId || undefined);
+  } else {
+    showPanel('landing');
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CI PANEL
+══════════════════════════════════════════════════════════════════════════ */
+
+function showCIPanel(cat) {
+  document.getElementById('loader').classList.add('hidden');
+  showPanel('ci-panel');
+
+  if (!cat.github) return;
+  const { owner, repo } = cat.github;
+
+  const nameEl  = document.getElementById('ci-repo-name');
+  const rowsEl  = document.getElementById('ci-rows');
+  const openEl  = document.getElementById('ci-open');
+
+  nameEl.textContent = owner + ' / ' + repo;
+  openEl.href        = `https://github.com/${owner}/${repo}/actions`;
+
+  rowsEl.innerHTML =
+    `<div class="ci-row">
+       <div class="ci-dot"></div>
+       <div class="ci-label shimmer" style="min-width:220px;min-height:13px">&nbsp;</div>
+       <div class="ci-status shimmer" style="min-width:60px;min-height:13px">&nbsp;</div>
+     </div>`;
+
+  const workflows = cat.workflows || [];
+  if (workflows.length === 0) {
+    rowsEl.innerHTML =
+      '<div class="ci-row"><div class="ci-label">No workflows configured</div></div>';
+    return;
+  }
+
+  rowsEl.innerHTML = '';
+  workflows.forEach(wf => {
+    const row = document.createElement('div');
+    row.className = 'ci-row';
+    row.innerHTML =
+      `<div class="ci-dot"></div>
+       <div class="ci-label">${wf.label}</div>
+       <div class="ci-status">Fetching&#8230;</div>
+       <div class="ci-time"></div>`;
+    rowsEl.appendChild(row);
+
+    const dot    = row.querySelector('.ci-dot');
+    const status = row.querySelector('.ci-status');
+    const time   = row.querySelector('.ci-time');
+
+    fetch(
+      ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${wf.file}/runs?per_page=1`),
+      { headers: { 'Accept': 'application/vnd.github+json' } }
+    )
+      .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(data => {
+        const run = (data.workflow_runs || [])[0];
+        if (run) {
+          const [color, label] = CI_CONCLUSION_MAP[run.conclusion]
+            || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
+          dot.style.background = color;
+          status.textContent   = label;
+          status.style.color   = color;
+          time.textContent     = relTime(new Date(run.updated_at));
+        } else {
+          status.textContent = 'no runs found';
+        }
+      })
+      .catch(err => {
+        dot.style.background = 'var(--border)';
+        status.textContent   = 'unavailable (' + err.message + ')';
+      });
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INITIALISATION
+══════════════════════════════════════════════════════════════════════════ */
+
+(function init() {
+  initTheme();
+  applyLandingTitle();
+  buildProjectTabs();
+  buildCIOverview();
+  loadFromHash();
+})();
+
+</script>
+</body>
+</html>
