@@ -178,6 +178,7 @@ class TestJsConfigGeneration:
         assert "const DEFAULT_THEME =" in js
         assert "const THEME_LABELS =" in js
         assert "const WORKER_URL =" in js
+        assert "const MAX_RECENT_BRANCHES =" in js
         assert "const PREFETCHED_CI_DATA = null;" in js
         assert "const CI_OVERVIEW_PROJECTS =" in js
 
@@ -213,6 +214,11 @@ class TestJsConfigGeneration:
         js = build_dashboard.generate_js_config(config, None)
         expected_url = config.get("dashboard", {}).get("worker_url", "")
         assert f'const WORKER_URL = "{expected_url}"' in js
+
+    def test_max_recent_branches_from_config(self, config):
+        js = build_dashboard.generate_js_config(config, None)
+        expected = config.get("dashboard", {}).get("max_recent_branches", 4)
+        assert f"const MAX_RECENT_BRANCHES = {expected};" in js
 
     def test_yaml_categories_to_js_ci(self):
         proj = {
@@ -284,6 +290,7 @@ class TestBuildOutput:
             "const DEFAULT_THEME =",
             "const THEME_LABELS =",
             "const WORKER_URL =",
+            "const MAX_RECENT_BRANCHES =",
             "const PREFETCHED_CI_DATA =",
             "const CI_OVERVIEW_PROJECTS =",
         ]:

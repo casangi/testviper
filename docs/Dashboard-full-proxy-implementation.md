@@ -133,6 +133,7 @@ The build script generates these JavaScript runtime constants from the YAML:
 | `CI_OVERVIEW_PROJECTS` | `[{ id, fixedBranch, workflows: [{ file, label }] }]` |
 | `PREFETCHED_CI_DATA` | `{ baked_at, projects: { [projectId]: { recent_branches?, workflows: { [file]: { conclusion, updated_at } } } } }` |
 | `WORKER_URL` | `string` (Cloudflare Worker URL or empty) |
+| `MAX_RECENT_BRANCHES` | `number` (from `dashboard.max_recent_branches`) |
 | `LANDING_TITLE` | `string` (HTML allowed) |
 | `THEME_LABELS` | `{ [themeId]: displayLabel }` |
 | `LAUNCH_PANEL_TYPES` | `string[]` |

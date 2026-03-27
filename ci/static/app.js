@@ -6,8 +6,8 @@
 
    CONFIGURATION CONSTANTS (injected by build_dashboard.py):
      PROJECTS, LANDING_TITLE, LAUNCH_PANEL_TYPES, LAUNCH_PANEL_URLS,
-     DEFAULT_THEME, THEME_LABELS, WORKER_URL, PREFETCHED_CI_DATA,
-     CI_OVERVIEW_PROJECTS
+     DEFAULT_THEME, THEME_LABELS, WORKER_URL, MAX_RECENT_BRANCHES,
+     PREFETCHED_CI_DATA, CI_OVERVIEW_PROJECTS
 ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── API URL helpers ─────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ async function fetchRecentBranches(owner, repo) {
       if (b && b !== 'main' && !seen.has(b)) {
         seen.add(b);
         branches.push(b);
-        if (branches.length >= 2) break;
+        if (branches.length >= MAX_RECENT_BRANCHES) break;
       }
     }
     return branches;

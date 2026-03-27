@@ -161,6 +161,9 @@ def generate_js_config(config: dict, prefetched_data) -> str:
     worker_url = dashboard.get("worker_url", "")
     lines.append(f"const WORKER_URL = {json.dumps(worker_url or '')};")
 
+    max_branches = dashboard.get("max_recent_branches", 4)
+    lines.append(f"const MAX_RECENT_BRANCHES = {json.dumps(max_branches)};")
+
     if prefetched_data is not None:
         lines.append(f"const PREFETCHED_CI_DATA = {json.dumps(prefetched_data, separators=(',', ':'))};")
     else:
