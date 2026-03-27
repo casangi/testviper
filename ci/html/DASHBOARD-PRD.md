@@ -3,17 +3,26 @@
 ## 1) Document Control
 
 - Product: VIPER Ecosystem Dashboard
-- Primary artifact: `ci/html/dashboard-live-index.html`
-- Supporting artifact: `scripts/bake_dashboard.py`
-- Related documentation: `ci/html/DASHBOARD.md`
-- PRD status: Draft for implementation baseline
+- Build output: `ci/html/dashboard.html` (generated — do not hand-edit)
+- Source files:
+  - `ci/config/projects.yaml` — configuration (single source of truth)
+  - `ci/templates/base.html` — HTML template (Jinja2)
+  - `ci/static/style.css` — stylesheet
+  - `ci/static/app.js` — JavaScript engine
+- Build script: `scripts/build_dashboard.py`
+- Test suite: `scripts/tests/test_build_dashboard.py`
+- API proxy: `ci/html/worker.js` (Cloudflare Worker)
+- CI workflow: `.github/workflows/bake-dashboard.yml`
+- Technical documentation: `ci/html/Dashboard-full-proxy-implementation.md`
+- Legacy artifacts (reference only): `ci/html/dashboard-live-index.html`, `scripts/bake_dashboard.py`
+- PRD status: Updated to reflect config-driven build + Worker proxy implementation
 
 ## 2) Product Summary
 
-The VIPER Ecosystem Dashboard is a single-file web application that centralizes access to CI, reports, benchmarks, coverage, docs, and repositories for VIPER projects. It is optimized for static hosting with no build step and supports two CI data modes:
+The VIPER Ecosystem Dashboard is a single-file web application that centralizes access to CI, reports, benchmarks, coverage, docs, and repositories for VIPER projects. It is built from modular source files (YAML config, Jinja2 template, CSS, JS) by a Python build script and deployed as a static file to GitHub Pages. It supports two CI data modes:
 
 - Pre-baked snapshot mode (fast load, no browser CI API calls at initial render)
-- Live mode (direct browser fetches from public APIs)
+- Live mode (browser fetches through an authenticated Cloudflare Worker proxy)
 
 The dashboard acts as both:
 
@@ -26,7 +35,8 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 
 - Aggregates cross-project CI health quickly
 - Provides consistent navigation to project artifacts
-- Works in static environments (for example GitHub Pages) without build tooling
+- Deploys as a static file on GitHub Pages
+- Overcomes the unauthenticated GitHub API rate limit (60 req/hr) through an authenticated proxy
 
 ## 4) Goals and Non-Goals
 
@@ -39,12 +49,14 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 - Support fast initial rendering via CI-baked snapshot data.
 - Preserve deep-linkable navigation via URL hash.
 - Support multiple visual themes with persisted user preference.
+- Provide authenticated GitHub API access through a Cloudflare Worker proxy (5,000 req/hr).
+- Maintain a single source of truth for all configuration (`projects.yaml`).
 
 ### Non-Goals
 
 - Real-time streaming/push updates.
-- Authenticated per-user API access in browser.
-- Server-side rendering or backend service ownership.
+- Per-user authentication or login within the dashboard UI.
+- Server-side rendering or backend service ownership (beyond the stateless Worker proxy).
 - Workflow auto-discovery at runtime (workflows are explicitly configured).
 
 ## 5) Users and Primary Use Cases
@@ -66,14 +78,17 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 
 ### In scope
 
-- Single-file dashboard with embedded CSS/JS.
+- Config-driven dashboard built from modular source files by a Python script.
+- Single-file output (`dashboard.html`) with embedded CSS and JavaScript.
 - Five configured projects (`testviper`, `xradio`, `astroviper`, `graphviper`, `toolviper`).
 - Category types: `ci`, `report`, `bench`, `coverage`, `docs`, `repo`, `custom`.
 - Landing CI overview table with per-project sections and workflow rows.
-- Branch selector for projects configured with `fixedBranch: false`.
+- Branch selector for projects configured with `fixed_branch: false`.
 - Theme selector (`dark`, `light`, `slate`, `system`) persisted in `localStorage`.
 - Hash-based routing (`#project`, `#project/category`).
 - Non-embeddable URL handling via launch panel and direct external links.
+- Cloudflare Worker proxy (`worker.js`) for authenticated GitHub and Codecov API access.
+- Automated CI build and deploy via GitHub Actions (`bake-dashboard.yml`).
 
 ### Out of scope
 
@@ -101,7 +116,7 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 
 ### 7.2 Landing Experience
 
-- Landing hero title must be configurable via `LANDING_TITLE`.
+- Landing hero title must be configurable via `dashboard.title` in `projects.yaml`.
 - Landing must display CI data status text:
   - Snapshot mode: `Snapshot from <relative time> + Refresh link`
   - Live mode: `Live data`
@@ -121,9 +136,10 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 
 ### FR-1: Project and Category Configuration
 
-- Dashboard shall be driven by a `PROJECTS` configuration array.
-- Each project shall define unique `id`, display `name`, and `categories`.
-- Each category shall define `id`, `label`, `type`, `url`, with optional type-specific fields.
+- Dashboard shall be driven by a `projects.yaml` configuration file.
+- Each project shall define unique `id`, display `name`, GitHub `owner`/`repo`, `fixed_branch` flag, `overview_workflows`, and `categories`.
+- Each category shall define `id`, `label`, `type`, `url`, with optional type-specific fields (`workflows`, `codecov`, `github`).
+- The build script (`build_dashboard.py`) reads this YAML and generates the JavaScript runtime constants.
 
 ### FR-2: Category Routing Behavior
 
@@ -145,7 +161,7 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 
 - Dashboard shall support dual-mode CI overview data:
   - Pre-baked: use `PREFETCHED_CI_DATA` + `CI_OVERVIEW_PROJECTS`
-  - Live fallback: use browser API calls + `CI_OVERVIEW_PROJECTS_FALLBACK`
+  - Live: use browser API calls (via Worker proxy) + `CI_OVERVIEW_PROJECTS`
 - If pre-baked data is available and not force-refreshed:
   - Render row status/times from embedded JSON immediately.
   - Populate non-main branch options from baked recent branches.
@@ -153,28 +169,28 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 
 ### FR-5: Branch Selection in CI Overview
 
-- For projects with `fixedBranch: false`, branch selector shall:
+- For projects with `fixed_branch: false`, branch selector shall:
   - Default to `main`
-  - Include up to two recent non-main branches when available
+  - Include up to N recent non-main branches (configured by `max_recent_branches`)
 - Changing branch shall re-fetch all workflow rows only for that project.
 
 ### FR-6: CI Category Panel
 
-- For a `ci` category, dashboard shall call one endpoint per configured workflow file:
-  - `GET /repos/{owner}/{repo}/actions/workflows/{file}/runs?per_page=1`
+- For a `ci` category, dashboard shall call one endpoint per configured workflow file via the Worker proxy:
+  - `GET /github/repos/{owner}/{repo}/actions/workflows/{file}/runs?per_page=1`
 - Panel shall show per-workflow status and relative time.
 - Empty workflow list shall render "No workflows configured."
 
 ### FR-7: Coverage Category Panel
 
-- Coverage panel shall fetch merged totals from:
-  - `GET https://api.codecov.io/api/v2/{service}/{owner}/repos/{repo}/`
+- Coverage panel shall fetch merged totals via the Worker proxy from:
+  - `GET /codecov/api/v2/{service}/{owner}/repos/{repo}/`
 - Panel shall render:
   - Coverage percentage and color state
   - Lines/hits/misses/partials
   - Branch and updated time
 - If `github` is configured, panel shall fetch latest CI row from:
-  - `GET /repos/{owner}/{repo}/actions/runs?per_page=5`
+  - `GET /github/repos/{owner}/{repo}/actions/runs?per_page=5`
 
 ### FR-8: URL and Navigation State
 
@@ -189,6 +205,7 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 
 - Dashboard shall support `dark`, `light`, `slate`, and `system` themes.
 - Selected theme shall persist in `localStorage` under `dashboard-theme`.
+- Theme labels are configurable in `projects.yaml` under `themes`.
 - Theme menu shall visually indicate active theme.
 
 ### FR-10: Loading and Error States
@@ -200,38 +217,65 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
   - `Could not load Codecov data (...)`
   - `CI status unavailable`
 
+### FR-11: Authenticated API Proxy
+
+- All runtime GitHub and Codecov API calls shall be routed through a Cloudflare Worker proxy (`worker.js`).
+- The Worker URL is configured in `projects.yaml` under `dashboard.worker_url`.
+- The Worker provides:
+  - Authenticated GitHub API access via a stored `GITHUB_TOKEN` (5,000 req/hr)
+  - CORS headers for cross-origin browser requests
+  - Path whitelisting to restrict forwarded requests
+- If `worker_url` is empty, the dashboard falls back to direct unauthenticated API calls (60 req/hr).
+
 ## 9) Data Contracts and Configuration Contracts
 
-### 9.1 Baked data contract
+### 9.1 Configuration file contract (`projects.yaml`)
 
-`PREFETCHED_CI_DATA` object format:
+`ci/config/projects.yaml` is the single source of truth. The build script reads it and generates all JavaScript runtime constants:
+
+- `PROJECTS` — array of project objects with categories
+- `CI_OVERVIEW_PROJECTS` — array of project overview workflow definitions
+- `LANDING_TITLE` — hero card title HTML
+- `LAUNCH_PANEL_TYPES` — category types that trigger the launch panel
+- `LAUNCH_PANEL_URLS` — URL hosts that trigger the launch panel
+- `DEFAULT_THEME` — initial theme
+- `THEME_LABELS` — map of theme id to display label
+- `WORKER_URL` — Cloudflare Worker proxy URL
+- `PREFETCHED_CI_DATA` — baked CI snapshot (null when not baked)
+
+### 9.2 Baked data contract
+
+`PREFETCHED_CI_DATA` object format (generated by `build_dashboard.py` when `GITHUB_TOKEN` is set):
 
 - `baked_at`: ISO-8601 UTC timestamp
-- `projects[projectId].recent_branches`: optional list of up to 2 branch names
+- `projects[projectId].recent_branches`: optional list of recent branch names
 - `projects[projectId].workflows[file].conclusion`
 - `projects[projectId].workflows[file].updated_at`
 
-### 9.2 Injection markers (strict contract)
+### 9.3 Worker proxy contract (`worker.js`)
 
-Bake script requires exact lines in HTML:
+The Cloudflare Worker exposes two route prefixes:
 
-- `const PREFETCHED_CI_DATA = null;`
-- `const CI_OVERVIEW_PROJECTS = null; /* INJECTED_BY_BAKE */`
+- `/github/*` — proxied to `api.github.com` with `Authorization: token <GITHUB_TOKEN>`
+- `/codecov/*` — proxied to `api.codecov.io` (no auth, public API)
 
-Changing these marker strings breaks injection.
+Requests not matching the path whitelist return 403. CORS headers and GitHub
+rate-limit headers are forwarded to the browser.
 
-### 9.3 CI overview config contract
+See [Dashboard-full-proxy-implementation.md](Dashboard-full-proxy-implementation.md)
+for full route details, environment variables, setup, and deployment.
 
-`CI_OVERVIEW_PROJECTS` is generated from canonical `PROJECTS` list in `scripts/bake_dashboard.py` and should remain machine-managed in baked output.
+### 9.4 CI overview config contract
 
-For unbaked local operation, `CI_OVERVIEW_PROJECTS_FALLBACK` must stay aligned with script project/workflow definitions.
+`CI_OVERVIEW_PROJECTS` is generated from `projects.yaml` by `build_dashboard.py`. Each entry maps a project's `id`, `fixed_branch`, and `overview_workflows` list. This replaces the legacy `CI_OVERVIEW_PROJECTS_FALLBACK` mechanism.
 
 ## 10) Operational and Non-Functional Requirements
 
 ### NFR-1: Deployability
 
-- Must run as a static file with no build step.
-- Must be suitable for static hosts such as GitHub Pages.
+- Output must be a single static HTML file with all CSS and JS inlined.
+- Must be deployable to static hosts such as GitHub Pages.
+- Build step requires Python 3.10+ with `jinja2` and `pyyaml`.
 
 ### NFR-2: Performance
 
@@ -242,36 +286,44 @@ For unbaked local operation, `CI_OVERVIEW_PROJECTS_FALLBACK` must stay aligned w
 
 - Missing or failed API responses must degrade gracefully without app crash.
 - If branch discovery fails, branch selector remains valid with `main` only.
+- If the Worker proxy is unreachable, baked snapshot data still renders.
 
 ### NFR-4: Maintainability
 
-- CI overview project/workflow source of truth is the Python bake script list.
-- HTML fallback list must be intentionally synchronized for local/unbaked usage.
+- All project/workflow configuration is centralized in `projects.yaml`.
+- To add a project or workflow, edit only `projects.yaml` and push to main.
+- No HTML editing is required for configuration changes.
+- The build script, CSS, JS, and template are separate files for independent editing.
 
 ### NFR-5: Security and Browser Safety
 
 - External links must open with `target="_blank"` and `rel="noopener noreferrer"` where applicable.
 - Window opener must be nulled when opening external tabs via script where possible.
+- The Worker proxy restricts forwarded paths via a whitelist.
+- The `GITHUB_TOKEN` is stored as an encrypted secret in Cloudflare (never exposed to the browser).
 
 ## 11) Constraints, Dependencies, and Risks
 
 ### Constraints
 
-- Browser-side GitHub API usage is unauthenticated in live mode.
-- Public API rate limits (GitHub unauthenticated) can cause HTTP 403.
+- Live API calls require the Cloudflare Worker to be reachable from the user's network.
+- Networks that block `*.workers.dev` (e.g., corporate VPNs/firewalls) will prevent live data; baked snapshots still work.
 - Embedded content depends on third-party framing policies.
 
 ### Dependencies
 
 - GitHub REST API (Actions endpoints)
 - Codecov v2 API
+- Cloudflare Workers (free tier, `worker.js` deployment)
 - GitHub Actions workflow `bake-dashboard.yml`
-- Valid `GITHUB_TOKEN` for bake-time script execution
+- Valid `GITHUB_TOKEN` in both Cloudflare Worker secrets and GitHub Actions secrets
+- Python build dependencies: `jinja2`, `pyyaml`
 
 ### Risks
 
-- Rate-limit exhaustion can degrade status fidelity.
-- Drift between fallback config and bake script config can create inconsistent local behavior.
+- Worker unavailability or `*.workers.dev` blocking degrades live data (mitigated by baked snapshots).
+- GitHub fine-grained PAT expiration (max 1 year) requires periodic rotation in Cloudflare.
+- Cloudflare free tier limit (100,000 req/day) could be exceeded under extreme load.
 - External service schema/availability changes can impact panel rendering.
 
 ## 12) Acceptance Criteria
@@ -287,7 +339,7 @@ For unbaked local operation, `CI_OVERVIEW_PROJECTS_FALLBACK` must stay aligned w
 
 ### AC-3: Live behavior
 
-- With null `PREFETCHED_CI_DATA`, status bar displays `Live data` and workflow rows fetch live.
+- With null `PREFETCHED_CI_DATA`, status bar displays `Live data` and workflow rows fetch live via the Worker proxy.
 
 ### AC-4: Branch switching
 
@@ -309,122 +361,30 @@ For unbaked local operation, `CI_OVERVIEW_PROJECTS_FALLBACK` must stay aligned w
 
 - API errors are presented as non-blocking, readable fallback states.
 
-## 13) Implementation Notes for Future Versions
+### AC-9: Worker proxy
 
-- Keep `scripts/bake_dashboard.py` as canonical source for CI overview project/workflow definitions.
-- Treat injection markers as immutable interface.
-- When adding a project:
-  - Add to Python `PROJECTS` list
-  - Ensure HTML `PROJECTS` app config includes matching `id` and category set
-  - Keep `CI_OVERVIEW_PROJECTS_FALLBACK` aligned for local mode
-- Prefer explicit workflow configuration over runtime discovery for predictable API behavior.
+- All live API calls from the browser go through the Worker proxy when `WORKER_URL` is configured.
+- Direct browser-to-GitHub API calls are not made when the Worker is configured.
 
-## 14) Open Questions
+## 13) Open Questions
 
-- Should live mode support authenticated browser requests (optional token) to reduce rate-limit failures?
 - Should CI overview support manual project filtering or collapsing for scale beyond five projects?
 - Should coverage panel include trend/history, or stay as latest snapshot only?
 - Should stale snapshot threshold trigger a stronger warning state on landing?
+- Should the Worker be deployed via the CI pipeline (Wrangler) instead of manually?
+- Should a custom domain be attached to the Worker to avoid `*.workers.dev` firewall blocks?
 
-## 15) Technical Specifications
+## 14) Technical Reference
 
-### 15.1 Reference Implementation and Runtime Model
+For full technical specifications — API endpoints, configuration schemas, build
+pipeline, Worker proxy details, rendering modes, panel behavior, error handling,
+performance, and security — see
+[Dashboard-full-proxy-implementation.md](Dashboard-full-proxy-implementation.md).
 
-- Primary runtime artifact: `ci/html/dashboard-live-index.html`.
-- Build/deploy model: static single-file HTML with embedded CSS and JavaScript.
-- Required runtime environment: modern browser with JavaScript enabled, `fetch` API, `localStorage`, URL hash support, and iframe support.
-- No backend service required for runtime rendering in current implementation.
+### Runtime model summary
 
-### 15.2 Rendering Modes and Switching Rules
-
-- Mode A: Pre-baked snapshot mode
-  - Condition: `PREFETCHED_CI_DATA` is non-null and no force-live refresh is requested.
-  - Landing CI overview rows are rendered from embedded JSON.
-  - Initial browser CI API calls for landing overview are avoided.
-- Mode B: Live mode
-  - Condition: `PREFETCHED_CI_DATA` is null, or user triggers refresh.
-  - Landing CI overview rows are fetched at runtime from GitHub APIs.
-- Refresh rule:
-  - Snapshot mode exposes a refresh action that forces live fetching for current session view.
-
-### 15.3 API Specifications
-
-- GitHub Actions (landing CI overview and CI category panel):
-  - `GET https://api.github.com/repos/{owner}/{repo}/actions/workflows/{file}/runs?branch={branch}&per_page=1`
-  - `GET https://api.github.com/repos/{owner}/{repo}/actions/workflows/{file}/runs?per_page=1`
-  - `GET https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=30` (recent branches)
-  - `GET https://api.github.com/repos/{owner}/{repo}/actions/runs?per_page=5` (coverage CI row)
-- Codecov (coverage panel):
-  - `GET https://api.codecov.io/api/v2/{service}/{owner}/repos/{repo}/`
-- Expected response fields consumed:
-  - GitHub: `workflow_runs[].conclusion`, `workflow_runs[].status`, `workflow_runs[].updated_at`, `workflow_runs[].head_branch`, `workflow_runs[].name`
-  - Codecov: `totals.coverage`, `totals.lines`, `totals.hits`, `totals.misses`, `totals.partials`, `branch`, `updatestamp`
-
-### 15.4 Configuration Schemas
-
-- `PROJECTS` schema:
-  - Project object: `{ id, name, categories[] }`
-  - Category object: `{ id, label, type, url, codecov?, github?, workflows? }`
-- `CI_OVERVIEW_PROJECTS` schema:
-  - `[{ id, fixedBranch, workflows: [{ file, label }] }]`
-- `PREFETCHED_CI_DATA` schema:
-  - `{ baked_at, projects: { [projectId]: { recent_branches?, workflows: { [file]: { conclusion, updated_at } } } } }`
-
-### 15.5 Bake Pipeline and Injection Contract
-
-- Bake script: `scripts/bake_dashboard.py`.
-- Required environment variable: `GITHUB_TOKEN`.
-- Optional variables: `DASHBOARD_SRC`, `DASHBOARD_OUT`.
-- Injection markers in HTML are strict and must remain exact:
-  - `const PREFETCHED_CI_DATA = null;`
-  - `const CI_OVERVIEW_PROJECTS = null; /* INJECTED_BY_BAKE */`
-- `CI_OVERVIEW_PROJECTS` is generated from bake script project definitions.
-- `CI_OVERVIEW_PROJECTS_FALLBACK` is required for local/unbaked rendering continuity.
-
-### 15.6 Routing and State Persistence
-
-- URL hash formats:
-  - Empty hash: landing
-  - `#projectId`: select project and default category
-  - `#projectId/categoryId`: select specific category
-- Theme persistence:
-  - Storage key: `dashboard-theme`
-  - Supported values: `dark`, `light`, `slate`, `system`
-
-### 15.7 Panel and Interaction Specifications
-
-- Exactly one content panel visible at a time:
-  - `landing`, `frame`, `launch-panel`, `coverage-panel`, `ci-panel`
-- Category handling:
-  - `repo`: opens new tab, center panel unchanged
-  - `coverage`: in-page coverage panel
-  - `ci`: in-page CI panel
-  - Non-embeddable URLs/types: launch panel
-  - Other URLs: iframe loader path
-
-### 15.8 Error Handling and Fallback Behavior
-
-- API request failures must not terminate app flow.
-- User-facing fallback statuses include:
-  - `unavailable (HTTP <code>)`
-  - `no runs found`
-  - `CI status unavailable`
-  - coverage load failure message with direct-open option
-- Branch discovery failure fallback:
-  - Keep branch selector usable with `main` only.
-- Iframe fallback:
-  - If loaded frame appears silently blank, route to launch panel.
-
-### 15.9 Performance and Rate-Limit Considerations
-
-- Live landing mode request budget is bounded by configured projects/workflows and branch discovery calls.
-- Pre-baked mode should avoid initial landing CI workflow requests from browser.
-- Runtime calls to GitHub in live mode are unauthenticated and subject to public rate limits (for example 60 requests/hour/IP).
-- Implementations should avoid unnecessary polling and excessive reload loops.
-
-### 15.10 Security and External Navigation
-
-- External links should use `target="_blank"` with `rel="noopener noreferrer"`.
-- Script-opened windows should clear opener linkage when supported.
-- Launch panel should be used for domains or types that cannot be safely embedded.
-
+- Build output: single static HTML file (`ci/html/dashboard.html`) with all CSS and JS inlined.
+- Build tool: `scripts/build_dashboard.py` (Python 3.10+, `jinja2`, `pyyaml`).
+- API proxy: `ci/html/worker.js` (Cloudflare Worker, deployed separately).
+- Runtime environment: modern browser with `fetch`, `localStorage`, URL hash, and iframe support.
+- No backend service beyond the stateless Worker proxy.

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ default_theme }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIPER Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+{{ css }}
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <nav id="projbar">
+    <div id="brand" onclick="goHome()" title="Return to landing page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </div>
+    <div id="proj-tabs"></div>
+    <div id="theme-switcher">
+      <button id="theme-btn" onclick="toggleThemeMenu()" title="Switch colour theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <span id="theme-label">{{ default_theme | capitalize }}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             style="width:10px;height:10px;opacity:0.5">
+          <polyline points="6,9 12,15 18,9"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div id="theme-menu">
+    <div class="theme-option" data-theme="dark" onclick="setTheme('dark')">
+      <span class="swatch" style="background:#141720; border-color:#252b38"></span>
+      Dark
+    </div>
+    <div class="theme-option" data-theme="light" onclick="setTheme('light')">
+      <span class="swatch" style="background:#ffffff; border-color:#d8dde8"></span>
+      Light
+    </div>
+    <div class="theme-option" data-theme="slate" onclick="setTheme('slate')">
+      <span class="swatch" style="background:#252d42; border-color:#323d56"></span>
+      Slate
+    </div>
+    <div class="theme-option" data-theme="system" onclick="setTheme('system')">
+      <span class="swatch"
+            style="background:linear-gradient(135deg,#fff 50%,#0d0f12 50%); border-color:#999">
+      </span>
+      System
+    </div>
+  </div>
+
+  <div id="catbar" class="empty">
+    <div id="cat-label">&mdash;</div>
+    <div id="cat-tabs"></div>
+    <button id="open-full" onclick="openFull()" title="Open current page in a new browser tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15,3 21,3 21,9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      open ↗
+    </button>
+  </div>
+
+  <div id="frame-wrap">
+    <div id="loader" class="hidden">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="landing">
+      <div id="hero-card">
+        <div id="hero-title">Dashboard</div>
+        <div class="hero-divider"></div>
+      </div>
+      <div id="ci-data-status"></div>
+      <div id="ci-overview"></div>
+    </div>
+
+    <iframe id="main-frame" title="Project content"></iframe>
+
+    <div id="launch-panel">
+      <div class="launch-icon-wrap" id="launch-icon"></div>
+      <div id="launch-title">Opening external page</div>
+      <div id="launch-url"></div>
+      <div id="launch-reason"></div>
+      <a id="launch-btn" href="#" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15,3 21,3 21,9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        Open in new tab
+      </a>
+      <div class="launch-note" id="launch-note">Opens in a new tab</div>
+    </div>
+
+    <div id="coverage-panel">
+      <div id="cov-box">
+        <div id="cov-header">
+          <div id="cov-circle">
+            <div id="cov-pct" class="shimmer" style="min-width:52px;min-height:26px">&nbsp;</div>
+            <div id="cov-pct-label">coverage</div>
+          </div>
+          <div id="cov-meta">
+            <div id="cov-name" class="shimmer" style="min-width:130px;min-height:16px">&nbsp;</div>
+            <div id="cov-branch" class="shimmer" style="min-width:100px;min-height:12px;margin-top:4px">&nbsp;</div>
+            <div id="cov-updated" class="shimmer" style="min-width:120px;min-height:11px;margin-top:4px">&nbsp;</div>
+          </div>
+        </div>
+        <div id="cov-stats">
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-lines">&#8212;</div>
+            <div class="cov-stat-lbl">Lines</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-hits" style="color:#4ade80">&#8212;</div>
+            <div class="cov-stat-lbl">Hits</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-misses" style="color:#f87171">&#8212;</div>
+            <div class="cov-stat-lbl">Misses</div>
+          </div>
+          <div class="cov-stat">
+            <div class="cov-stat-val" id="cov-parts" style="color:#fbbf24">&#8212;</div>
+            <div class="cov-stat-lbl">Partials</div>
+          </div>
+        </div>
+        <div id="cov-ci">
+          <div id="cov-ci-dot"></div>
+          <div id="cov-ci-text">Fetching CI status&#8230;</div>
+          <div id="cov-ci-time"></div>
+        </div>
+        <div id="cov-error"></div>
+        <a id="cov-open" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15,3 21,3 21,9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          Open full report &#x2197;
+        </a>
+      </div>
+    </div>
+
+    <div id="ci-panel">
+      <div id="ci-box">
+        <div id="ci-box-header">
+          <div id="ci-repo-name">&nbsp;</div>
+          <div id="ci-repo-sub">GitHub Actions &mdash; latest run per workflow</div>
+        </div>
+        <div id="ci-rows"></div>
+        <a id="ci-open" href="#" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15,3 21,3 21,9"/>
+            <line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          View all runs &#x2197;
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+{{ js }}
+</script>
+</body>
+</html>

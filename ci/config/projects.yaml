@@ -1,0 +1,182 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# VIPER Ecosystem Dashboard — Single Source of Truth
+#
+# This file drives the entire dashboard: the HTML PROJECTS config, the
+# CI overview table, and the bake-time API fetch list are all generated
+# from the data below by scripts/build_dashboard.py.
+#
+# To add a project:  copy a project block, change the fields, rebuild.
+# To add a workflow:  add an entry under overview_workflows and/or
+#                     the CI category's workflows list.
+# To change an artifact URL: edit the relevant category's url field.
+# ─────────────────────────────────────────────────────────────────────────────
+
+dashboard:
+  title: >-
+    Dashboard for <a href="https://github.com/casangi"
+    target="_blank" rel="noopener noreferrer">VIPER</a> Ecosystem
+  default_theme: light
+  worker_url: "https://viper-dashboard-proxy.scastro-287.workers.dev"
+  max_recent_branches: 4
+
+themes:
+  dark:   Dark
+  light:  Light
+  slate:  Slate
+  system: System
+
+launch_panel_types: []
+
+launch_panel_urls:
+  - github.com
+  - gitlab.com
+  - bitbucket.org
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Projects
+#
+# Each project has:
+#   id / name / owner / repo   — identity
+#   fixed_branch               — false = show branch dropdown on landing
+#   overview_workflows         — subset shown on the landing CI table
+#   categories                 — full artifact tabs (CI, Reports, Bench, …)
+#
+# The CI category's `workflows` list can be larger than overview_workflows;
+# overview_workflows controls what appears on the landing page.
+# ─────────────────────────────────────────────────────────────────────────────
+
+projects:
+  - id: testviper
+    name: testviper
+    owner: casangi
+    repo: testviper
+    fixed_branch: false
+    overview_workflows:
+      - { file: integration_tests_linux.yml,    label: "Branch Python Tests (Linux)" }
+      - { file: dispatch-receiver.yml,          label: "Repository Dispatch Receiver" }
+      - { file: python-tests-allure-report.yml, label: "Python Tests & Allure Reports" }
+    categories:
+      - id: ci
+        label: CI
+        type: ci
+        url: "https://github.com/casangi/testviper/actions"
+        workflows:
+          - { file: integration_tests_linux.yml,    label: "Branch Python Integration Tests (Linux)" }
+          - { file: dispatch-receiver.yml,          label: "Repository Dispatch Receiver" }
+          - { file: python-tests-allure-report.yml, label: "Python Integration Tests & Allure Reports" }
+      - { id: report, label: Reports,    type: report, url: "https://casangi.github.io/testviper/main/testviper/index.html" }
+      - { id: repo,   label: Repo,       type: repo,   url: "https://github.com/casangi/testviper" }
+
+  - id: xradio
+    name: xradio
+    owner: casangi
+    repo: xradio
+    fixed_branch: false
+    overview_workflows:
+      - { file: python-testing-linux.yml, label: "Python Tests (Linux)" }
+      - { file: python-testing-macos.yml, label: "Python Tests (macOS)" }
+    categories:
+      - id: ci
+        label: CI
+        type: ci
+        url: "https://github.com/casangi/xradio/actions"
+        workflows:
+          - { file: black.yml,                               label: "Code Format (Black)" }
+          - { file: python-testing-linux.yml,                label: "Python Tests (Linux)" }
+          - { file: python-testing-macos.yml,                label: "Python Tests (macOS)" }
+          - { file: python-testing-basic-schema-install.yml, label: "Python Tests Schema Install" }
+          - { file: python-testing-casatools.yml,            label: "Python Tests with casatools" }
+          - { file: python-testing-integration.yml,          label: "Python Integration Tests" }
+          - { file: run-ipynb.yml,                           label: "Python Notebook Tests" }
+      - { id: report, label: Reports,    type: report, url: "https://casangi.github.io/testviper/main/xradio/index.html" }
+      - { id: bench,  label: Benchmarks, type: bench,  url: "https://casangi.github.io/benchviper/xradio/#/" }
+      - id: coverage
+        label: Coverage
+        type: coverage
+        url: "https://app.codecov.io/gh/casangi/xradio"
+        codecov: { service: github, owner: casangi, repo: xradio }
+      - { id: docs, label: Docs, type: docs, url: "https://xradio.readthedocs.io" }
+      - { id: repo, label: Repo, type: repo, url: "https://github.com/casangi/xradio" }
+
+  - id: astroviper
+    name: astroviper
+    owner: casangi
+    repo: astroviper
+    fixed_branch: false
+    overview_workflows:
+      - { file: python-testing-linux.yml, label: "Python Tests (Linux)" }
+      - { file: python-testing-macos.yml, label: "Python Tests (macOS)" }
+    categories:
+      - id: ci
+        label: CI
+        type: ci
+        url: "https://github.com/casangi/astroviper/actions"
+        workflows:
+          - { file: black.yml,                      label: "Code Format (Black)" }
+          - { file: python-testing-linux.yml,       label: "Python Tests (Linux)" }
+          - { file: python-testing-macos.yml,       label: "Python Tests (macOS)" }
+          - { file: python-testing-integration.yml, label: "Python Integration Tests" }
+          - { file: run-ipynb.yml,                  label: "Python Notebook Tests" }
+      - { id: report, label: Reports,    type: report, url: "https://casangi.github.io/testviper/main/astroviper/index.html" }
+      - { id: bench,  label: Benchmarks, type: bench,  url: "https://casangi.github.io/benchviper/astroviper/" }
+      - id: coverage
+        label: Coverage
+        type: coverage
+        url: "https://app.codecov.io/gh/casangi/astroviper"
+        codecov: { service: github, owner: casangi, repo: astroviper }
+      - { id: repo, label: Repo, type: repo, url: "https://github.com/casangi/astroviper" }
+
+  - id: graphviper
+    name: graphviper
+    owner: casangi
+    repo: graphviper
+    fixed_branch: false
+    overview_workflows:
+      - { file: python-testing-linux.yml, label: "Python Tests (Linux)" }
+      - { file: python-testing-macos.yml, label: "Python Tests (macOS)" }
+    categories:
+      - id: ci
+        label: CI
+        type: ci
+        url: "https://github.com/casangi/graphviper/actions"
+        workflows:
+          - { file: black.yml,                      label: "Code Format (Black)" }
+          - { file: python-testing-linux.yml,       label: "Python Tests (Linux)" }
+          - { file: python-testing-macos.yml,       label: "Python Tests (macOS)" }
+          - { file: python-testing-integration.yml, label: "Python Integration Tests" }
+          - { file: run-ipynb.yml,                  label: "Python Notebook Tests" }
+      - { id: report, label: Reports,    type: report, url: "https://casangi.github.io/testviper/main/graphviper/index.html" }
+      - id: coverage
+        label: Coverage
+        type: coverage
+        url: "https://app.codecov.io/gh/casangi/graphviper"
+        codecov: { service: github, owner: casangi, repo: graphviper }
+      - { id: docs, label: Docs, type: docs, url: "https://graphviper.readthedocs.io/en/latest/" }
+      - { id: repo, label: Repo, type: repo, url: "https://github.com/casangi/graphviper" }
+
+  - id: toolviper
+    name: toolviper
+    owner: casangi
+    repo: toolviper
+    fixed_branch: false
+    overview_workflows:
+      - { file: python-testing-linux.yml, label: "Python Tests (Linux)" }
+      - { file: python-testing-macos.yml, label: "Python Tests (macOS)" }
+    categories:
+      - id: ci
+        label: CI
+        type: ci
+        url: "https://github.com/casangi/toolviper/actions"
+        workflows:
+          - { file: black.yml,                      label: "Code Format (Black)" }
+          - { file: python-testing-linux.yml,       label: "Python Tests (Linux)" }
+          - { file: python-testing-macos.yml,       label: "Python Tests (macOS)" }
+          - { file: python-testing-integration.yml, label: "Python Integration Tests" }
+          - { file: run-ipynb.yml,                  label: "Python Notebook Tests" }
+      - { id: report, label: Reports,    type: report, url: "https://casangi.github.io/testviper/main/toolviper/index.html" }
+      - id: coverage
+        label: Coverage
+        type: coverage
+        url: "https://app.codecov.io/gh/casangi/toolviper"
+        codecov: { service: github, owner: casangi, repo: toolviper }
+      - { id: repo, label: Repo, type: repo, url: "https://github.com/casangi/toolviper" }
