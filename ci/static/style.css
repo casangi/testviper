@@ -699,23 +699,95 @@ html, body {
 #ci-repo-name  { font-size: 16px; font-weight: 600; color: var(--text); }
 #ci-repo-sub   { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
                  letter-spacing: 0.08em; text-transform: uppercase; }
-.ci-row {
+
+/* CI panel — column layout aligned with landing CI overview table */
+#ci-rows-wrap {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  padding: 10px 14px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+/* Same typography as .ci-ov-table thead th (landing page).
+   Grid: dot | label | push | branch | status | last run — push shifts branch+status+time right;
+   branch column is wider; branch has extra padding before status (~2ch). */
+.ci-panel-head-row {
+  display: grid;
+  grid-template-columns:
+    9px
+    minmax(0, 1fr)
+    minmax(64px, 72px)
+    minmax(180px, 1.15fr)
+    108px
+    minmax(72px, 96px);
+  column-gap: 10px;
+  align-items: center;
+  padding: 8px 8px 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted2);
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+}
+.ci-panel-head-spacer {
+  width: 9px;
+  height: 1px;
+  flex-shrink: 0;
+}
+.ci-panel-push {
+  /* Visual gap between workflow name and branch block */
+  min-height: 1px;
+  pointer-events: none;
+}
+.ci-panel-head-branch {
+  padding-right: 2ch;
+  box-sizing: border-box;
+}
+.ci-panel-head-last {
+  text-align: right;
+  padding-right: 0;
+}
+
+.ci-row {
+  display: grid;
+  grid-template-columns:
+    9px
+    minmax(0, 1fr)
+    minmax(64px, 72px)
+    minmax(180px, 1.15fr)
+    108px
+    minmax(72px, 96px);
+  column-gap: 10px;
+  align-items: center;
+  padding: 10px 8px 10px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface2);
   position: relative;
   z-index: 1;
 }
-.ci-dot    { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
-.ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; min-width: 0; }
-.ci-branch { font-family: var(--font-mono); font-size: 11px; color: var(--accent); flex-shrink: 0;
-             min-width: 72px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex-shrink: 0; }
-.ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); flex-shrink: 0; }
+.ci-dot    { width: 9px; height: 9px; border-radius: 50%; align-self: center; background: var(--border); }
+.ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); min-width: 0;
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ci-branch { font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+             padding-right: 2ch;
+             box-sizing: border-box; }
+.ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); }
+.ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: right; }
+
+.ci-panel-empty-msg {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted2);
+}
 #ci-open {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 9px 16px;

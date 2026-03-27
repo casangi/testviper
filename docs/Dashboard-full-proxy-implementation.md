@@ -164,11 +164,12 @@ Exactly one content panel is visible at a time:
 
 Selecting `repo` opens a new tab; the center panel stays unchanged.
 
-**CI panel (`ci-panel`)**: For each configured workflow, the app requests the latest
-workflow run (`GET .../actions/workflows/{file}/runs?per_page=1`). Each row shows
-the workflow label, **branch** (GitHub `head_branch` for that run — the branch the
-job ran against), conclusion/status, and relative time. If there is no run or the
-request fails, the branch cell shows an em dash.
+**CI panel (`ci-panel`)**: A header row matches the landing CI table: **CI Job
+Description**, **Branch**, **Status**, **Last Run** (same uppercase mono styling as
+`.ci-ov-table thead`). For each configured workflow, the app requests the latest
+workflow run (`GET .../actions/workflows/{file}/runs?per_page=1`). Each data row
+shows the workflow label, **branch** (GitHub `head_branch` for that run), conclusion/status,
+and relative time. If there is no run or the request fails, the branch cell shows an em dash.
 
 ### Error handling and fallback
 

@@ -764,15 +764,17 @@ function showCIPanel(cat) {
   rowsEl.innerHTML =
     `<div class="ci-row">
        <div class="ci-dot"></div>
-       <div class="ci-label shimmer" style="min-width:220px;min-height:13px">&nbsp;</div>
-       <div class="ci-branch shimmer" style="min-width:80px;min-height:13px">&nbsp;</div>
-       <div class="ci-status shimmer" style="min-width:60px;min-height:13px">&nbsp;</div>
+       <div class="ci-label shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-panel-push" aria-hidden="true"></div>
+       <div class="ci-branch shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-status shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-time shimmer" style="min-height:13px">&nbsp;</div>
      </div>`;
 
   const workflows = cat.workflows || [];
   if (workflows.length === 0) {
     rowsEl.innerHTML =
-      '<div class="ci-row"><div class="ci-label">No workflows configured</div></div>';
+      '<div class="ci-panel-empty-msg">No workflows configured</div>';
     return;
   }
 
@@ -783,6 +785,7 @@ function showCIPanel(cat) {
     row.innerHTML =
       `<div class="ci-dot"></div>
        <div class="ci-label">${wf.label}</div>
+       <div class="ci-panel-push" aria-hidden="true"></div>
        <div class="ci-branch">\u2014</div>
        <div class="ci-status">Fetching&#8230;</div>
        <div class="ci-time"></div>`;
