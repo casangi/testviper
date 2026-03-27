@@ -164,6 +164,12 @@ Exactly one content panel is visible at a time:
 
 Selecting `repo` opens a new tab; the center panel stays unchanged.
 
+**CI panel (`ci-panel`)**: For each configured workflow, the app requests the latest
+workflow run (`GET .../actions/workflows/{file}/runs?per_page=1`). Each row shows
+the workflow label, **branch** (GitHub `head_branch` for that run — the branch the
+job ran against), conclusion/status, and relative time. If there is no run or the
+request fails, the branch cell shows an em dash.
+
 ### Error handling and fallback
 
 - API failures never terminate the app. User-facing statuses include:
@@ -457,7 +463,7 @@ python3 -m http.server 8000
 | Baked data               | Build with GITHUB_TOKEN, reload                  | "Snapshot from X ago" status   |
 | Live refresh             | Click "Refresh" link on landing                  | Status changes to "Live data"  |
 | Branch switching         | Select a non-main branch in dropdown             | Rows update with branch status |
-| Project CI panel         | Click a project → CI tab                         | Workflow statuses load         |
+| Project CI panel         | Click a project → CI tab                         | Per-workflow status, branch, and time load |
 | Coverage panel           | Click a project → Coverage tab                   | Codecov data loads             |
 | Reports iframe           | Click a project → Reports tab                    | Allure report loads in iframe  |
 | Repo tab                 | Click a project → Repo tab                       | GitHub opens in new tab        |

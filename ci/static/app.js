@@ -765,6 +765,7 @@ function showCIPanel(cat) {
     `<div class="ci-row">
        <div class="ci-dot"></div>
        <div class="ci-label shimmer" style="min-width:220px;min-height:13px">&nbsp;</div>
+       <div class="ci-branch shimmer" style="min-width:80px;min-height:13px">&nbsp;</div>
        <div class="ci-status shimmer" style="min-width:60px;min-height:13px">&nbsp;</div>
      </div>`;
 
@@ -782,11 +783,13 @@ function showCIPanel(cat) {
     row.innerHTML =
       `<div class="ci-dot"></div>
        <div class="ci-label">${wf.label}</div>
+       <div class="ci-branch">\u2014</div>
        <div class="ci-status">Fetching&#8230;</div>
        <div class="ci-time"></div>`;
     rowsEl.appendChild(row);
 
     const dot    = row.querySelector('.ci-dot');
+    const branch = row.querySelector('.ci-branch');
     const status = row.querySelector('.ci-status');
     const time   = row.querySelector('.ci-time');
 
@@ -801,15 +804,18 @@ function showCIPanel(cat) {
           const [color, label] = CI_CONCLUSION_MAP[run.conclusion]
             || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
           dot.style.background = color;
+          branch.textContent   = run.head_branch || '\u2014';
           status.textContent   = label;
           status.style.color   = color;
           time.textContent     = relTime(new Date(run.updated_at));
         } else {
+          branch.textContent = '\u2014';
           status.textContent = 'no runs found';
         }
       })
       .catch(err => {
         dot.style.background = 'var(--border)';
+        branch.textContent   = '\u2014';
         status.textContent   = 'unavailable (' + err.message + ')';
       });
   });
