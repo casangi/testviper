@@ -1,0 +1,86 @@
+name: Bake CI Dashboard
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Triggers
+#
+# 1. repository_dispatch (integration-test-trigger)
+#    Fired by xradio / astroviper / graphviper / toolviper AFTER their own
+#    python-integration-tests workflows complete on a merge to main.
+#    By the time this event arrives, all CI jobs on those repos have finished,
+#    so the baked snapshot reflects completed (not in-progress) run states.
+#
+# 2. push to main
+#    Covers testviper's own merges to main.
+#
+# 3. schedule — every hour
+#    Fallback heartbeat for quiet periods when no merges happen for a long
+#    time.  Keeps the pre-baked data fresh even during low-activity stretches.
+#
+# 4. workflow_dispatch
+#    Allows triggering a manual bake from the GitHub Actions UI for testing
+#    or to force an immediate refresh outside of the normal trigger cycle.
+# ─────────────────────────────────────────────────────────────────────────────
+on:
+  repository_dispatch:
+    types: [integration-test-trigger]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 * * * *'   # top of every hour
+  workflow_dispatch:
+
+jobs:
+  bake:
+    name: Bake and deploy dashboard
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write   # required to push to the gh-pages branch
+
+    steps:
+      # ── 1. Checkout source (main branch) ───────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python ────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # ── 3. Install build and test dependencies ─────────────────────────
+      - name: Install build and test dependencies
+        run: pip install jinja2 pyyaml pytest
+
+      # ── 4. Build dashboard and bake CI data ──────────────────────────
+      #    build_dashboard.py reads ci/config/projects.yaml, renders the
+      #    Jinja2 template with inlined CSS/JS, and bakes CI data from the
+      #    GitHub API (authenticated via GITHUB_TOKEN → 5 000 req/hr).
+      #    Output: ci/html/dashboard.html
+      - name: Build and bake dashboard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/build_dashboard.py
+
+      # ── 5. Validate build output ─────────────────────────────────────
+      #    Runs the test suite to verify config integrity, JS generation,
+      #    HTML structure, and baked data contract before deploying.
+      - name: Validate build output
+        run: pytest scripts/tests/test_build_dashboard.py -v
+
+      # ── 6. Deploy built dashboard to gh-pages ─────────────────────────
+      #    Publishes ci/html/ → gh-pages branch under the path ci/.
+      #    This is intentionally separate from the path used by
+      #    python-tests-allure-report.yml (which deploys to main/) to avoid
+      #    any gh-pages push conflicts between the two workflows.
+      #
+      #    Resulting URL:
+      #      https://casangi.github.io/testviper/ci/dashboard.html
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ci/html
+          destination_dir: ci
+          keep_files: true
+          commit_message: 'chore: build + bake CI dashboard [skip ci]'

@@ -1,0 +1,931 @@
+/* ══════════════════════════════════════════════════════════════════════
+   RESET
+   Zero out browser default spacing and make box-sizing consistent.
+══════════════════════════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   2a. THEMES
+   ─────────────────────────────────────────────────────────────────────
+   All colours are defined as CSS custom properties on [data-theme="..."]
+   selectors. The JS theme-switcher simply sets data-theme on <html>.
+   To add a new theme: add a new [data-theme="yourtheme"] block here,
+   then add an entry in the #theme-menu HTML and the THEME_LABELS object.
+
+   Variable reference:
+     --bg           Page/content background
+     --surface      Navbar and card backgrounds (slightly lighter than bg)
+     --surface2     Category bar background (slightly darker than surface)
+     --border       Primary border colour (nav separators, card edges)
+     --border2      Secondary border colour (category bar, subtler elements)
+     --accent       Highlight colour (active tabs, buttons, spinner)
+     --accent-dim   Translucent accent for hover backgrounds
+     --text         Primary readable text
+     --muted        De-emphasised text (labels, hints)
+     --muted2       Slightly more visible muted text (inactive tabs)
+     --hover-bg     Background on tab/row hover
+     --cat-hover-bg Background on category tab hover
+     --spinner-bg   The non-spinning part of the loading spinner ring
+     --panel-btn-bg Background of the launch panel icon container
+     --landing-card Card background on the landing page
+══════════════════════════════════════════════════════════════════════ */
+
+/* ── DARK theme (default) ─────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg:            #0d0f12;
+  --surface:       #141720;
+  --surface2:      #0f1219;
+  --border:        #252b38;
+  --border2:       #1c2230;
+  --accent:        #00d4aa;
+  --accent-dim:    #00d4aa22;
+  --text:          #e2e8f0;
+  --muted:         #52607a;
+  --muted2:        #7a8ba8;
+  --hover-bg:      rgba(255,255,255,0.025);
+  --cat-hover-bg:  rgba(255,255,255,0.03);
+  --spinner-bg:    #252b38;
+  --panel-btn-bg:  #1e2533;
+  --landing-card:  #141e2e;
+  --landing-glow:  rgba(0,212,170,0.08);
+}
+
+/* ── LIGHT theme ──────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:            #f4f6f9;
+  --surface:       #ffffff;
+  --surface2:      #f0f2f6;
+  --border:        #d8dde8;
+  --border2:       #e4e8f0;
+  --accent:        #0066cc;
+  --accent-dim:    #0066cc18;
+  --text:          #1a202c;
+  --muted:         #8896aa;
+  --muted2:        #5a6a80;
+  --hover-bg:      rgba(0,0,0,0.03);
+  --cat-hover-bg:  rgba(0,0,0,0.03);
+  --spinner-bg:    #d8dde8;
+  --panel-btn-bg:  #eef1f7;
+  --landing-card:  #e8edf7;
+  --landing-glow:  rgba(0,102,204,0.06);
+}
+
+/* ── SLATE theme ──────────────────────────────────────────────────── */
+[data-theme="slate"] {
+  --bg:            #1e2433;
+  --surface:       #252d42;
+  --surface2:      #1a2030;
+  --border:        #323d56;
+  --border2:       #2a3448;
+  --accent:        #7c9ef5;
+  --accent-dim:    #7c9ef522;
+  --text:          #cdd6f4;
+  --muted:         #45506b;
+  --muted2:        #6b7ea0;
+  --hover-bg:      rgba(255,255,255,0.04);
+  --cat-hover-bg:  rgba(255,255,255,0.04);
+  --spinner-bg:    #323d56;
+  --panel-btn-bg:  #2a3450;
+  --landing-card:  #1e2840;
+  --landing-glow:  rgba(124,158,245,0.07);
+}
+
+/* ── SYSTEM theme ─────────────────────────────────────────────────── */
+/* Default to light; media query overrides to dark when OS is in dark mode */
+[data-theme="system"] {
+  --bg:            #f4f6f9;    --surface:       #ffffff;
+  --surface2:      #f0f2f6;   --border:        #d8dde8;
+  --border2:       #e4e8f0;   --accent:        #0066cc;
+  --accent-dim:    #0066cc18; --text:          #1a202c;
+  --muted:         #8896aa;   --muted2:        #5a6a80;
+  --hover-bg:      rgba(0,0,0,0.03);
+  --cat-hover-bg:  rgba(0,0,0,0.03);
+  --spinner-bg:    #d8dde8;   --panel-btn-bg:  #eef1f7;
+  --landing-card:  #e8edf7;   --landing-glow:  rgba(0,102,204,0.06);
+}
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --bg:            #0d0f12;   --surface:       #141720;
+    --surface2:      #0f1219;   --border:        #252b38;
+    --border2:       #1c2230;   --accent:        #00d4aa;
+    --accent-dim:    #00d4aa22; --text:          #e2e8f0;
+    --muted:         #52607a;   --muted2:        #7a8ba8;
+    --hover-bg:      rgba(255,255,255,0.025);
+    --cat-hover-bg:  rgba(255,255,255,0.03);
+    --spinner-bg:    #252b38;   --panel-btn-bg:  #1e2533;
+    --landing-card:  #141e2e;   --landing-glow:  rgba(0,212,170,0.08);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GLOBAL CONSTANTS (not theme-specific)
+══════════════════════════════════════════════════════════════════════ */
+:root {
+  --proj-h:    44px;   /* Height of the top project navigation bar   */
+  --cat-h:     40px;   /* Height of the second category bar          */
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   2b. LAYOUT — APP SHELL
+══════════════════════════════════════════════════════════════════════ */
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  /* overflow:hidden prevents outer scrollbars — content scrolls inside the iframe */
+  overflow: hidden;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* Main flex column that fills the viewport */
+#app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── PROJECT BAR (top navigation strip) ────────────────────────────
+   Contains: brand/logo, project tabs, theme switcher.
+   overflow-x:auto allows horizontal scrolling when many projects exist.
+   NOTE: because overflow-x is set, overflow-y is implicitly clipped —
+   that's why the theme dropdown menu must live OUTSIDE this element
+   (it is placed after </nav> in the HTML and positioned via JS).
+── */
+#projbar {
+  display: flex;
+  align-items: stretch;
+  height: var(--proj-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;        /* Firefox: hide scrollbar */
+  transition: background 0.2s, border-color 0.2s;
+}
+#projbar::-webkit-scrollbar { display: none; } /* Chrome/Safari: hide scrollbar */
+
+/* ── Brand / logo (left side of project bar) ─────────────────────── */
+/* Clicking this returns to the landing page — see JS goHome() */
+#brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px 0 14px;
+  border-right: 1px solid var(--border);
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;                  /* indicates it's clickable */
+  user-select: none;
+  transition: opacity 0.15s;
+}
+#brand:hover { opacity: 0.75; }
+#brand svg { width: 16px; height: 16px; }
+
+/* ── Project tabs container ───────────────────────────────────────── */
+/* Individual tabs are created dynamically in JS (buildProjectTabs) */
+#proj-tabs { display: flex; align-items: stretch; flex: 1; }
+
+.proj-tab {
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted2);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.proj-tab:hover  { color: var(--text); background: var(--hover-bg); }
+/* Active tab gets the accent underline */
+.proj-tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* ── Theme switcher button (right side of project bar) ────────────── */
+#theme-switcher {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  position: relative; /* anchor for the dropdown positioning calculation */
+}
+
+#theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--muted2);
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+#theme-btn:hover { color: var(--text); border-color: var(--accent); background: var(--accent-dim); }
+#theme-btn svg   { width: 12px; height: 12px; }
+
+/* ── Theme dropdown menu ──────────────────────────────────────────── */
+/* IMPORTANT: This element is placed OUTSIDE #projbar in the HTML so it
+   is not clipped by projbar's overflow:auto. Its position:fixed and
+   coordinates are set dynamically by toggleThemeMenu() in JS.         */
+#theme-menu {
+  display: none;
+  position: fixed;            /* fixed so it overlays everything */
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 1000;              /* high z-index to appear above all other elements */
+  min-width: 150px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+#theme-menu.open { display: block; }
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted2);
+  transition: background 0.1s, color 0.1s;
+  white-space: nowrap;
+}
+.theme-option:hover  { background: var(--hover-bg); color: var(--text); }
+.theme-option.active { color: var(--accent); font-weight: 600; } /* current theme */
+
+/* Small colour swatch circle shown next to each theme name */
+.theme-option .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* ── CATEGORY BAR (second strip, below project bar) ────────────────
+   Shows the categories of the currently selected project.
+   The .empty class is added when no project is selected (e.g. on the
+   landing page), making it visually dimmed and non-interactive.
+── */
+#catbar {
+  display: flex;
+  align-items: stretch;
+  height: var(--cat-h);
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border2);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  transition: opacity 0.2s, background 0.2s, border-color 0.2s;
+}
+#catbar::-webkit-scrollbar { display: none; }
+#catbar.empty { opacity: 0.35; pointer-events: none; }
+
+/* Project name label at the left of the category bar */
+#cat-label {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  border-right: 1px solid var(--border2);
+  flex-shrink: 0;
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+/* Category tabs row */
+#cat-tabs { display: flex; align-items: stretch; flex: 1; padding: 0 6px; }
+
+.cat-tab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted2);
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px; /* overlap the catbar's bottom border with the active underline */
+}
+.cat-tab:hover  { color: var(--text); background: var(--cat-hover-bg); }
+.cat-tab.active { color: var(--text); font-weight: 600; }
+
+/* Each category type gets its own accent underline colour */
+.cat-tab[data-type="report"].active { border-bottom-color: #4ade80; } /* green  */
+.cat-tab[data-type="bench"].active  { border-bottom-color: #60a5fa; } /* blue   */
+.cat-tab[data-type="docs"].active   { border-bottom-color: #c084fc; } /* purple */
+.cat-tab[data-type="repo"].active   { border-bottom-color: #fb923c; } /* orange */
+.cat-tab[data-type="custom"].active    { border-bottom-color: #f87171; } /* red    */
+.cat-tab[data-type="coverage"].active  { border-bottom-color: #fbbf24; } /* yellow */
+.cat-tab[data-type="ci"].active        { border-bottom-color: #38bdf8; } /* sky    */
+
+/* SVG icon inside each category tab */
+.cat-icon { width: 13px; height: 13px; flex-shrink: 0; opacity: 0.65; }
+.cat-tab.active .cat-icon { opacity: 1; }
+/* Icon colour matches the tab's accent underline */
+.cat-tab[data-type="report"]   .cat-icon { color: #4ade80; }
+.cat-tab[data-type="bench"]    .cat-icon { color: #60a5fa; }
+.cat-tab[data-type="docs"]     .cat-icon { color: #c084fc; }
+.cat-tab[data-type="repo"]     .cat-icon { color: #fb923c; }
+.cat-tab[data-type="custom"]   .cat-icon { color: #f87171; }
+.cat-tab[data-type="coverage"] .cat-icon { color: #fbbf24; }
+.cat-tab[data-type="ci"]       .cat-icon { color: #38bdf8; }
+
+/* Repo category link inside the tab: clickable "Repo" text + external icon */
+.cat-repo-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+.cat-repo-link:hover {
+  text-decoration: underline;
+}
+.cat-repo-external {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+/* "open ↗" button at the far right of the category bar */
+#open-full {
+  margin-left: auto;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  align-self: center;
+  flex-shrink: 0;
+  padding: 4px 11px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--muted2);
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+#open-full:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+#open-full svg   { width: 11px; height: 11px; }
+
+/* ── FRAME AREA ─────────────────────────────────────────────────────
+   flex:1 makes it fill all remaining vertical space below the two nav bars.
+   position:relative is needed so the absolute-positioned #loader overlay works.
+   overflow:hidden clips the iframe — prevents iframe scrollbars bleeding out.
+── */
+#frame-wrap { flex: 1; position: relative; overflow: hidden; }
+
+/* The iframe that renders embedded content (Allure reports, ASV benchmarks, etc.) */
+#main-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;  /* white fallback before the page loads */
+  display: none;      /* hidden until a category is selected */
+}
+
+/* ── Loading spinner overlay ─────────────────────────────────────── */
+/* Covers the frame-wrap while the iframe is loading */
+#loader {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: opacity 0.3s;
+  pointer-events: none; /* allow clicks through once faded out */
+}
+#loader.hidden { opacity: 0; }
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--spinner-bg);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   2c. LANDING PAGE
+   ─────────────────────────────────────────────────────────────────────
+   Shown at first load (no hash) and when the user clicks "DASHBOARD".
+   Contains a hero card with the dashboard title at the top, followed
+   by the CI overview table (#ci-overview) showing live GitHub Actions
+   status for all 5 VIPER projects.  The UTC clock and project shortcut
+   cards from v1 have been replaced by this table.
+══════════════════════════════════════════════════════════════════════ */
+
+#landing {
+  display: flex;               /* shown by default; hidden when a project is loaded */
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* table starts near the top, not vertically centred */
+  gap: 28px;
+  height: 100%;
+  background: var(--bg);
+  transition: background 0.2s;
+  padding: 28px 24px 40px;
+  overflow-y: auto;
+}
+
+/* ── Hero rectangle ─────────────────────────────────────────────── */
+/* Compact header card — clock removed in v2, so padding is reduced  */
+#hero-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 28px 80px;
+  background: var(--landing-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  max-width: 680px;
+  width: 100%;
+  /* Subtle inner glow using box-shadow */
+  box-shadow: 0 0 0 1px var(--border),
+              inset 0 1px 0 rgba(255,255,255,0.04),
+              0 24px 64px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+/* Decorative top accent bar along the top edge of the hero card */
+#hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.6;
+}
+
+/* Subtle radial glow in the background of the hero card */
+#hero-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, var(--landing-glow) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Dashboard main title ─────────────────────────────────────────── */
+/* To change this text, edit LANDING_TITLE in the CONFIG section below */
+#hero-title {
+  font-family: var(--font-sans);
+  font-size: 28px;           /* large, prominent */
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  line-height: 1.2;
+  position: relative;        /* above the ::after pseudo-element */
+  z-index: 1;
+}
+
+/* ── Divider line below the title ────────────────────────────────── */
+.hero-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--border);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── CI Overview table (landing page, v2) ────────────────────────── */
+/* Replaces the UTC clock and project shortcut cards from v1.         */
+/* Fetches live GitHub Actions status for all 5 VIPER projects.       */
+#ci-overview {
+  width: 80%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.ci-ov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* Column header row */
+.ci-ov-table thead th {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted2);
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+}
+
+/* Project section header row (spans all columns) */
+.ci-ov-proj-row td {
+  background: var(--surface);
+  padding: 9px 12px;
+  border-top: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Flex container inside the project header cell */
+.ci-ov-proj-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Project name label */
+.ci-ov-proj-name {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Branch selector dropdown (xradio / astroviper / graphviper / toolviper) */
+.ci-ov-branch-select {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--surface2);
+  color: var(--muted2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 8px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ci-ov-branch-select:hover,
+.ci-ov-branch-select:focus { border-color: var(--accent); color: var(--accent); }
+
+/* "Open in GitHub ↗" link in the project header */
+.ci-ov-open-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted2);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ci-ov-open-link:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Workflow data rows */
+.ci-ov-wf-row td {
+  padding: 8px 12px;
+  color: var(--muted2);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.ci-ov-wf-row:last-of-type td { border-bottom: none; }
+.ci-ov-wf-row:hover td { background: var(--hover-bg); }
+
+/* Dot cell — fixed narrow width to keep the indicator compact */
+.ci-ov-dot-cell { width: 28px; }
+
+/* Status indicator dot */
+.ci-ov-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* Status text (colour is set inline by JS after fetch) */
+.ci-ov-status { font-size: 12px; }
+
+/* Relative timestamp */
+.ci-ov-time { font-size: 11px; color: var(--muted); }
+
+/* ── Data status bar above the CI overview table ─────────────────── */
+/* Shows "Snapshot from X ago · ↺ Refresh" or "Live data".           */
+#ci-data-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Refresh link inside the status bar */
+.ci-refresh-link {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted2);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 7px;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ci-refresh-link:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── CI panel (Panel 5 — type "ci") ─────────────────────────────── */
+#ci-panel {
+  display: none;   /* toggled to flex by showCIPanel() */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--bg);
+  overflow-y: auto;
+  padding: 32px 24px;
+  transition: background 0.2s;
+}
+#ci-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px 36px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  max-width: 900px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: hidden;
+}
+#ci-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #38bdf8, transparent);
+  opacity: 0.6;
+}
+#ci-box-header { display: flex; flex-direction: column; gap: 4px; position: relative; z-index: 1; }
+#ci-repo-name  { font-size: 16px; font-weight: 600; color: var(--text); }
+#ci-repo-sub   { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+                 letter-spacing: 0.08em; text-transform: uppercase; }
+.ci-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  position: relative;
+  z-index: 1;
+}
+.ci-dot    { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+.ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; }
+.ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); }
+.ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+#ci-open {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 13px; color: var(--muted2); text-decoration: none;
+  background: var(--surface2);
+  transition: border-color 0.15s, color 0.15s;
+  align-self: flex-start; position: relative; z-index: 1;
+}
+#ci-open:hover { border-color: var(--accent); color: var(--accent); }
+#ci-open svg   { width: 13px; height: 13px; flex-shrink: 0; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   2d. LAUNCH PANEL
+   ─────────────────────────────────────────────────────────────────────
+   Shown instead of the iframe when a URL cannot be embedded.
+   GitHub/GitLab set X-Frame-Options: DENY which causes Firefox (and
+   others) to refuse to display the page inside an iframe.
+   The launch panel shows the URL and a button to open it in a new tab.
+══════════════════════════════════════════════════════════════════════ */
+
+#launch-panel {
+  display: none;  /* toggled to flex by showLaunchPanel() */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  height: 100%;
+  background: var(--bg);
+  font-family: var(--font-sans);
+  text-align: center;
+  transition: background 0.2s;
+}
+
+/* Icon container square */
+.launch-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-btn-bg);
+  border: 1px solid var(--border);
+}
+.launch-icon-wrap svg { width: 28px; height: 28px; }
+
+#launch-title  { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: 0.02em; }
+#launch-url    { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+                 max-width: 480px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#launch-reason { font-size: 12px; color: var(--muted2); max-width: 380px; line-height: 1.6; }
+
+/* Primary CTA button */
+#launch-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 28px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: opacity 0.15s, transform 0.1s;
+}
+#launch-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+#launch-btn svg   { width: 14px; height: 14px; }
+
+.launch-note { font-size: 11px; font-family: var(--font-mono); color: var(--muted); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   2e. COVERAGE PANEL
+   ─────────────────────────────────────────────────────────────────────
+   Shown when a category has type "coverage". Calls the Codecov v2 repo
+   endpoint (not /commits/) to get authoritative merged totals for the
+   default branch, and the GitHub Actions API for the latest CI status.
+   Renders a summary card: percentage circle, line/hit/miss stats, CI row.
+══════════════════════════════════════════════════════════════════════ */
+
+#coverage-panel {
+  display: none;   /* toggled to flex by showCoveragePanel() */
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  height: 100%;
+  background: var(--bg);
+  overflow-y: auto;
+  padding: 32px 24px;
+  transition: background 0.2s;
+}
+
+/* Main card container */
+#cov-box {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 36px;
+  max-width: 580px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  position: relative;
+}
+
+/* Decorative yellow accent bar at the top of the card */
+#cov-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+  border-radius: 12px 12px 0 0;
+  opacity: 0.7;
+}
+
+/* Header row: circle + meta text */
+#cov-header { display: flex; align-items: center; gap: 24px; }
+
+/* Circular percentage display */
+#cov-circle {
+  flex-shrink: 0;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.3s;
+}
+#cov-pct       { font-family: var(--font-mono); font-size: 22px; font-weight: 600; line-height: 1; }
+#cov-pct-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+                 color: var(--muted); text-transform: uppercase; margin-top: 3px; }
+
+/* Repo name, branch, updated timestamp */
+#cov-meta    { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+#cov-name    { font-size: 14px; font-weight: 600; color: var(--text); }
+#cov-branch  { font-family: var(--font-mono); font-size: 11px; color: var(--muted2); }
+#cov-updated { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+/* Stats row: lines / hits / misses / partials */
+#cov-stats { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.cov-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-right: 1px solid var(--border);
+}
+.cov-stat:last-child { border-right: none; }
+.cov-stat-val { font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--text); }
+.cov-stat-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+                color: var(--muted); text-transform: uppercase; }
+
+/* CI status row */
+#cov-ci {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+}
+#cov-ci-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
+#cov-ci-text { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; }
+#cov-ci-time { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+
+/* Inline error message */
+#cov-error { display: none; font-family: var(--font-mono); font-size: 11px;
+             color: var(--muted2); line-height: 1.6; }
+
+/* "Open full report" button */
+#cov-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-decoration: none;
+  align-self: flex-start;
+  transition: opacity 0.15s, transform 0.1s;
+}
+#cov-open:hover { opacity: 0.88; transform: translateY(-1px); }
+#cov-open svg   { width: 13px; height: 13px; }
+
+/* Shimmer loading skeleton */
+.shimmer {
+  background: linear-gradient(90deg, var(--border) 25%, var(--surface2) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+  display: inline-block;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
