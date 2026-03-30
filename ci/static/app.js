@@ -219,9 +219,9 @@ function buildCIOverview(forceLive) {
     `<tr>` +
     `<th style="width:28px"></th>` +
     `<th>CI Job Description</th>` +
-    `<th style="width:110px">Branch</th>` +
-    `<th style="width:110px">Status</th>` +
-    `<th style="width:120px">Last Run</th>` +
+    `<th style="width:100px">Branch</th>` +
+    `<th style="width:96px">Status</th>` +
+    `<th style="width:108px">Last Run</th>` +
     `</tr>`;
   table.appendChild(thead);
 
@@ -237,27 +237,31 @@ function buildCIOverview(forceLive) {
 
     const projBaked = usePrebaked ? (PREFETCHED_CI_DATA.projects || {})[cfg.id] : null;
 
-    const projRow  = document.createElement('tr');
+    const projRow = document.createElement('tr');
     projRow.className = 'ci-ov-proj-row';
-    const projCell = document.createElement('td');
-    projCell.colSpan = 5;
 
-    const inner = document.createElement('div');
-    inner.className = 'ci-ov-proj-inner';
+    const dotTd = document.createElement('td');
+    dotTd.className = 'ci-ov-dot-cell';
+    projRow.appendChild(dotTd);
 
-    const nameSpan       = document.createElement('span');
-    nameSpan.className   = 'ci-ov-proj-name';
+    const nameTd = document.createElement('td');
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'ci-ov-proj-name';
     nameSpan.textContent = proj.name;
-    inner.appendChild(nameSpan);
+    nameTd.appendChild(nameSpan);
+    projRow.appendChild(nameTd);
+
+    const branchTd = document.createElement('td');
+    branchTd.className = 'ci-ov-proj-branch-cell';
 
     let selectEl = null;
     if (!cfg.fixedBranch) {
       selectEl = document.createElement('select');
       selectEl.className = 'ci-ov-branch-select';
-      selectEl.title     = 'Select branch';
+      selectEl.title = 'Select branch';
 
-      const mainOpt       = document.createElement('option');
-      mainOpt.value       = 'main';
+      const mainOpt = document.createElement('option');
+      mainOpt.value = 'main';
       mainOpt.textContent = 'main';
       selectEl.appendChild(mainOpt);
 
@@ -265,18 +269,18 @@ function buildCIOverview(forceLive) {
 
       if (projBaked && projBaked.recent_branches && projBaked.recent_branches.length) {
         projBaked.recent_branches.forEach(b => {
-          const opt       = document.createElement('option');
-          opt.value       = b;
-          opt.textContent = b;
+          const opt = document.createElement('option');
+          opt.value = b;
+          opt.textContent = b.length > 40 ? b.slice(0, 37) + '\u2026' : b;
           selectEl.appendChild(opt);
         });
         resizeBranchSelect(selectEl);
       } else {
         fetchRecentBranches(owner, repo).then(branches => {
           branches.forEach(b => {
-            const opt       = document.createElement('option');
-            opt.value       = b;
-            opt.textContent = b;
+            const opt = document.createElement('option');
+            opt.value = b;
+            opt.textContent = b.length > 40 ? b.slice(0, 37) + '\u2026' : b;
             selectEl.appendChild(opt);
           });
           resizeBranchSelect(selectEl);
@@ -288,19 +292,25 @@ function buildCIOverview(forceLive) {
         refreshProjectRows(tbody, owner, repo, cfg.id, cfg.workflows, selectEl.value);
       });
 
-      inner.appendChild(selectEl);
+      branchTd.appendChild(selectEl);
     }
+    projRow.appendChild(branchTd);
 
-    const openLink     = document.createElement('a');
+    const statusTd = document.createElement('td');
+    statusTd.className = 'ci-ov-proj-status-cell';
+    projRow.appendChild(statusTd);
+
+    const lastTd = document.createElement('td');
+    lastTd.className = 'ci-ov-proj-last-cell';
+    const openLink = document.createElement('a');
     openLink.className = 'ci-ov-open-link';
-    openLink.href      = actionsUrl;
-    openLink.target    = '_blank';
-    openLink.rel       = 'noopener noreferrer';
+    openLink.href = actionsUrl;
+    openLink.target = '_blank';
+    openLink.rel = 'noopener noreferrer';
     openLink.innerHTML = extSvg + '&nbsp;Open in GitHub';
-    inner.appendChild(openLink);
+    lastTd.appendChild(openLink);
+    projRow.appendChild(lastTd);
 
-    projCell.appendChild(inner);
-    projRow.appendChild(projCell);
     tbody.appendChild(projRow);
 
     cfg.workflows.forEach(wf => {
@@ -520,7 +530,7 @@ function selectCategory(projId, catId) {
   history.replaceState(null, '', `#${projId}/${catId}`);
 
   if (cat.type === 'ci') {
-    showCIPanel(cat);
+    showCIPanel(cat, projId);
   } else if (cat.type === 'coverage') {
     showCoveragePanel(cat);
   } else if (cat.type === 'repo') {
@@ -747,7 +757,7 @@ function loadFromHash() {
    CI PANEL
 ══════════════════════════════════════════════════════════════════════════ */
 
-function showCIPanel(cat) {
+function showCIPanel(cat, projId) {
   document.getElementById('loader').classList.add('hidden');
   showPanel('ci-panel');
 
@@ -778,6 +788,10 @@ function showCIPanel(cat) {
     return;
   }
 
+  const panelBaked = PREFETCHED_CI_DATA
+    && PREFETCHED_CI_DATA.projects[projId]
+    && PREFETCHED_CI_DATA.projects[projId].panel_workflows;
+
   rowsEl.innerHTML = '';
   workflows.forEach(wf => {
     const row = document.createElement('div');
@@ -795,6 +809,18 @@ function showCIPanel(cat) {
     const branch = row.querySelector('.ci-branch');
     const status = row.querySelector('.ci-status');
     const time   = row.querySelector('.ci-time');
+
+    const baked = panelBaked && panelBaked[wf.file];
+    if (baked) {
+      const [color, label] = CI_CONCLUSION_MAP[baked.conclusion]
+        || ['#7a8ba8', baked.conclusion || 'unknown'];
+      dot.style.background = color;
+      branch.textContent   = baked.head_branch || '\u2014';
+      status.textContent   = label;
+      status.style.color   = color;
+      time.textContent     = relTime(new Date(baked.updated_at));
+      return;
+    }
 
     fetch(
       ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${wf.file}/runs?per_page=1`),

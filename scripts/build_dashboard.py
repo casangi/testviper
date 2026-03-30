@@ -89,6 +89,17 @@ def fetch_workflow_run(owner, repo, wf_file, branch, token):
     return runs[0] if runs else None
 
 
+def fetch_workflow_run_any_branch(owner, repo, wf_file, token):
+    """Fetch the latest run for a workflow on any branch (used by CI panels)."""
+    path = (
+        f"/repos/{owner}/{repo}/actions/workflows/{wf_file}/runs"
+        f"?per_page=1"
+    )
+    data = _gh_get(path, token)
+    runs = data.get("workflow_runs", [])
+    return runs[0] if runs else None
+
+
 def fetch_recent_branches(owner, repo, token, max_branches=2):
     path = f"/repos/{owner}/{repo}/actions/runs?per_page=30"
     data = _gh_get(path, token)
@@ -209,6 +220,50 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
                 else:
                     failures += 1
                     print("no data")
+
+            # Fetch CI panel workflows (latest run on any branch)
+            ci_cats = [c for c in proj.get("categories", [])
+                       if c.get("type") == "ci"]
+            panel_wfs = {wf["file"] for c in ci_cats
+                         for wf in c.get("workflows", [])}
+            # Exclude workflows already fetched for overview (avoid duplicate calls)
+            overview_wfs = {wf["file"] for wf in proj.get("overview_workflows", [])}
+            extra_panel_wfs = panel_wfs - overview_wfs
+            panel_data: dict = {}
+
+            # Re-fetch overview workflows without branch filter for panel use
+            for wf_file in overview_wfs & panel_wfs:
+                print(f"  Fetching panel run: {wf_file} (any branch) ...", end=" ")
+                run = fetch_workflow_run_any_branch(owner, repo, wf_file, token)
+                total_calls += 1
+                if run:
+                    panel_data[wf_file] = {
+                        "conclusion":  run.get("conclusion") or run.get("status") or "unknown",
+                        "updated_at":  run.get("updated_at", ""),
+                        "head_branch": run.get("head_branch", ""),
+                    }
+                    print(panel_data[wf_file]["conclusion"])
+                else:
+                    failures += 1
+                    print("no data")
+
+            for wf_file in sorted(extra_panel_wfs):
+                print(f"  Fetching panel run: {wf_file} (any branch) ...", end=" ")
+                run = fetch_workflow_run_any_branch(owner, repo, wf_file, token)
+                total_calls += 1
+                if run:
+                    panel_data[wf_file] = {
+                        "conclusion":  run.get("conclusion") or run.get("status") or "unknown",
+                        "updated_at":  run.get("updated_at", ""),
+                        "head_branch": run.get("head_branch", ""),
+                    }
+                    print(panel_data[wf_file]["conclusion"])
+                else:
+                    failures += 1
+                    print("no data")
+
+            if panel_data:
+                proj_data["panel_workflows"] = panel_data
 
             if not proj.get("fixed_branch", False):
                 print("  Fetching recent branches ...", end=" ")

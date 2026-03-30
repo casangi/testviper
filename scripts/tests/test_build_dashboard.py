@@ -378,6 +378,32 @@ class TestBakeDataStructure:
             if not proj.get("fixed_branch", False):
                 assert "recent_branches" in proj_data
 
+    def test_bake_panel_workflows_present(self, config):
+        with mock.patch.object(build_dashboard, "_gh_get", side_effect=self._mock_gh_get):
+            result = build_dashboard.bake_ci_data(config, "fake-token")
+
+        assert result is not None
+        for proj in config["projects"]:
+            pid = proj["id"]
+            ci_cats = [c for c in proj.get("categories", []) if c.get("type") == "ci"]
+            panel_wfs = {wf["file"] for c in ci_cats for wf in c.get("workflows", [])}
+            if not panel_wfs:
+                continue
+            proj_data = result["projects"][pid]
+            assert "panel_workflows" in proj_data, (
+                f"Missing panel_workflows in baked data for '{pid}'"
+            )
+            for wf_file in panel_wfs:
+                assert wf_file in proj_data["panel_workflows"], (
+                    f"Missing panel workflow '{wf_file}' in baked data for '{pid}'"
+                )
+                wf_data = proj_data["panel_workflows"][wf_file]
+                assert "conclusion" in wf_data
+                assert "updated_at" in wf_data
+                assert "head_branch" in wf_data, (
+                    f"Missing head_branch in panel workflow '{wf_file}' for '{pid}'"
+                )
+
     def test_bake_recent_branches_excludes_main(self, config):
         with mock.patch.object(build_dashboard, "_gh_get", side_effect=self._mock_gh_get):
             result = build_dashboard.bake_ci_data(config, "fake-token")
@@ -438,6 +464,34 @@ class TestApiHelpers:
         ):
             result = build_dashboard.fetch_workflow_run("org", "repo", "test.yml", "main", "tok")
         assert result is None
+
+    def test_fetch_workflow_run_any_branch_returns_first_run(self):
+        fake_run = {
+            "conclusion": "success",
+            "updated_at": "2025-01-01T00:00:00Z",
+            "head_branch": "feature-x",
+        }
+        with mock.patch.object(
+            build_dashboard, "_gh_get",
+            return_value={"workflow_runs": [fake_run]},
+        ):
+            result = build_dashboard.fetch_workflow_run_any_branch("org", "repo", "test.yml", "tok")
+        assert result == fake_run
+
+    def test_fetch_workflow_run_any_branch_returns_none_on_empty(self):
+        with mock.patch.object(
+            build_dashboard, "_gh_get",
+            return_value={"workflow_runs": []},
+        ):
+            result = build_dashboard.fetch_workflow_run_any_branch("org", "repo", "test.yml", "tok")
+        assert result is None
+
+    def test_fetch_workflow_run_any_branch_no_branch_param(self):
+        """Verify the API path does not include a branch query parameter."""
+        with mock.patch.object(build_dashboard, "_gh_get", return_value={"workflow_runs": []}) as m:
+            build_dashboard.fetch_workflow_run_any_branch("org", "repo", "test.yml", "tok")
+        called_path = m.call_args[0][0]
+        assert "branch=" not in called_path
 
     def test_fetch_recent_branches_deduplicates(self):
         runs = [
