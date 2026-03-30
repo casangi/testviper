@@ -206,7 +206,7 @@
       align-items: center;
       padding: 0 22px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 400;
       color: var(--muted2);
       border-bottom: 2px solid transparent;
@@ -311,7 +311,7 @@
       align-items: center;
       padding: 0 16px;
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 600;
       letter-spacing: 0.08em;
       color: var(--muted);
@@ -331,7 +331,7 @@
       gap: 7px;
       padding: 0 16px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 400;
       color: var(--muted2);
       white-space: nowrap;
@@ -534,9 +534,10 @@
     /* ── CI Overview table (landing page, v2) ────────────────────────── */
     /* Replaces the UTC clock and project shortcut cards from v1.         */
     /* Fetches live GitHub Actions status for all 5 VIPER projects.       */
+    /* Narrower than 1100px so Branch/Status/Last Run sit closer to job names (less dead space). */
     #ci-overview {
-      width: 80%;
-      max-width: 1100px;
+      width: 72%;
+      max-width: 900px;
       margin: 0 auto;
     }
 
@@ -553,29 +554,23 @@
       letter-spacing: 0.04em;
       text-transform: uppercase;
       color: var(--muted2);
-      padding: 8px 12px;
+      padding: 8px 8px;
       border-bottom: 2px solid var(--border);
       text-align: left;
     }
 
-    /* Project section header row (spans all columns) */
+    /* Project section — one row per project, same 5 columns as thead / workflow rows
+       (dot | name | branch menu | — | Open in GitHub) so the branch select lines up with BRANCH. */
     .ci-ov-proj-row td {
       background: var(--surface);
-      padding: 9px 12px;
+      padding: 9px 8px;
       border-top: 2px solid var(--border);
       border-bottom: 1px solid var(--border);
-    }
-
-    /* Flex container inside the project header cell */
-    .ci-ov-proj-inner {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      vertical-align: middle;
     }
 
     /* Project name label */
     .ci-ov-proj-name {
-      flex: 1;
       font-family: var(--font-sans);
       font-size: 13px;
       font-weight: 600;
@@ -617,13 +612,25 @@
 
     /* Workflow data rows */
     .ci-ov-wf-row td {
-      padding: 8px 12px;
+      padding: 8px 8px;
       color: var(--muted2);
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
     }
     .ci-ov-wf-row:last-of-type td { border-bottom: none; }
     .ci-ov-wf-row:hover td { background: var(--hover-bg); }
+
+    /* Pull Branch/Status block slightly left vs job column (tighter than default cell padding sum). */
+    .ci-ov-table thead th:nth-child(2),
+    .ci-ov-wf-row td:nth-child(2),
+    .ci-ov-proj-row td:nth-child(2) {
+      padding-right: 4px;
+    }
+    .ci-ov-table thead th:nth-child(3),
+    .ci-ov-wf-row td:nth-child(3),
+    .ci-ov-proj-row td:nth-child(3) {
+      padding-left: 4px;
+    }
 
     /* Dot cell — fixed narrow width to keep the indicator compact */
     .ci-ov-dot-cell { width: 28px; }
@@ -690,7 +697,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 14px;
-      max-width: 900px;
+      max-width: 960px;
       width: 100%;
       box-shadow: 0 8px 32px rgba(0,0,0,0.2);
       position: relative;
@@ -708,21 +715,96 @@
     #ci-repo-name  { font-size: 16px; font-weight: 600; color: var(--text); }
     #ci-repo-sub   { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
                      letter-spacing: 0.08em; text-transform: uppercase; }
-    .ci-row {
+
+    /* CI panel — column layout aligned with landing CI overview table */
+    #ci-rows-wrap {
       display: flex;
-      align-items: center;
+      flex-direction: column;
       gap: 10px;
-      padding: 10px 14px;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+    /* Same typography as .ci-ov-table thead th (landing page).
+       Grid: dot | label | push | branch | status | last run.
+       Label column is the only 1fr — branch uses a px max (no fr) so long job names are not squeezed.
+       Push widens the gap between job description and branch; branch padding 0 keeps Status close. */
+    .ci-panel-head-row {
+      display: grid;
+      grid-template-columns:
+        9px
+        minmax(0, 1fr)
+        minmax(80px, 120px)
+        minmax(112px, 200px)
+        100px
+        minmax(72px, 96px);
+      column-gap: 10px;
+      align-items: center;
+      padding: 8px 8px 8px 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted2);
+      border-bottom: 2px solid var(--border);
+      text-align: left;
+    }
+    .ci-panel-head-spacer {
+      width: 9px;
+      height: 1px;
+      flex-shrink: 0;
+    }
+    .ci-panel-push {
+      /* Visual gap between workflow name and branch block */
+      min-height: 1px;
+      pointer-events: none;
+    }
+    .ci-panel-head-branch {
+      padding-right: 0;
+      box-sizing: border-box;
+    }
+    .ci-panel-head-last {
+      text-align: right;
+      padding-right: 0;
+    }
+
+    .ci-row {
+      display: grid;
+      grid-template-columns:
+        9px
+        minmax(0, 1fr)
+        minmax(80px, 120px)
+        minmax(112px, 200px)
+        100px
+        minmax(72px, 96px);
+      column-gap: 10px;
+      align-items: center;
+      padding: 10px 8px 10px 14px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--surface2);
       position: relative;
       z-index: 1;
     }
-    .ci-dot    { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
-    .ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; }
-    .ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); }
-    .ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+    .ci-dot    { width: 9px; height: 9px; border-radius: 50%; align-self: center; background: var(--border); }
+    .ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); min-width: 0;
+                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ci-branch { font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                 padding-right: 0;
+                 box-sizing: border-box; min-width: 0; }
+    .ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); min-width: 0; }
+    .ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: right; }
+
+    .ci-panel-empty-msg {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface2);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--muted2);
+    }
     #ci-open {
       display: inline-flex; align-items: center; gap: 7px;
       padding: 9px 16px;
@@ -1097,7 +1179,17 @@
           <div id="ci-repo-name">&nbsp;</div>
           <div id="ci-repo-sub">GitHub Actions &mdash; latest run per workflow</div>
         </div>
-        <div id="ci-rows"></div>
+        <div id="ci-rows-wrap">
+          <div class="ci-panel-head-row" id="ci-panel-head-row">
+            <span class="ci-panel-head-spacer" aria-hidden="true"></span>
+            <span>CI Job Description</span>
+            <span class="ci-panel-push" aria-hidden="true"></span>
+            <span class="ci-panel-head-branch">Branch</span>
+            <span>Status</span>
+            <span class="ci-panel-head-last">Last Run</span>
+          </div>
+          <div id="ci-rows"></div>
+        </div>
         <a id="ci-open" href="#" target="_blank" rel="noopener noreferrer">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
@@ -1113,14 +1205,15 @@
 </div>
 
 <script>
-const PROJECTS = [{"id":"testviper","name":"testviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/testviper/actions","github":{"owner":"casangi","repo":"testviper"},"workflows":[{"file":"integration_tests_linux.yml","label":"Branch Python Integration Tests (Linux)"},{"file":"dispatch-receiver.yml","label":"Repository Dispatch Receiver"},{"file":"python-tests-allure-report.yml","label":"Python Integration Tests & Allure Reports"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/testviper/index.html"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/testviper"}]},{"id":"xradio","name":"xradio","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/xradio/actions","github":{"owner":"casangi","repo":"xradio"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-basic-schema-install.yml","label":"Python Tests Schema Install"},{"file":"python-testing-casatools.yml","label":"Python Tests with casatools"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/xradio/index.html"},{"id":"bench","label":"Benchmarks","type":"bench","url":"https://casangi.github.io/benchviper/xradio/#/"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/xradio","codecov":{"service":"github","owner":"casangi","repo":"xradio"},"github":{"owner":"casangi","repo":"xradio"}},{"id":"docs","label":"Docs","type":"docs","url":"https://xradio.readthedocs.io"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/xradio"}]},{"id":"astroviper","name":"astroviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/astroviper/actions","github":{"owner":"casangi","repo":"astroviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/astroviper/index.html"},{"id":"bench","label":"Benchmarks","type":"bench","url":"https://casangi.github.io/benchviper/astroviper/"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/astroviper","codecov":{"service":"github","owner":"casangi","repo":"astroviper"},"github":{"owner":"casangi","repo":"astroviper"}},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/astroviper"}]},{"id":"graphviper","name":"graphviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/graphviper/actions","github":{"owner":"casangi","repo":"graphviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/graphviper/index.html"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/graphviper","codecov":{"service":"github","owner":"casangi","repo":"graphviper"},"github":{"owner":"casangi","repo":"graphviper"}},{"id":"docs","label":"Docs","type":"docs","url":"https://graphviper.readthedocs.io/en/latest/"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/graphviper"}]},{"id":"toolviper","name":"toolviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/toolviper/actions","github":{"owner":"casangi","repo":"toolviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/toolviper/index.html"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/toolviper","codecov":{"service":"github","owner":"casangi","repo":"toolviper"},"github":{"owner":"casangi","repo":"toolviper"}},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/toolviper"}]}];
+const PROJECTS = [{"id":"testviper","name":"testviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/testviper/actions","github":{"owner":"casangi","repo":"testviper"},"workflows":[{"file":"integration_tests_linux.yml","label":"Integration Tests on Branch (Linux)"},{"file":"dispatch-receiver.yml","label":"Repository Dispatch Receiver"},{"file":"python-tests-allure-report.yml","label":"Integration Tests & Allure Reports"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/testviper/index.html"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/testviper"}]},{"id":"xradio","name":"xradio","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/xradio/actions","github":{"owner":"casangi","repo":"xradio"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-basic-schema-install.yml","label":"Python Tests Schema Install"},{"file":"python-testing-casatools.yml","label":"Python Tests with casatools"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/xradio/index.html"},{"id":"bench","label":"Benchmarks","type":"bench","url":"https://casangi.github.io/benchviper/xradio/#/"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/xradio","codecov":{"service":"github","owner":"casangi","repo":"xradio"},"github":{"owner":"casangi","repo":"xradio"}},{"id":"docs","label":"Docs","type":"docs","url":"https://xradio.readthedocs.io"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/xradio"}]},{"id":"astroviper","name":"astroviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/astroviper/actions","github":{"owner":"casangi","repo":"astroviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/astroviper/index.html"},{"id":"bench","label":"Benchmarks","type":"bench","url":"https://casangi.github.io/benchviper/astroviper/"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/astroviper","codecov":{"service":"github","owner":"casangi","repo":"astroviper"},"github":{"owner":"casangi","repo":"astroviper"}},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/astroviper"}]},{"id":"graphviper","name":"graphviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/graphviper/actions","github":{"owner":"casangi","repo":"graphviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/graphviper/index.html"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/graphviper","codecov":{"service":"github","owner":"casangi","repo":"graphviper"},"github":{"owner":"casangi","repo":"graphviper"}},{"id":"docs","label":"Docs","type":"docs","url":"https://graphviper.readthedocs.io/en/latest/"},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/graphviper"}]},{"id":"toolviper","name":"toolviper","categories":[{"id":"ci","label":"CI","type":"ci","url":"https://github.com/casangi/toolviper/actions","github":{"owner":"casangi","repo":"toolviper"},"workflows":[{"file":"black.yml","label":"Code Format (Black)"},{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"},{"file":"python-testing-integration.yml","label":"Python Integration Tests"},{"file":"run-ipynb.yml","label":"Python Notebook Tests"}]},{"id":"report","label":"Reports","type":"report","url":"https://casangi.github.io/testviper/main/toolviper/index.html"},{"id":"coverage","label":"Coverage","type":"coverage","url":"https://app.codecov.io/gh/casangi/toolviper","codecov":{"service":"github","owner":"casangi","repo":"toolviper"},"github":{"owner":"casangi","repo":"toolviper"}},{"id":"repo","label":"Repo","type":"repo","url":"https://github.com/casangi/toolviper"}]}];
 const LANDING_TITLE = "Dashboard for <a href=\"https://github.com/casangi\" target=\"_blank\" rel=\"noopener noreferrer\">VIPER</a> Ecosystem";
 const LAUNCH_PANEL_TYPES = [];
 const LAUNCH_PANEL_URLS = ["github.com", "gitlab.com", "bitbucket.org"];
 const DEFAULT_THEME = "light";
 const THEME_LABELS = {"dark": "Dark", "light": "Light", "slate": "Slate", "system": "System"};
 const WORKER_URL = "https://viper-dashboard-proxy.scastro-287.workers.dev";
-const PREFETCHED_CI_DATA = {"baked_at":"2026-03-30T14:22:09Z","projects":{"testviper":{"workflows":{"integration_tests_linux.yml":{"conclusion":"success","updated_at":"2026-03-27T14:23:34Z"},"dispatch-receiver.yml":{"conclusion":"success","updated_at":"2026-03-19T17:39:52Z"},"python-tests-allure-report.yml":{"conclusion":"failure","updated_at":"2026-03-27T14:25:51Z"}},"recent_branches":["41-cleanup-repo","gh-pages"]},"xradio":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-26T19:50:43Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-26T19:49:33Z"}},"recent_branches":["fix-scan-intent-link","454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks","559-api-documentation-missing","540-xradio-changes-needed-for-astroviper-demonstrator"]},"astroviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-18T14:40:22Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-18T14:40:31Z"}},"recent_branches":["183-add-dask-parallelism-for-cube-single-field-imaging","215-multi_gaussian2d_fitpy-yx---xy-and-notebook-clarifications","copilot/fix-colab-link-and-imports"]},"graphviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-19T17:36:43Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-19T17:56:40Z"}},"recent_branches":["v0.0.40","refs/pull/55/head","50-graphviper-changes-needed-for-astroviper-demonstrator"]},"toolviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-25T07:16:17Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-25T07:17:52Z"}},"recent_branches":["46-split-the-repository-up-into-specialized-pieces","42-documentation-and-single-dish-tools"]}}};
+const MAX_RECENT_BRANCHES = 4;
+const PREFETCHED_CI_DATA = {"baked_at":"2026-03-30T15:18:55Z","projects":{"testviper":{"workflows":{"integration_tests_linux.yml":{"conclusion":"success","updated_at":"2026-03-27T14:23:34Z"},"dispatch-receiver.yml":{"conclusion":"success","updated_at":"2026-03-19T17:39:52Z"},"python-tests-allure-report.yml":{"conclusion":"in_progress","updated_at":"2026-03-30T15:18:37Z"}},"panel_workflows":{"dispatch-receiver.yml":{"conclusion":"success","updated_at":"2026-03-19T17:39:52Z","head_branch":"main"},"python-tests-allure-report.yml":{"conclusion":"in_progress","updated_at":"2026-03-30T15:18:37Z","head_branch":"main"},"integration_tests_linux.yml":{"conclusion":"success","updated_at":"2026-03-30T14:45:52Z","head_branch":"41-cleanup-repo"}},"recent_branches":["gh-pages","41-cleanup-repo"]},"xradio":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-26T19:50:43Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-26T19:49:33Z"}},"panel_workflows":{"python-testing-linux.yml":{"conclusion":"failure","updated_at":"2026-03-27T17:51:59Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-27T10:09:40Z","head_branch":"559-api-documentation-missing"},"black.yml":{"conclusion":"success","updated_at":"2026-03-30T10:02:18Z","head_branch":"fix-scan-intent-link"},"python-testing-basic-schema-install.yml":{"conclusion":"success","updated_at":"2026-03-27T17:52:04Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks"},"python-testing-casatools.yml":{"conclusion":"success","updated_at":"2026-03-27T10:12:19Z","head_branch":"559-api-documentation-missing"},"python-testing-integration.yml":{"conclusion":"failure","updated_at":"2026-03-27T10:02:11Z","head_branch":"559-api-documentation-missing"},"run-ipynb.yml":{"conclusion":"failure","updated_at":"2026-03-27T17:52:54Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks"}},"recent_branches":["fix-scan-intent-link","454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks","559-api-documentation-missing","540-xradio-changes-needed-for-astroviper-demonstrator"]},"astroviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-18T14:40:22Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-18T14:40:31Z"}},"panel_workflows":{"python-testing-linux.yml":{"conclusion":"failure","updated_at":"2026-03-27T23:22:05Z","head_branch":"183-add-dask-parallelism-for-cube-single-field-imaging"},"python-testing-macos.yml":{"conclusion":"failure","updated_at":"2026-03-27T23:25:42Z","head_branch":"183-add-dask-parallelism-for-cube-single-field-imaging"},"black.yml":{"conclusion":"failure","updated_at":"2026-03-27T23:20:27Z","head_branch":"183-add-dask-parallelism-for-cube-single-field-imaging"},"python-testing-integration.yml":{"conclusion":"failure","updated_at":"2026-03-27T23:29:07Z","head_branch":"183-add-dask-parallelism-for-cube-single-field-imaging"},"run-ipynb.yml":{"conclusion":"failure","updated_at":"2026-03-27T23:25:28Z","head_branch":"183-add-dask-parallelism-for-cube-single-field-imaging"}},"recent_branches":["183-add-dask-parallelism-for-cube-single-field-imaging","215-multi_gaussian2d_fitpy-yx---xy-and-notebook-clarifications","copilot/fix-colab-link-and-imports"]},"graphviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-19T17:36:43Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-19T17:56:40Z"}},"panel_workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-19T17:41:47Z","head_branch":"v0.0.40"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-19T18:06:12Z","head_branch":"v0.0.40"},"black.yml":{"conclusion":"success","updated_at":"2026-03-19T17:24:17Z","head_branch":"v0.0.40"},"python-testing-integration.yml":{"conclusion":"failure","updated_at":"2026-03-19T17:32:03Z","head_branch":"main"},"run-ipynb.yml":{"conclusion":"success","updated_at":"2026-03-19T17:36:33Z","head_branch":"v0.0.40"}},"recent_branches":["v0.0.40","refs/pull/55/head","50-graphviper-changes-needed-for-astroviper-demonstrator"]},"toolviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-25T07:16:17Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-25T07:17:52Z"}},"panel_workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-03-25T12:01:31Z","head_branch":"42-documentation-and-single-dish-tools"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-03-25T12:03:36Z","head_branch":"42-documentation-and-single-dish-tools"},"black.yml":{"conclusion":"success","updated_at":"2026-03-30T03:46:43Z","head_branch":"46-split-the-repository-up-into-specialized-pieces"},"python-testing-integration.yml":{"conclusion":"failure","updated_at":"2026-03-25T07:26:39Z","head_branch":"main"},"run-ipynb.yml":{"conclusion":"success","updated_at":"2026-03-30T04:08:02Z","head_branch":"42-documentation-and-single-dish-tools"}},"recent_branches":["46-split-the-repository-up-into-specialized-pieces","42-documentation-and-single-dish-tools"]}}};
 const CI_OVERVIEW_PROJECTS = [{"id":"testviper","fixedBranch":false,"workflows":[{"file":"integration_tests_linux.yml","label":"Branch Python Tests (Linux)"},{"file":"dispatch-receiver.yml","label":"Repository Dispatch Receiver"},{"file":"python-tests-allure-report.yml","label":"Python Tests & Allure Reports"}]},{"id":"xradio","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"astroviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"graphviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"toolviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]}];
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1131,8 +1224,8 @@ const CI_OVERVIEW_PROJECTS = [{"id":"testviper","fixedBranch":false,"workflows":
 
    CONFIGURATION CONSTANTS (injected by build_dashboard.py):
      PROJECTS, LANDING_TITLE, LAUNCH_PANEL_TYPES, LAUNCH_PANEL_URLS,
-     DEFAULT_THEME, THEME_LABELS, WORKER_URL, PREFETCHED_CI_DATA,
-     CI_OVERVIEW_PROJECTS
+     DEFAULT_THEME, THEME_LABELS, WORKER_URL, MAX_RECENT_BRANCHES,
+     PREFETCHED_CI_DATA, CI_OVERVIEW_PROJECTS
 ══════════════════════════════════════════════════════════════════════════ */
 
 /* ── API URL helpers ─────────────────────────────────────────────────────
@@ -1246,7 +1339,7 @@ async function fetchRecentBranches(owner, repo) {
       if (b && b !== 'main' && !seen.has(b)) {
         seen.add(b);
         branches.push(b);
-        if (branches.length >= 2) break;
+        if (branches.length >= MAX_RECENT_BRANCHES) break;
       }
     }
     return branches;
@@ -1306,7 +1399,7 @@ function resizeBranchSelect(sel) {
     'font-family:monospace;font-size:11px;padding:0 22px 0 8px;';
   tmp.textContent = sel.options[sel.selectedIndex]?.text || 'main';
   document.body.appendChild(tmp);
-  sel.style.width = tmp.offsetWidth + 'px';
+  sel.style.width = (tmp.offsetWidth + 2) + 'px';
   document.body.removeChild(tmp);
 }
 
@@ -1344,9 +1437,9 @@ function buildCIOverview(forceLive) {
     `<tr>` +
     `<th style="width:28px"></th>` +
     `<th>CI Job Description</th>` +
-    `<th style="width:110px">Branch</th>` +
-    `<th style="width:110px">Status</th>` +
-    `<th style="width:120px">Last Run</th>` +
+    `<th style="width:100px">Branch</th>` +
+    `<th style="width:96px">Status</th>` +
+    `<th style="width:108px">Last Run</th>` +
     `</tr>`;
   table.appendChild(thead);
 
@@ -1362,27 +1455,31 @@ function buildCIOverview(forceLive) {
 
     const projBaked = usePrebaked ? (PREFETCHED_CI_DATA.projects || {})[cfg.id] : null;
 
-    const projRow  = document.createElement('tr');
+    const projRow = document.createElement('tr');
     projRow.className = 'ci-ov-proj-row';
-    const projCell = document.createElement('td');
-    projCell.colSpan = 5;
 
-    const inner = document.createElement('div');
-    inner.className = 'ci-ov-proj-inner';
+    const dotTd = document.createElement('td');
+    dotTd.className = 'ci-ov-dot-cell';
+    projRow.appendChild(dotTd);
 
-    const nameSpan       = document.createElement('span');
-    nameSpan.className   = 'ci-ov-proj-name';
+    const nameTd = document.createElement('td');
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'ci-ov-proj-name';
     nameSpan.textContent = proj.name;
-    inner.appendChild(nameSpan);
+    nameTd.appendChild(nameSpan);
+    projRow.appendChild(nameTd);
+
+    const branchTd = document.createElement('td');
+    branchTd.className = 'ci-ov-proj-branch-cell';
 
     let selectEl = null;
     if (!cfg.fixedBranch) {
       selectEl = document.createElement('select');
       selectEl.className = 'ci-ov-branch-select';
-      selectEl.title     = 'Select branch';
+      selectEl.title = 'Select branch';
 
-      const mainOpt       = document.createElement('option');
-      mainOpt.value       = 'main';
+      const mainOpt = document.createElement('option');
+      mainOpt.value = 'main';
       mainOpt.textContent = 'main';
       selectEl.appendChild(mainOpt);
 
@@ -1390,18 +1487,18 @@ function buildCIOverview(forceLive) {
 
       if (projBaked && projBaked.recent_branches && projBaked.recent_branches.length) {
         projBaked.recent_branches.forEach(b => {
-          const opt       = document.createElement('option');
-          opt.value       = b;
-          opt.textContent = b;
+          const opt = document.createElement('option');
+          opt.value = b;
+          opt.textContent = b.length > 40 ? b.slice(0, 37) + '\u2026' : b;
           selectEl.appendChild(opt);
         });
         resizeBranchSelect(selectEl);
       } else {
         fetchRecentBranches(owner, repo).then(branches => {
           branches.forEach(b => {
-            const opt       = document.createElement('option');
-            opt.value       = b;
-            opt.textContent = b;
+            const opt = document.createElement('option');
+            opt.value = b;
+            opt.textContent = b.length > 40 ? b.slice(0, 37) + '\u2026' : b;
             selectEl.appendChild(opt);
           });
           resizeBranchSelect(selectEl);
@@ -1413,19 +1510,25 @@ function buildCIOverview(forceLive) {
         refreshProjectRows(tbody, owner, repo, cfg.id, cfg.workflows, selectEl.value);
       });
 
-      inner.appendChild(selectEl);
+      branchTd.appendChild(selectEl);
     }
+    projRow.appendChild(branchTd);
 
-    const openLink     = document.createElement('a');
+    const statusTd = document.createElement('td');
+    statusTd.className = 'ci-ov-proj-status-cell';
+    projRow.appendChild(statusTd);
+
+    const lastTd = document.createElement('td');
+    lastTd.className = 'ci-ov-proj-last-cell';
+    const openLink = document.createElement('a');
     openLink.className = 'ci-ov-open-link';
-    openLink.href      = actionsUrl;
-    openLink.target    = '_blank';
-    openLink.rel       = 'noopener noreferrer';
+    openLink.href = actionsUrl;
+    openLink.target = '_blank';
+    openLink.rel = 'noopener noreferrer';
     openLink.innerHTML = extSvg + '&nbsp;Open in GitHub';
-    inner.appendChild(openLink);
+    lastTd.appendChild(openLink);
+    projRow.appendChild(lastTd);
 
-    projCell.appendChild(inner);
-    projRow.appendChild(projCell);
     tbody.appendChild(projRow);
 
     cfg.workflows.forEach(wf => {
@@ -1645,7 +1748,7 @@ function selectCategory(projId, catId) {
   history.replaceState(null, '', `#${projId}/${catId}`);
 
   if (cat.type === 'ci') {
-    showCIPanel(cat);
+    showCIPanel(cat, projId);
   } else if (cat.type === 'coverage') {
     showCoveragePanel(cat);
   } else if (cat.type === 'repo') {
@@ -1872,7 +1975,7 @@ function loadFromHash() {
    CI PANEL
 ══════════════════════════════════════════════════════════════════════════ */
 
-function showCIPanel(cat) {
+function showCIPanel(cat, projId) {
   document.getElementById('loader').classList.add('hidden');
   showPanel('ci-panel');
 
@@ -1889,16 +1992,23 @@ function showCIPanel(cat) {
   rowsEl.innerHTML =
     `<div class="ci-row">
        <div class="ci-dot"></div>
-       <div class="ci-label shimmer" style="min-width:220px;min-height:13px">&nbsp;</div>
-       <div class="ci-status shimmer" style="min-width:60px;min-height:13px">&nbsp;</div>
+       <div class="ci-label shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-panel-push" aria-hidden="true"></div>
+       <div class="ci-branch shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-status shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-time shimmer" style="min-height:13px">&nbsp;</div>
      </div>`;
 
   const workflows = cat.workflows || [];
   if (workflows.length === 0) {
     rowsEl.innerHTML =
-      '<div class="ci-row"><div class="ci-label">No workflows configured</div></div>';
+      '<div class="ci-panel-empty-msg">No workflows configured</div>';
     return;
   }
+
+  const panelBaked = PREFETCHED_CI_DATA
+    && PREFETCHED_CI_DATA.projects[projId]
+    && PREFETCHED_CI_DATA.projects[projId].panel_workflows;
 
   rowsEl.innerHTML = '';
   workflows.forEach(wf => {
@@ -1907,13 +2017,28 @@ function showCIPanel(cat) {
     row.innerHTML =
       `<div class="ci-dot"></div>
        <div class="ci-label">${wf.label}</div>
+       <div class="ci-panel-push" aria-hidden="true"></div>
+       <div class="ci-branch">\u2014</div>
        <div class="ci-status">Fetching&#8230;</div>
        <div class="ci-time"></div>`;
     rowsEl.appendChild(row);
 
     const dot    = row.querySelector('.ci-dot');
+    const branch = row.querySelector('.ci-branch');
     const status = row.querySelector('.ci-status');
     const time   = row.querySelector('.ci-time');
+
+    const baked = panelBaked && panelBaked[wf.file];
+    if (baked) {
+      const [color, label] = CI_CONCLUSION_MAP[baked.conclusion]
+        || ['#7a8ba8', baked.conclusion || 'unknown'];
+      dot.style.background = color;
+      branch.textContent   = baked.head_branch || '\u2014';
+      status.textContent   = label;
+      status.style.color   = color;
+      time.textContent     = relTime(new Date(baked.updated_at));
+      return;
+    }
 
     fetch(
       ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${wf.file}/runs?per_page=1`),
@@ -1926,15 +2051,18 @@ function showCIPanel(cat) {
           const [color, label] = CI_CONCLUSION_MAP[run.conclusion]
             || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
           dot.style.background = color;
+          branch.textContent   = run.head_branch || '\u2014';
           status.textContent   = label;
           status.style.color   = color;
           time.textContent     = relTime(new Date(run.updated_at));
         } else {
+          branch.textContent = '\u2014';
           status.textContent = 'no runs found';
         }
       })
       .catch(err => {
         dot.style.background = 'var(--border)';
+        branch.textContent   = '\u2014';
         status.textContent   = 'unavailable (' + err.message + ')';
       });
   });
