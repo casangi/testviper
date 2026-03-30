@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate summary HTML report with links to individual component reports
+-------  OUTDATED --------
 """
 import json
 import os

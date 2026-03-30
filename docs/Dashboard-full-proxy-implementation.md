@@ -63,7 +63,6 @@ ci/
     dashboard-live-index.html  ← legacy monolith (kept for reference)
 scripts/
   build_dashboard.py        ← build + bake script
-  bake_dashboard.py         ← legacy bake script (kept for reference)
   tests/
     test_build_dashboard.py ← automated test suite (48 tests)
 .github/
@@ -80,9 +79,11 @@ scripts/
 - **Mode A — Pre-baked snapshot**
   - Condition: `PREFETCHED_CI_DATA` is non-null and no force-live refresh is requested.
   - Landing CI overview rows render from embedded JSON. No browser API calls on initial load.
+  - Project CI panels also render from baked `panel_workflows` data (latest run on any branch, including `head_branch`).
 - **Mode B — Live**
   - Condition: `PREFETCHED_CI_DATA` is null, or user triggers Refresh.
   - Landing CI overview rows are fetched at runtime via the Worker proxy.
+  - Project CI panels fetch per-workflow status at runtime via the Worker proxy.
 - **Refresh rule**: Snapshot mode exposes a "Refresh" link that forces live fetching for the current session.
 
 ### API reference
@@ -131,8 +132,9 @@ The build script generates these JavaScript runtime constants from the YAML:
 |----------|--------|
 | `PROJECTS` | `[{ id, name, categories: [{ id, label, type, url, codecov?, github?, workflows? }] }]` |
 | `CI_OVERVIEW_PROJECTS` | `[{ id, fixedBranch, workflows: [{ file, label }] }]` |
-| `PREFETCHED_CI_DATA` | `{ baked_at, projects: { [projectId]: { recent_branches?, workflows: { [file]: { conclusion, updated_at } } } } }` |
+| `PREFETCHED_CI_DATA` | `{ baked_at, projects: { [projectId]: { recent_branches?, workflows: { [file]: { conclusion, updated_at } }, panel_workflows?: { [file]: { conclusion, updated_at, head_branch } } } } }` |
 | `WORKER_URL` | `string` (Cloudflare Worker URL or empty) |
+| `MAX_RECENT_BRANCHES` | `number` (from `dashboard.max_recent_branches`) |
 | `LANDING_TITLE` | `string` (HTML allowed) |
 | `THEME_LABELS` | `{ [themeId]: displayLabel }` |
 | `LAUNCH_PANEL_TYPES` | `string[]` |
@@ -162,6 +164,13 @@ Exactly one content panel is visible at a time:
 | `launch-panel` | Non-embeddable URL or type in `LAUNCH_PANEL_TYPES` |
 
 Selecting `repo` opens a new tab; the center panel stays unchanged.
+
+**CI panel (`ci-panel`)**: A header row matches the landing CI table: **CI Job
+Description**, **Branch**, **Status**, **Last Run** (same uppercase mono styling as
+`.ci-ov-table thead`). For each configured workflow, the app requests the latest
+workflow run (`GET .../actions/workflows/{file}/runs?per_page=1`). Each data row
+shows the workflow label, **branch** (GitHub `head_branch` for that run), conclusion/status,
+and relative time. If there is no run or the request fails, the branch cell shows an em dash.
 
 ### Error handling and fallback
 
@@ -418,7 +427,7 @@ pytest scripts/tests/test_build_dashboard.py -v
 | `TestConfigValidation` | YAML has required fields, no duplicate IDs, valid category types, CI categories have workflows, coverage categories have codecov config |
 | `TestJsConfigGeneration` | All JS constants generated, project/overview arrays match YAML, Worker URL propagated, category type conversion (CI, coverage, repo) |
 | `TestBuildOutput` | Output is valid HTML, CSS and JS inlined, all JS constants present, no unresolved Jinja2 `{{ }}`, key DOM elements exist, reasonable file size |
-| `TestBakeDataStructure` | Baked data has correct structure (mocked API), every project/workflow present, branches exclude main, ISO-8601 timestamp, graceful failure handling |
+| `TestBakeDataStructure` | Baked data has correct structure (mocked API), every project/workflow present, panel_workflows present with head_branch, branches exclude main, ISO-8601 timestamp, graceful failure handling |
 | `TestApiHelpers` | `fetch_workflow_run` and `fetch_recent_branches` handle empty results, deduplication, and limits correctly |
 | `TestConfigOutputConsistency` | Every project ID, workflow file, Worker URL, and theme label from YAML appears in the built HTML |
 
@@ -456,7 +465,7 @@ python3 -m http.server 8000
 | Baked data               | Build with GITHUB_TOKEN, reload                  | "Snapshot from X ago" status   |
 | Live refresh             | Click "Refresh" link on landing                  | Status changes to "Live data"  |
 | Branch switching         | Select a non-main branch in dropdown             | Rows update with branch status |
-| Project CI panel         | Click a project → CI tab                         | Workflow statuses load         |
+| Project CI panel         | Click a project → CI tab                         | Per-workflow status, branch, and time load |
 | Coverage panel           | Click a project → Coverage tab                   | Codecov data loads             |
 | Reports iframe           | Click a project → Reports tab                    | Allure report loads in iframe  |
 | Repo tab                 | Click a project → Repo tab                       | GitHub opens in new tab        |

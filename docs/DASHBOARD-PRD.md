@@ -13,8 +13,7 @@
 - Test suite: `scripts/tests/test_build_dashboard.py`
 - API proxy: `ci/html/worker.js` (Cloudflare Worker)
 - CI workflow: `.github/workflows/bake-dashboard.yml`
-- Technical documentation: `ci/html/Dashboard-full-proxy-implementation.md`
-- Legacy artifacts (reference only): `ci/html/dashboard-live-index.html`, `scripts/bake_dashboard.py`
+- Technical documentation: `docs/Dashboard-full-proxy-implementation.md`
 - PRD status: Updated to reflect config-driven build + Worker proxy implementation
 
 ## 2) Product Summary

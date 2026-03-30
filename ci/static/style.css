@@ -197,7 +197,7 @@ html, body {
   align-items: center;
   padding: 0 22px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 400;
   color: var(--muted2);
   border-bottom: 2px solid transparent;
@@ -302,7 +302,7 @@ html, body {
   align-items: center;
   padding: 0 16px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--muted);
@@ -322,7 +322,7 @@ html, body {
   gap: 7px;
   padding: 0 16px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   color: var(--muted2);
   white-space: nowrap;
@@ -525,9 +525,10 @@ html, body {
 /* ── CI Overview table (landing page, v2) ────────────────────────── */
 /* Replaces the UTC clock and project shortcut cards from v1.         */
 /* Fetches live GitHub Actions status for all 5 VIPER projects.       */
+/* Narrower than 1100px so Branch/Status/Last Run sit closer to job names (less dead space). */
 #ci-overview {
-  width: 80%;
-  max-width: 1100px;
+  width: 72%;
+  max-width: 900px;
   margin: 0 auto;
 }
 
@@ -544,29 +545,23 @@ html, body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted2);
-  padding: 8px 12px;
+  padding: 8px 8px;
   border-bottom: 2px solid var(--border);
   text-align: left;
 }
 
-/* Project section header row (spans all columns) */
+/* Project section — one row per project, same 5 columns as thead / workflow rows
+   (dot | name | branch menu | — | Open in GitHub) so the branch select lines up with BRANCH. */
 .ci-ov-proj-row td {
   background: var(--surface);
-  padding: 9px 12px;
+  padding: 9px 8px;
   border-top: 2px solid var(--border);
   border-bottom: 1px solid var(--border);
-}
-
-/* Flex container inside the project header cell */
-.ci-ov-proj-inner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  vertical-align: middle;
 }
 
 /* Project name label */
 .ci-ov-proj-name {
-  flex: 1;
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
@@ -608,13 +603,25 @@ html, body {
 
 /* Workflow data rows */
 .ci-ov-wf-row td {
-  padding: 8px 12px;
+  padding: 8px 8px;
   color: var(--muted2);
   border-bottom: 1px solid var(--border);
   vertical-align: middle;
 }
 .ci-ov-wf-row:last-of-type td { border-bottom: none; }
 .ci-ov-wf-row:hover td { background: var(--hover-bg); }
+
+/* Pull Branch/Status block slightly left vs job column (tighter than default cell padding sum). */
+.ci-ov-table thead th:nth-child(2),
+.ci-ov-wf-row td:nth-child(2),
+.ci-ov-proj-row td:nth-child(2) {
+  padding-right: 4px;
+}
+.ci-ov-table thead th:nth-child(3),
+.ci-ov-wf-row td:nth-child(3),
+.ci-ov-proj-row td:nth-child(3) {
+  padding-left: 4px;
+}
 
 /* Dot cell — fixed narrow width to keep the indicator compact */
 .ci-ov-dot-cell { width: 28px; }
@@ -681,7 +688,7 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  max-width: 900px;
+  max-width: 960px;
   width: 100%;
   box-shadow: 0 8px 32px rgba(0,0,0,0.2);
   position: relative;
@@ -699,21 +706,96 @@ html, body {
 #ci-repo-name  { font-size: 16px; font-weight: 600; color: var(--text); }
 #ci-repo-sub   { font-family: var(--font-mono); font-size: 11px; color: var(--muted);
                  letter-spacing: 0.08em; text-transform: uppercase; }
-.ci-row {
+
+/* CI panel — column layout aligned with landing CI overview table */
+#ci-rows-wrap {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  padding: 10px 14px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+/* Same typography as .ci-ov-table thead th (landing page).
+   Grid: dot | label | push | branch | status | last run.
+   Label column is the only 1fr — branch uses a px max (no fr) so long job names are not squeezed.
+   Push widens the gap between job description and branch; branch padding 0 keeps Status close. */
+.ci-panel-head-row {
+  display: grid;
+  grid-template-columns:
+    9px
+    minmax(0, 1fr)
+    minmax(80px, 120px)
+    minmax(112px, 200px)
+    100px
+    minmax(72px, 96px);
+  column-gap: 10px;
+  align-items: center;
+  padding: 8px 8px 8px 14px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted2);
+  border-bottom: 2px solid var(--border);
+  text-align: left;
+}
+.ci-panel-head-spacer {
+  width: 9px;
+  height: 1px;
+  flex-shrink: 0;
+}
+.ci-panel-push {
+  /* Visual gap between workflow name and branch block */
+  min-height: 1px;
+  pointer-events: none;
+}
+.ci-panel-head-branch {
+  padding-right: 0;
+  box-sizing: border-box;
+}
+.ci-panel-head-last {
+  text-align: right;
+  padding-right: 0;
+}
+
+.ci-row {
+  display: grid;
+  grid-template-columns:
+    9px
+    minmax(0, 1fr)
+    minmax(80px, 120px)
+    minmax(112px, 200px)
+    100px
+    minmax(72px, 96px);
+  column-gap: 10px;
+  align-items: center;
+  padding: 10px 8px 10px 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface2);
   position: relative;
   z-index: 1;
 }
-.ci-dot    { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--border); }
-.ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); flex: 1; }
-.ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); }
-.ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.ci-dot    { width: 9px; height: 9px; border-radius: 50%; align-self: center; background: var(--border); }
+.ci-label  { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); min-width: 0;
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ci-branch { font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+             padding-right: 0;
+             box-sizing: border-box; min-width: 0; }
+.ci-status { font-family: var(--font-mono); font-size: 12px; color: var(--muted2); min-width: 0; }
+.ci-time   { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: right; }
+
+.ci-panel-empty-msg {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--muted2);
+}
 #ci-open {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 9px 16px;

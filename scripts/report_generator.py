@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate individual Allure reports for each component
+----- OUTDATED -----
 """
 import subprocess
 import sys

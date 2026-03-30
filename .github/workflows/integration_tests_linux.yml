@@ -1,9 +1,12 @@
 ---
-name: Integration Tests - Linux
+name: Integration Tests on Branch - Linux
 
 on:
   push:
-    branches: ["**"]
+    branches-ignore: ["main"]
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
   pull_request:
 
 jobs:
@@ -104,20 +107,20 @@ jobs:
       #     token: ${{ secrets.CODECOV_TOKEN }}
       #     slug: casangi/testviper
 
-      - name: Setup Testspace
-        uses: testspace-com/setup-testspace@v1
-        with:
-          domain: 'casangi'
-          project: 'testviper-${{ matrix.python-version }}'
+#       - name: Setup Testspace
+#         uses: testspace-com/setup-testspace@v1
+#         with:
+#           domain: 'casangi'
+#           project: 'testviper-${{ matrix.python-version }}'
 
-      - name: Publish test results to Testspace
-        run: |
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/testviper]testviper-tests/${{ matrix.python-version }}/*.xml"
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/toolviper]toolviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/xradio]xradio-tests/${{ matrix.python-version }}/*.xml" --link=codecov
-          testspace "[Python ${{ matrix.python-version }}/Unit Tests/graphviper]graphviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
-#          testspace "[Python ${{ matrix.python-version }}/Unit Tests/astroviper]astroviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov 
-        if: always()
+#       - name: Publish test results to Testspace
+#         run: |
+#           testspace "[Python ${{ matrix.python-version }}/Unit Tests/testviper]testviper-tests/${{ matrix.python-version }}/*.xml"
+#           testspace "[Python ${{ matrix.python-version }}/Unit Tests/toolviper]toolviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
+#           testspace "[Python ${{ matrix.python-version }}/Unit Tests/xradio]xradio-tests/${{ matrix.python-version }}/*.xml" --link=codecov
+#           testspace "[Python ${{ matrix.python-version }}/Unit Tests/graphviper]graphviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
+# #          testspace "[Python ${{ matrix.python-version }}/Unit Tests/astroviper]astroviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov 
+#         if: always()
 
       - name: Upload test results
         if: always()

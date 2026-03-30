@@ -48,11 +48,7 @@ jobs:
         with:
           python-version: '3.13'
 
-      # ── 3. Install build and test dependencies ─────────────────────────
-      - name: Install build and test dependencies
-        run: pip install jinja2 pyyaml pytest
-
-      # ── 4. Build dashboard and bake CI data ──────────────────────────
+      # ── 3. Build dashboard and bake CI data ──────────────────────────
       #    build_dashboard.py reads ci/config/projects.yaml, renders the
       #    Jinja2 template with inlined CSS/JS, and bakes CI data from the
       #    GitHub API (authenticated via GITHUB_TOKEN → 5 000 req/hr).
@@ -62,13 +58,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python scripts/build_dashboard.py
 
-      # ── 5. Validate build output ─────────────────────────────────────
+      # ── 4. Validate build output ─────────────────────────────────────
       #    Runs the test suite to verify config integrity, JS generation,
       #    HTML structure, and baked data contract before deploying.
       - name: Validate build output
-        run: pytest scripts/tests/test_build_dashboard.py -v
+        run: pytest -v scripts/tests/test_build_dashboard.py -v
 
-      # ── 6. Deploy built dashboard to gh-pages ─────────────────────────
+      # ── 5. Deploy built dashboard to gh-pages ─────────────────────────
       #    Publishes ci/html/ → gh-pages branch under the path ci/.
       #    This is intentionally separate from the path used by
       #    python-tests-allure-report.yml (which deploys to main/) to avoid
@@ -76,7 +72,7 @@ jobs:
       #
       #    Resulting URL:
       #      https://casangi.github.io/testviper/ci/dashboard.html
-      - name: Deploy to gh-pages
+      - name: Deploy dashboard to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
