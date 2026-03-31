@@ -291,7 +291,8 @@ def generate_allure_report(component):
         print(f"Allure report generated for {component_name}")
       
         # Add back link to the report
-        add_back_link_to_report(report_dir, component_name, allure2=allure2_version)
+        # Remove add_back_link_to_report in favor of dashboard links
+        # add_back_link_to_report(report_dir, component_name, allure2=allure2_version)
       
         # Copy history for next run
         if allure2_version:
