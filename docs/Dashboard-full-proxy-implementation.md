@@ -62,8 +62,7 @@ ci/
   cloudflare/
     worker.js               ← Cloudflare Worker proxy source (deploy manually)
   html/
-    dashboard.html          ← default BUILD OUTPUT (do not hand-edit)
-    dashboard-live-index.html  ← legacy monolith (kept for reference)
+    dashboard.html          ← created by build_dashboard.py by default (do not hand-edit)
 scripts/
   build_dashboard.py        ← build + bake script
   tests/
