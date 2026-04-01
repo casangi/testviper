@@ -56,10 +56,12 @@ jobs:
       #    build_dashboard.py reads ci/config/projects.yaml, renders the
       #    Jinja2 template with inlined CSS/JS, and bakes CI data from the
       #    GitHub API (authenticated via GITHUB_TOKEN → 5 000 req/hr).
-      #    Output: ci/html/dashboard.html
+      #    DASHBOARD_OUT writes ci/html/index.html so GitHub Pages serves /
+      #    (local default without env remains ci/html/dashboard.html).
       - name: Build and bake dashboard
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DASHBOARD_OUT: ci/html/index.html
         run: python scripts/build_dashboard.py
 
       # ── 5. Validate build output ─────────────────────────────────────
@@ -69,18 +71,16 @@ jobs:
         run: pytest -v scripts/tests/test_build_dashboard.py -v
 
       # ── 6. Deploy built dashboard to gh-pages ─────────────────────────
-      #    Publishes ci/html/ → gh-pages branch under the path ci/.
-      #    This is intentionally separate from the path used by
-      #    python-tests-allure-report.yml (which deploys to main/) to avoid
-      #    any gh-pages push conflicts between the two workflows.
+      #    Publishes ci/html/ → gh-pages branch under the root of gh-pages.
+      #    This is the landing page of the URL and must be named index.html.
       #
       #    Resulting URL:
-      #      https://casangi.github.io/testviper/ci/dashboard.html
+      #      https://casangi.github.io/testviper/  (index.html at site root)
       - name: Deploy dashboard to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ci/html
-          destination_dir: ci
+          destination_dir:
           keep_files: true
           commit_message: 'chore: build + bake CI dashboard [skip ci]'
