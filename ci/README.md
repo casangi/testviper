@@ -52,15 +52,11 @@ A new version of the Allure Reports will be created in the gh-pages branch and d
      - Generates Allure results and HTML reports for each component.
      - Saves new history for each component to `allure-report/allure-history/<component>` for future runs.
 
-10. **Generate Enhanced Summary Report**
-    - Executes `python scripts/enhanced_summary_generator.py`:
-      - Creates a summary dashboard with links to each component's Allure report and CodeCov badges.
-
-11. **Upload Allure Reports**
+10. **Upload Allure Reports**
     - Uses `actions/upload-artifact` to save the generated Allure reports as a workflow artifact.
 
-12. **Deploy to gh-pages**
-    - Uses `peaceiris/actions-gh-pages` to deploy the contents of `allure-report/` to the `gh-pages` branch under the `main` directory. The reports can be accessed from the https://casangi.github.io/testviper/ URL.
+11. **Deploy to gh-pages**
+    - Uses `peaceiris/actions-gh-pages` to deploy the contents of `allure-report/` to the `gh-pages` branch under the `main` directory. The reports can be accessed from the https://casangi.github.io/testviper/ URL as part of the Dashboard or directly via their individual URLs at https://casangi.github.io/testviper/main/<component>/index.html.
     - This makes the reports and history available for the next workflow run and for web viewing.
 
 ---
@@ -69,8 +65,6 @@ A new version of the Allure Reports will be created in the gh-pages branch and d
 
 - **scripts/enhanced_report_generator.py**
   - Runs tests, generates Allure reports, and manages per-component history.
-- **scripts/enhanced_summary_generator.py**
-  - Generates a summary dashboard with test and coverage statistics.
 
 ---
 
@@ -84,9 +78,6 @@ Inside a Python virtual environment, install all dependencies and run some tests
 
 ### Run enhanced report generation
 `python scripts/enhanced_report_generator.py`
-
-### Generate summary page
-`python scripts/enhanced_summary_generator.py`
 
 ### View results in a browser
 `open allure-report/index.html`

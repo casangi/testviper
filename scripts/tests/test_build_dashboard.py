@@ -74,7 +74,7 @@ class TestSourceFiles:
         assert os.path.getsize(path) > 0, f"{label} is empty"
 
     def test_worker_js_exists(self):
-        worker_path = os.path.join(REPO_ROOT, "ci", "html", "worker.js")
+        worker_path = os.path.join(REPO_ROOT, "ci", "cloudflare", "worker.js")
         assert os.path.isfile(worker_path), "worker.js not found"
 
 

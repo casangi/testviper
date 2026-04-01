@@ -18,9 +18,11 @@ Worker proxy** for authenticated access (5,000 req/hr instead of 60).
 Source files                Build step              Output
 ─────────────────────      ───────────────────      ────────────────────────
 ci/config/projects.yaml    scripts/                 ci/html/dashboard.html
-ci/templates/base.html  →  build_dashboard.py  →    (single file, deployed
-ci/static/style.css         + optional bake          to gh-pages)
-ci/static/app.js
+ci/templates/base.html  →  build_dashboard.py  →    (default local), or
+ci/static/style.css         + optional bake          ci/html/index.html
+ci/static/app.js                                   (CI via DASHBOARD_OUT → gh-pages)
+ci/cloudflare/worker.js    manual Cloudflare       Worker proxy for live API
+                           deploy (not bake)       (source only; not in HTML)
 ```
 
 ### Data flow
@@ -28,7 +30,7 @@ ci/static/app.js
 ```
 ┌─────────────────────┐     ┌──────────────────────┐
 │  GitHub Pages       │     │  Cloudflare Worker    │
-│  dashboard.html     │────▶│  (authenticated)      │
+│  index or dashboard │────▶│  (authenticated)      │
 │  (baked + live)     │     │  workers.dev proxy    │
 └─────────────────────┘     └──────────┬───────────┘
                                        │
@@ -57,14 +59,14 @@ ci/
   static/
     style.css               ← all CSS (themes, layout, panels)
     app.js                  ← all JS (routing, API calls, panels)
+  cloudflare/
+    worker.js               ← Cloudflare Worker proxy source (deploy manually)
   html/
-    dashboard.html          ← BUILD OUTPUT (do not hand-edit)
-    worker.js               ← Cloudflare Worker proxy source
-    dashboard-live-index.html  ← legacy monolith (kept for reference)
+    dashboard.html          ← created by build_dashboard.py by default (do not hand-edit)
 scripts/
   build_dashboard.py        ← build + bake script
   tests/
-    test_build_dashboard.py ← automated test suite (48 tests)
+    test_build_dashboard.py ← automated test suite (53 tests)
 .github/
   workflows/
     bake-dashboard.yml      ← CI workflow (triggers build + deploy)
@@ -306,7 +308,8 @@ The build script (`scripts/build_dashboard.py`) performs these steps:
 Environment variables:
 
 - `GITHUB_TOKEN` — optional; when set, bakes CI data into the output
-- `DASHBOARD_OUT` — optional; output path (default: `ci/html/dashboard.html`)
+- `DASHBOARD_OUT` — optional; output path (default: `ci/html/dashboard.html`).
+  The bake workflow sets `DASHBOARD_OUT=ci/html/index.html` so GitHub Pages serves the site root; local builds omit this and write `dashboard.html` by default.
 
 ### Local build (no baking)
 
@@ -336,15 +339,16 @@ The workflow `.github/workflows/bake-dashboard.yml` runs automatically on:
 - Manual trigger (workflow_dispatch)
 
 It installs Python dependencies (`jinja2`, `pyyaml`), runs `build_dashboard.py`
-with `GITHUB_TOKEN`, and deploys `ci/html/` to the `gh-pages` branch.
+with `GITHUB_TOKEN` and `DASHBOARD_OUT=ci/html/index.html`, then deploys
+`ci/html/` to the `gh-pages` branch root.
 
-**Result URL**: `https://casangi.github.io/testviper/ci/dashboard.html`
+**Result URL**: `https://casangi.github.io/testviper/` (or `/index.html`)
 
 ---
 
 ## Cloudflare Worker Proxy
 
-The Worker (`ci/html/worker.js`) proxies GitHub and Codecov API calls with
+The Worker (`ci/cloudflare/worker.js`) proxies GitHub and Codecov API calls with
 authentication, solving the 60 req/hr unauthenticated rate limit.
 
 ### Routes
@@ -380,7 +384,7 @@ GitHub rate-limit headers (`X-RateLimit-Remaining`, `X-RateLimit-Limit`,
 
 1. Sign up at [dash.cloudflare.com](https://dash.cloudflare.com) (free)
 2. Create a Worker named `viper-dashboard-proxy`
-3. Paste the contents of `ci/html/worker.js`
+3. Paste the contents of `ci/cloudflare/worker.js`
 4. Add secret `GITHUB_TOKEN` (type: Secret) — a GitHub fine-grained PAT with
    Public Repositories read-only access
 5. Deploy
@@ -395,7 +399,7 @@ GitHub rate-limit headers (`X-RateLimit-Remaining`, `X-RateLimit-Limit`,
 ### Deployment model
 
 The Worker is deployed manually to Cloudflare — it is **not** part of the GitHub
-Actions pipeline. Changes to `ci/html/worker.js` must be manually pasted into
+Actions pipeline. Changes to `ci/cloudflare/worker.js` must be manually pasted into
 the Cloudflare dashboard and redeployed.
 
 ### Token rotation
@@ -419,11 +423,11 @@ gh-pages.
 pytest scripts/tests/test_build_dashboard.py -v
 ```
 
-### What the tests cover (48 tests)
+### What the tests cover (53 tests)
 
 | Test class | What it validates |
 |---|---|
-| `TestSourceFiles` | All source files exist and are non-empty (`projects.yaml`, `base.html`, `style.css`, `app.js`, `worker.js`) |
+| `TestSourceFiles` | All source files exist and are non-empty (`projects.yaml`, `base.html`, `style.css`, `app.js`, `ci/cloudflare/worker.js`) |
 | `TestConfigValidation` | YAML has required fields, no duplicate IDs, valid category types, CI categories have workflows, coverage categories have codecov config |
 | `TestJsConfigGeneration` | All JS constants generated, project/overview arrays match YAML, Worker URL propagated, category type conversion (CI, coverage, repo) |
 | `TestBuildOutput` | Output is valid HTML, CSS and JS inlined, all JS constants present, no unresolved Jinja2 `{{ }}`, key DOM elements exist, reasonable file size |
@@ -566,6 +570,6 @@ and a `ci` category with a `github` owner/repo.
 | Change dashboard styling        | As needed                | Edit `ci/static/style.css`, push to main  |
 | Change dashboard behavior       | As needed                | Edit `ci/static/app.js`, push to main     |
 | Change page structure           | As needed                | Edit `ci/templates/base.html`, push to main|
-| Update Worker proxy code        | As needed                | Edit `ci/html/worker.js`, manually redeploy to Cloudflare |
+| Update Worker proxy code        | As needed                | Edit `ci/cloudflare/worker.js`, manually redeploy to Cloudflare |
 | Rotate GitHub PAT               | Before expiry (max 1yr)  | New PAT → update Cloudflare Worker secret + redeploy |
 | Verify bake workflow            | Monthly                  | Check workflow run history on GitHub       |

@@ -3,15 +3,16 @@
 ## 1) Document Control
 
 - Product: VIPER Ecosystem Dashboard
-- Build output: `ci/html/dashboard.html` (generated — do not hand-edit)
+- Build output: `ci/html/dashboard.html` by default locally (generated — do not hand-edit); GitHub Actions sets `DASHBOARD_OUT` to `ci/html/index.html` for `gh-pages`
 - Source files:
   - `ci/config/projects.yaml` — configuration (single source of truth)
   - `ci/templates/base.html` — HTML template (Jinja2)
   - `ci/static/style.css` — stylesheet
   - `ci/static/app.js` — JavaScript engine
+  - `ci/cloudflare/worker.js` — Cloudflare Worker proxy source (manual deploy)
 - Build script: `scripts/build_dashboard.py`
 - Test suite: `scripts/tests/test_build_dashboard.py`
-- API proxy: `ci/html/worker.js` (Cloudflare Worker)
+- API proxy: same Worker code as `ci/cloudflare/worker.js`, hosted on Cloudflare (not served from GitHub Pages)
 - CI workflow: `.github/workflows/bake-dashboard.yml`
 - Technical documentation: `docs/Dashboard-full-proxy-implementation.md`
 - PRD status: Updated to reflect config-driven build + Worker proxy implementation
@@ -78,7 +79,7 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 ### In scope
 
 - Config-driven dashboard built from modular source files by a Python script.
-- Single-file output (`dashboard.html`) with embedded CSS and JavaScript.
+- Single-file HTML output (`dashboard.html` locally by default, `index.html` on GitHub Pages) with embedded CSS and JavaScript.
 - Five configured projects (`testviper`, `xradio`, `astroviper`, `graphviper`, `toolviper`).
 - Category types: `ci`, `report`, `bench`, `coverage`, `docs`, `repo`, `custom`.
 - Landing CI overview table with per-project sections and workflow rows.
@@ -251,7 +252,7 @@ VIPER project status is fragmented across multiple URLs and services (GitHub Act
 - `projects[projectId].workflows[file].conclusion`
 - `projects[projectId].workflows[file].updated_at`
 
-### 9.3 Worker proxy contract (`worker.js`)
+### 9.3 Worker proxy contract (`ci/cloudflare/worker.js`)
 
 The Cloudflare Worker exposes two route prefixes:
 
@@ -382,8 +383,8 @@ performance, and security — see
 
 ### Runtime model summary
 
-- Build output: single static HTML file (`ci/html/dashboard.html`) with all CSS and JS inlined.
+- Build output: single static HTML file with all CSS and JS inlined (`ci/html/dashboard.html` by default; CI writes `index.html` for Pages).
 - Build tool: `scripts/build_dashboard.py` (Python 3.10+, `jinja2`, `pyyaml`).
-- API proxy: `ci/html/worker.js` (Cloudflare Worker, deployed separately).
+- API proxy: `ci/cloudflare/worker.js` (source in repo; deployed separately to Cloudflare).
 - Runtime environment: modern browser with `fetch`, `localStorage`, URL hash, and iframe support.
 - No backend service beyond the stateless Worker proxy.
