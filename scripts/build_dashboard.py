@@ -55,6 +55,23 @@ BRANCH   = "main"
 
 
 def _gh_get(path: str, token: str) -> dict:
+    """Perform an authenticated GET against the GitHub REST API.
+
+    Parameters
+    ----------
+    path : str
+        Path appended to ``API_BASE`` (for example ``/repos/{owner}/{repo}/...``).
+    token : str
+        Bearer token sent in the ``Authorization`` header.
+
+    Returns
+    -------
+    dict
+        Parsed JSON response body. On HTTP errors other than 401/403, logs a
+        warning and returns an empty dict. On 401 or 403, raises
+        ``RuntimeError``. On other exceptions, logs a warning and returns {}.
+
+    """
     url = API_BASE + path
     req = urllib.request.Request(
         url,
@@ -80,6 +97,27 @@ def _gh_get(path: str, token: str) -> dict:
 
 
 def fetch_workflow_run(owner, repo, wf_file, branch, token):
+    """Return the most recent workflow run for a workflow file on a branch.
+
+    Parameters
+    ----------
+    owner : str
+        GitHub repository owner (user or organization).
+    repo : str
+        Repository name.
+    wf_file : str
+        Workflow filename under ``.github/workflows`` (for example ``ci.yml``).
+    branch : str
+        Branch name to filter runs.
+    token : str
+        GitHub API token for ``_gh_get``.
+
+    Returns
+    -------
+    dict or None
+        The latest matching workflow run object, or ``None`` if none exist.
+
+    """
     path = (
         f"/repos/{owner}/{repo}/actions/workflows/{wf_file}/runs"
         f"?branch={branch}&per_page=1"
@@ -90,7 +128,27 @@ def fetch_workflow_run(owner, repo, wf_file, branch, token):
 
 
 def fetch_workflow_run_any_branch(owner, repo, wf_file, token):
-    """Fetch the latest run for a workflow on any branch (used by CI panels)."""
+    """Fetch the latest GitHub Actions run for a workflow, any branch.
+
+    Used for CI panels so the newest run is shown regardless of ``head_branch``.
+
+    Parameters
+    ----------
+    owner : str
+        GitHub repository owner.
+    repo : str
+        Repository name.
+    wf_file : str
+        Workflow filename under ``.github/workflows``.
+    token : str
+        GitHub API token for ``_gh_get``.
+
+    Returns
+    -------
+    dict or None
+        The latest workflow run object, or ``None`` if no runs exist.
+
+    """
     path = (
         f"/repos/{owner}/{repo}/actions/workflows/{wf_file}/runs"
         f"?per_page=1"
@@ -101,6 +159,26 @@ def fetch_workflow_run_any_branch(owner, repo, wf_file, token):
 
 
 def fetch_recent_branches(owner, repo, token, max_branches=2):
+    """Collect distinct head branches from recent workflow runs.
+
+    Parameters
+    ----------
+    owner : str
+        GitHub repository owner.
+    repo : str
+        Repository name.
+    token : str
+        GitHub API token for ``_gh_get``.
+    max_branches : int, optional
+        Maximum number of branches to return after excluding the default
+        branch (``BRANCH``). Default is 2.
+
+    Returns
+    -------
+    list of str
+        Head branch names from recent runs, excluding the configured default.
+
+    """
     path = f"/repos/{owner}/{repo}/actions/runs?per_page=30"
     data = _gh_get(path, token)
     seen: set[str] = set()
@@ -120,7 +198,22 @@ def fetch_recent_branches(owner, repo, token, max_branches=2):
 # ---------------------------------------------------------------------------
 
 def yaml_categories_to_js(project: dict) -> list[dict]:
-    """Convert a YAML project's categories to the JS PROJECTS format."""
+    """Map YAML project categories to client ``PROJECTS`` category dicts.
+
+    Parameters
+    ----------
+    project : dict
+        One project entry from config (must include ``categories``, ``owner``,
+        ``repo`` as used by ``ci`` / ``coverage`` categories).
+
+    Returns
+    -------
+    list of dict
+        Category objects with ``id``, ``label``, ``type``, ``url``, and for
+        ``ci`` / ``coverage`` the appropriate ``github`` (and optional
+        ``workflows`` / ``codecov``) keys.
+
+    """
     js_cats = []
     for cat in project.get("categories", []):
         js_cat: dict = {
@@ -141,7 +234,23 @@ def yaml_categories_to_js(project: dict) -> list[dict]:
 
 
 def generate_js_config(config: dict, prefetched_data) -> str:
-    """Generate the JS config constants block from the YAML config."""
+    """Emit JavaScript lines for dashboard globals (projects, theme, CI bake).
+
+    Parameters
+    ----------
+    config : dict
+        Parsed YAML root (``dashboard``, ``projects``, launch panels, themes).
+    prefetched_data : dict or None
+        Result of ``bake_ci_data`` (embedded as ``PREFETCHED_CI_DATA``), or
+        ``None`` for live mode.
+
+    Returns
+    -------
+    str
+        Newline-joined ``const ... = ...;`` assignments consumed by the
+        dashboard script.
+
+    """
     dashboard = config.get("dashboard", {})
     projects  = config.get("projects", [])
 
@@ -190,7 +299,24 @@ def generate_js_config(config: dict, prefetched_data) -> str:
 # ---------------------------------------------------------------------------
 
 def bake_ci_data(config: dict, token: str) -> dict | None:
-    """Fetch CI data for all projects and return the PREFETCHED_CI_DATA payload."""
+    """Prefetch workflow and branch data from GitHub for all projects.
+
+    Parameters
+    ----------
+    config : dict
+        Parsed YAML with ``projects`` and ``dashboard.max_recent_branches``.
+    token : str
+        ``GITHUB_TOKEN`` for API requests.
+
+    Returns
+    -------
+    dict or None
+        Payload with UTC ``baked_at`` and per-project ``workflows``,
+        optional ``panel_workflows`` and ``recent_branches``. Returns
+        ``None`` if a ``RuntimeError`` is raised (e.g. auth failure).
+        Individual fetch failures are counted and warned on stderr.
+
+    """
     projects = config.get("projects", [])
     max_branches = config.get("dashboard", {}).get("max_recent_branches", 2)
     baked_projects: dict = {}
@@ -297,6 +423,18 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
 # ---------------------------------------------------------------------------
 
 def main() -> int:
+    """Load config and assets, optionally bake CI data, write dashboard HTML.
+
+    Reads ``CONFIG_PATH``, inlines CSS/JS/template, optionally calls
+    ``bake_ci_data`` when ``GITHUB_TOKEN`` is set, renders with Jinja2, and
+    writes to ``DASHBOARD_OUT`` or ``DEFAULT_OUT``.
+
+    Returns
+    -------
+    int
+        0 on success, 1 if baking was requested but failed.
+
+    """
     # ── Load config ────────────────────────────────────────────────────
     print(f"Config : {CONFIG_PATH}")
     with open(CONFIG_PATH, encoding="utf-8") as fh:

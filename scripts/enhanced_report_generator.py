@@ -55,7 +55,20 @@ COMPONENTS = [
     }
 ]
 def read_version(path_to_toml):
-    """Read version from .toml"""
+    """Read a package version from ``pyproject.toml`` or ``pixi.toml``.
+
+    Parameters
+    ----------
+    path_to_toml : str
+        Directory containing the TOML file (not the file path itself).
+
+    Returns
+    -------
+    str
+        Version string, normalized with a leading ``v`` if missing. Returns
+        ``v0.0.0`` if neither file exists.
+
+    """
     if os.path.exists(os.path.join(path_to_toml, "pyproject.toml")):
         with open(os.path.join(path_to_toml,"pyproject.toml"), "rb") as f:
             data = tomllib.load(f)
@@ -68,7 +81,16 @@ def read_version(path_to_toml):
     return "v0.0.0"  # Default version if file not found
 
 def create_allure_environment(component_name, component_path):
-    """Create environment.properties for Allure report"""
+    """Write Allure ``environment.properties`` for a component.
+
+    Parameters
+    ----------
+    component_name : str
+        Short component identifier (used in the output path).
+    component_path : str
+        Reserved for future use; component metadata path (currently unused).
+
+    """
     env_content = f"""Component={component_name}
 Python.Version=3.12
 Test.Framework=pytest
@@ -138,7 +160,20 @@ window.addEventListener('load', function() {
     
 
 def run_component_tests(component):
-    """Run tests for a specific component and generate Allure results"""
+    """Run pytest with Allure for one component and materialize results.
+
+    Creates ``allure-results-<name>``, writes environment metadata, and runs
+    tests under ``component['path']`` / ``component['test_path']``. If the
+    test path is missing or execution fails, writes a minimal Allure JSON
+    result and may emit a static JUnit XML via ``create_static_xml_report``.
+
+    Parameters
+    ----------
+    component : dict
+        Must include ``name``, ``path``, ``test_path`` (and keys used by
+        ``create_static_xml_report`` / JUnit path layout).
+
+    """
     component_name = component['name']
     component_path = component['path']
     test_path = component['test_path']
@@ -195,8 +230,21 @@ def run_component_tests(component):
         print(f"Finished test execution for {component_name}")
 
 def create_static_xml_report(test_path, component_name, filename, fMessage="Test execution failed, no report generated"):
-    """Create a static JUnit XML report if pytest did not generate one"""
+    """Write a minimal JUnit XML file when pytest did not produce a report.
 
+    Parameters
+    ----------
+    test_path : str
+        Relative test directory (used only for consistency with callers).
+    component_name : str
+        Name embedded in the synthetic testsuite / testcase.
+    filename : str
+        Destination path for the XML file (opened in binary mode).
+    fMessage : str, optional
+        Failure message and body for the single failing testcase. Default
+        indicates missing pytest output.
+
+    """
     e = datetime.datetime.now()
     timestamp = e.strftime('%Y-%m-%dT%H:%M:%S.%f')
     data = ET.Element('testsuites')
@@ -222,7 +270,18 @@ def create_static_xml_report(test_path, component_name, filename, fMessage="Test
         f.write(b_xml)
 
 def create_minimal_result(results_dir, component_name, error_message):
-    """Create a minimal test result for components with issues"""
+    """Write a minimal Allure-format JSON result for error / skip scenarios.
+
+    Parameters
+    ----------
+    results_dir : str
+        Allure results directory (e.g. ``allure-results-<component>``).
+    component_name : str
+        Used in synthetic test identifiers and display name.
+    error_message : str
+        Stored as ``statusMessage`` with ``status`` set to ``broken``.
+
+    """
     minimal_result = {
         "uuid": f"test-{component_name}",
         "historyId": f"test-{component_name}", 
@@ -239,7 +298,22 @@ def create_minimal_result(results_dir, component_name, error_message):
         json.dump(minimal_result, f, indent=2)
 
 def write_config_file(component):
-    """Write Allure configuration file"""
+    """Write Allure CLI config JSON under ``gh-pages/main/allure3-history``.
+
+    Ensures the history directory exists and writes ``allure-config-<name>.json``
+    with ``historyPath`` and ``appendHistory`` for non--Allure-2 workflows.
+
+    Parameters
+    ----------
+    component : dict
+        Must include ``name`` for paths and report title.
+
+    Returns
+    -------
+    str
+        Absolute path to the directory containing the config file.
+
+    """
     # This can be changed to point to a shared history location if desired
     # Currently using allure 2 history stored in gh-pages/main
     testpath = f"{os.getcwd()}/gh-pages/main/allure3-history/{component['name']}"
@@ -254,7 +328,18 @@ def write_config_file(component):
     return f"{testpath}"
 
 def generate_allure_report(component):
-    """Generate Allure HTML report for a component"""
+    """Build Allure HTML under ``allure-report/<name>`` and patch metadata.
+
+    Detects Allure 2 vs other versions, runs ``allure generate``, copies
+    history when applicable, updates summary JSON and ``index.html`` title.
+    On failure, writes a minimal error ``index.html`` with a back link.
+
+    Parameters
+    ----------
+    component : dict
+        Component entry (``name``, ``path``, ``display_name``, ``icon``, etc.).
+
+    """
     component_name = component['name']
     component_version = read_version(component['path'])
     results_dir = f"allure-results-{component_name}"
@@ -356,7 +441,13 @@ def generate_allure_report(component):
             f.write(error_html)
 
 def main():
-    """Main function to orchestrate the report generation"""
+    """Run tests and Allure reports for every entry in ``COMPONENTS``.
+
+    Creates ``allure-report``, then for each component: optionally runs
+    ``run_component_tests`` and ``generate_allure_report``, or builds minimal
+    results when the component path is missing.
+
+    """
     print("Starting enhanced Allure report generation...")
     
     # Create main report directory
