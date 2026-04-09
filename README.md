@@ -11,9 +11,9 @@ This repository will be used to build and run integration tests for the VIPER Ec
 It will install all components and run the available tests in the CI.
 Structure of this repository:
 - ci: configuration for CI system
-- (docs): TBD
+- docs: documentation of some of the features implemented in testviper
 - requirements: requirements to build dependencies
-- scripts: scripts to generate reports and for installation
+- scripts: scripts to create dashboard and generate reports
 - tests/integration: workflow integration tests
 
 
@@ -138,10 +138,7 @@ pixi run pytest -v external/xradio/tests
 ```
 
 ## Central Dashboard for VIPER Ecosystem Integration Tests
-Currently there is a draft implementation using Allure Reports and accessible via
+The Central Dashboard is available in:
 https://casangi.github.io/testviper/
-
-There is another draft implementation of test aggregation using Testspace, accessible via
-https://casangi.testspace.com/projects/68338/spaces and https://casangi.testspace.com/spaces/311697/metrics.
 
 - ....
