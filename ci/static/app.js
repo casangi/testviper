@@ -106,6 +106,17 @@ const CI_CONCLUSION_MAP = {
   skipped:   ['#7a8ba8', 'skipped'],
 };
 
+/**
+ * Fetch recently active branches for a repository, excluding `main`.
+ *
+ * Inspects the last 30 workflow runs and collects distinct `head_branch`
+ * values up to {@link MAX_RECENT_BRANCHES}. Returns an empty array on error.
+ *
+ * @async
+ * @param {string} owner - GitHub repository owner.
+ * @param {string} repo  - Repository name.
+ * @returns {Promise<string[]>} Branch names in order of most recent activity.
+ */
 async function fetchRecentBranches(owner, repo) {
   try {
     const r = await fetch(
@@ -130,6 +141,22 @@ async function fetchRecentBranches(owner, repo) {
   }
 }
 
+/**
+ * Fetch the latest GitHub Actions run for a workflow and update the DOM row.
+ *
+ * Makes one API call and writes conclusion colour, label, branch name, and
+ * relative time directly into the provided DOM elements. On error the row
+ * shows "unavailable".
+ *
+ * @param {string}      owner    - Repository owner.
+ * @param {string}      repo     - Repository name.
+ * @param {string}      file     - Workflow filename (e.g. `ci.yml`).
+ * @param {string}      branch   - Branch to filter runs.
+ * @param {HTMLElement} dotEl    - Status indicator dot element.
+ * @param {HTMLElement} statusEl - Element for the conclusion label.
+ * @param {HTMLElement} branchEl - Element for the branch name.
+ * @param {HTMLElement} timeEl   - Element for the relative run time.
+ */
 function fetchWorkflowRow(owner, repo, file, branch, dotEl, statusEl, branchEl, timeEl) {
   branchEl.textContent     = branch;
   dotEl.style.background   = 'var(--border)';
@@ -162,6 +189,16 @@ function fetchWorkflowRow(owner, repo, file, branch, dotEl, statusEl, branchEl, 
     });
 }
 
+/**
+ * Re-fetch and repaint all workflow rows for a project when the branch changes.
+ *
+ * @param {HTMLElement} tbody     - Table body containing the rows.
+ * @param {string}      owner     - Repository owner.
+ * @param {string}      repo      - Repository name.
+ * @param {string}      projId    - Project id matching `data-proj` on each row.
+ * @param {object[]}    workflows - Workflow config objects with a `file` key.
+ * @param {string}      branch    - Branch to fetch runs for.
+ */
 function refreshProjectRows(tbody, owner, repo, projId, workflows, branch) {
   workflows.forEach(wf => {
     const row = tbody.querySelector(`tr[data-proj="${projId}"][data-wf="${wf.file}"]`);
@@ -174,6 +211,14 @@ function refreshProjectRows(tbody, owner, repo, projId, workflows, branch) {
   });
 }
 
+/**
+ * Resize a `<select>` element to fit the text of its currently selected option.
+ *
+ * Uses a hidden `<span>` to measure the rendered width of the selected text,
+ * then applies that width (plus a small buffer) to the select element.
+ *
+ * @param {HTMLSelectElement} sel - The select element to resize.
+ */
 function resizeBranchSelect(sel) {
   const tmp = document.createElement('span');
   tmp.style.cssText =
@@ -185,6 +230,17 @@ function resizeBranchSelect(sel) {
   document.body.removeChild(tmp);
 }
 
+/**
+ * Build or rebuild the landing-page CI overview table.
+ *
+ * When pre-baked data is available and `forceLive` is false, populates rows
+ * from {@link PREFETCHED_CI_DATA} and shows the snapshot age. Otherwise fetches
+ * live data from the GitHub API via {@link fetchWorkflowRow}. Each project
+ * with a non-fixed branch gets a `<select>` for switching branches, populated
+ * from baked `recent_branches` or via {@link fetchRecentBranches}.
+ *
+ * @param {boolean} [forceLive=false] - Skip pre-baked data and fetch live.
+ */
 function buildCIOverview(forceLive) {
   const projects = CI_OVERVIEW_PROJECTS;
   const usePrebaked = PREFETCHED_CI_DATA && !forceLive;
@@ -375,6 +431,12 @@ function buildCIOverview(forceLive) {
    NAVIGATION
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Navigate back to the landing page, resetting all active state.
+ *
+ * Clears `activeProject` and `activeCategory`, removes active tab
+ * highlights, collapses the category bar, and shows the landing panel.
+ */
 function goHome() {
   history.replaceState(null, '', window.location.pathname);
   activeProject  = null;
@@ -391,6 +453,12 @@ function goHome() {
    PANEL VISIBILITY
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Show exactly one named panel and hide all others.
+ *
+ * @param {string|null} name - One of `'landing'`, `'frame'`, `'launch-panel'`,
+ *   `'coverage-panel'`, `'ci-panel'`, or `null` to hide every panel.
+ */
 function showPanel(name) {
   document.getElementById('landing').style.display          = 'none';
   document.getElementById('main-frame').style.display       = 'none';
@@ -415,6 +483,14 @@ function showPanel(name) {
    THEME SWITCHER
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Activate a theme by name, persist the choice, and update all UI controls.
+ *
+ * Sets `data-theme` on `<html>`, writes to `localStorage`, updates the
+ * visible theme label, and toggles `.active` on each `.theme-option` element.
+ *
+ * @param {string} name - Theme key matching a key in {@link THEME_LABELS}.
+ */
 function setTheme(name) {
   document.documentElement.dataset.theme = name;
   localStorage.setItem('dashboard-theme', name);
@@ -425,6 +501,12 @@ function setTheme(name) {
   document.getElementById('theme-menu').classList.remove('open');
 }
 
+/**
+ * Toggle the theme dropdown open or closed, anchoring it below the button.
+ *
+ * When opening, calculates and sets absolute `top` / `right` position so the
+ * menu aligns with the button regardless of scroll position.
+ */
 function toggleThemeMenu() {
   const menu   = document.getElementById('theme-menu');
   const btn    = document.getElementById('theme-btn');
@@ -454,6 +536,12 @@ function initTheme() {
    PROJECT & CATEGORY TAB BUILDING
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Populate `#proj-tabs` with one tab per project from {@link PROJECTS}.
+ *
+ * Clears any existing tabs, then creates a `.proj-tab` element for each
+ * project with a click handler that calls {@link selectProject}.
+ */
 function buildProjectTabs() {
   const projTabs = document.getElementById('proj-tabs');
   projTabs.innerHTML = '';
@@ -468,6 +556,16 @@ function buildProjectTabs() {
   });
 }
 
+/**
+ * Select a project, build its category tabs, and navigate to a category.
+ *
+ * Marks the matching `.proj-tab` active, renders category tabs for the
+ * project via inline DOM construction, and then calls {@link selectCategory}
+ * on `catId` (or the first category if omitted).
+ *
+ * @param {string}           projId - Project `id` from {@link PROJECTS}.
+ * @param {string|undefined} catId  - Category to activate; defaults to first.
+ */
 function selectProject(projId, catId) {
   const p = PROJECTS.find(x => x.id === projId);
   if (!p) return;
@@ -517,6 +615,17 @@ function selectProject(projId, catId) {
   if (defaultCat) selectCategory(projId, defaultCat);
 }
 
+/**
+ * Activate a category tab and show the appropriate content panel.
+ *
+ * Updates the URL hash to `#projId/catId`, marks the `.cat-tab` active,
+ * and dispatches to {@link showCIPanel}, {@link showCoveragePanel},
+ * {@link showLaunchPanel}, or {@link loadUrl} based on `cat.type`.
+ * `repo` categories open directly in a new tab.
+ *
+ * @param {string} projId - Project `id` from {@link PROJECTS}.
+ * @param {string} catId  - Category `id` within that project.
+ */
 function selectCategory(projId, catId) {
   const p   = PROJECTS.find(x => x.id === projId);
   const cat = p?.categories.find(c => c.id === catId);
@@ -549,6 +658,18 @@ function selectCategory(projId, catId) {
    EMBEDDABILITY CHECK
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Decide whether a category must be shown in the launch panel.
+ *
+ * Returns `true` if `cat.type` is listed in {@link LAUNCH_PANEL_TYPES}, or
+ * if the category URL's hostname matches (or is a subdomain of) any entry in
+ * {@link LAUNCH_PANEL_URLS} — indicating the host blocks embedding.
+ *
+ * @param {object} cat       - Category config object.
+ * @param {string} cat.type  - Category type string.
+ * @param {string} cat.url   - URL that would be loaded in the iframe.
+ * @returns {boolean} `true` if the launch panel should be used.
+ */
 function shouldUseLaunchPanel(cat) {
   if (LAUNCH_PANEL_TYPES.includes(cat.type)) return true;
   try {
@@ -563,6 +684,14 @@ function shouldUseLaunchPanel(cat) {
    LAUNCH PANEL
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Render the launch panel for a category that cannot be embedded in an iframe.
+ *
+ * Populates the icon, title, URL, reason text, and open-button href, then
+ * calls {@link showPanel} to make the panel visible.
+ *
+ * @param {object} cat      - Category config with `type`, `label`, and `url`.
+ */
 function showLaunchPanel(cat) {
   document.getElementById('loader').classList.add('hidden');
   showPanel('launch-panel');
@@ -585,6 +714,21 @@ function showLaunchPanel(cat) {
    COVERAGE PANEL
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Render the coverage panel, fetching Codecov totals and latest CI status.
+ *
+ * Sets shimmer placeholders while loading, then:
+ * - If `cat.codecov` is set, fetches coverage totals (lines, hits, misses,
+ *   partials, percentage) from the Codecov API via {@link ccApiUrl}.
+ * - If `cat.github` is set, fetches the latest workflow run from the GitHub
+ *   API via {@link ghApiUrl} and populates the inline CI status strip.
+ * Both requests are proxied through {@link WORKER_URL} when configured.
+ *
+ * @param {object}          cat           - Coverage category config.
+ * @param {object}          [cat.codecov] - Codecov config: `service`, `owner`, `repo`.
+ * @param {object}          [cat.github]  - GitHub config: `owner`, `repo`.
+ * @param {string}          cat.url       - Direct Codecov link for the open button.
+ */
 function showCoveragePanel(cat) {
   document.getElementById('loader').classList.add('hidden');
   showPanel('coverage-panel');
@@ -682,6 +826,15 @@ function showCoveragePanel(cat) {
   }
 }
 
+/**
+ * Remove shimmer loading styles from an element and set its text content.
+ *
+ * Clears `min-width`, `min-height`, and the `.shimmer` class, then sets
+ * the element's `textContent` to the given string.
+ *
+ * @param {string} id   - DOM element id.
+ * @param {string} text - Text to display once loading is complete.
+ */
 function clearShimmer(id, text) {
   const el = document.getElementById(id);
   el.classList.remove('shimmer');
@@ -690,6 +843,15 @@ function clearShimmer(id, text) {
   el.textContent = text;
 }
 
+/**
+ * Format a date as a short human-readable relative time string.
+ *
+ * Thresholds: seconds (<60 s), minutes (<1 h), hours (<1 d), days otherwise.
+ *
+ * @param {Date} date - The date to compare against `Date.now()`.
+ * @returns {string} A string like `'42s ago'`, `'5m ago'`, `'3h ago'`, `'2d ago'`,
+ *   or `'?'` if `date` is falsy or invalid.
+ */
 function relTime(date) {
   if (!date || isNaN(date)) return '?';
   const s = Math.floor((Date.now() - date) / 1000);
@@ -703,6 +865,15 @@ function relTime(date) {
    IFRAME LOADER
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Load a URL in the main iframe, showing a spinner until it completes.
+ *
+ * Hides all panels and reveals a loading indicator while the iframe loads.
+ * After load, falls back to {@link showLaunchPanel} if the frame body is
+ * empty — a signal that the host blocked embedding via X-Frame-Options or CSP.
+ *
+ * @param {string} url - URL to load in `#main-frame`.
+ */
 function loadUrl(url) {
   const frame  = document.getElementById('main-frame');
   const loader = document.getElementById('loader');
@@ -728,6 +899,9 @@ function loadUrl(url) {
   frame.src = url;
 }
 
+/**
+ * Open the active category's URL in a new tab with no opener reference.
+ */
 function openFull() {
   if (activeCategory) {
     const win = window.open(activeCategory.url, '_blank');
@@ -739,6 +913,12 @@ function openFull() {
    URL HASH ROUTING
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Parse the URL hash and navigate to the matching project / category.
+ *
+ * Expected format: `#projId` or `#projId/catId`. Calls {@link selectProject}
+ * when a project id is found, otherwise shows the landing page.
+ */
 function loadFromHash() {
   const hash = location.hash.slice(1);
   if (!hash) {
@@ -757,6 +937,18 @@ function loadFromHash() {
    CI PANEL
 ══════════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Render the CI panel for a project's `ci` category.
+ *
+ * Shows a shimmer skeleton while loading, then renders one row per workflow.
+ * Uses baked data from {@link PREFETCHED_CI_DATA} when available; otherwise
+ * fetches the latest run for each workflow (any branch) from the GitHub API
+ * via {@link ghApiUrl}. Workflow rows show: dot indicator, label, branch,
+ * conclusion, and relative time.
+ *
+ * @param {object} cat    - CI category config with `github` and `workflows`.
+ * @param {string} projId - Project id used to look up `panel_workflows` in baked data.
+ */
 function showCIPanel(cat, projId) {
   document.getElementById('loader').classList.add('hidden');
   showPanel('ci-panel');
