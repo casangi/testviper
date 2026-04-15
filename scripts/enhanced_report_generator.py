@@ -6,15 +6,16 @@ and back links to the summary page.
 """
 
 import os
+import sys
 import json
 import subprocess
 import shutil
 from pathlib import Path
 import tomllib  # Python 3.11+ supports tomllib natively
-from bs4 import BeautifulSoup
 import datetime
 import socket
 import xml.etree.ElementTree as ET
+from bs4 import BeautifulSoup
 
 # Component configurations
 COMPONENTS = [
@@ -70,95 +71,38 @@ def read_version(path_to_toml):
 def create_allure_environment(component_name, component_path):
     """Create environment.properties for Allure report"""
     env_content = f"""Component={component_name}
-Python.Version=3.12
+Python.Version={sys.version_info.major}.{sys.version_info.minor}
 Test.Framework=pytest
 CI=GitHub Actions
 Repository=casangi/{component_name}
 """
-    
+
     env_file = Path(f"allure-results-{component_name}/environment.properties")
     env_file.parent.mkdir(parents=True, exist_ok=True)
     env_file.write_text(env_content)
-
-def add_back_link_to_report(report_path, component_name, allure2=True):
-    """Add back link to summary page in Allure report"""
-    
-    # Create a custom JavaScript file to add back link
-    js_content = """
-window.addEventListener('load', function() {
-    // Wait for Allure to load
-    setTimeout(function() {
-        const headerElement = document.querySelector('.side-nav__brand');
-        if (headerElement && !document.querySelector('.back-to-summary')) {
-            const backLink = document.createElement('a');
-            backLink.href = '../index.html';
-            backLink.innerHTML = '← Back to Summary';
-            backLink.className = 'back-to-summary';
-            backLink.style.cssText = `
-                display: block;
-                margin-top: 10px;
-                padding: 8px 12px;
-                background: #007bff;
-                color: white;
-                text-decoration: none;
-                border-radius: 4px;
-                font-size: 14px;
-                text-align: center;
-            `;
-            headerElement.appendChild(backLink);
-        }
-    }, 1000);
-});
-"""
-    
-    # Create plugins directory and add custom JS
-    plugins_dir = Path(report_path) / "plugins"
-    plugins_dir.mkdir(exist_ok=True)
-    
-    js_file = plugins_dir / "back-link.js"
-    js_file.write_text(js_content)
-    
-    # Modify the index.html to include our custom script
-    index_file = Path(report_path) / "index.html"
-    if index_file.exists():
-        content = index_file.read_text()
-        if "back-link.js" not in content:
-            # Add script before closing body tag
-            if allure2:
-                content = content.replace(
-                    "</body>",
-                    f'<script src="plugins/back-link.js"></script></body>'
-                )
-            else:
-                content = content.replace(
-                    "</body>",
-                    f'<script src="plugins/back-link.js"></script></body>'
-                ).replace("</title>", "</title><a href=\"../index.html\" class=\"back-link\">← Back to Summary</a>")
-            index_file.write_text(content)
-    
 
 def run_component_tests(component):
     """Run tests for a specific component and generate Allure results"""
     component_name = component['name']
     component_path = component['path']
     test_path = component['test_path']
-    
+
     print(f"Running tests for {component_name}...")
-    
+
     # Create results directory
     results_dir = f"allure-results-{component_name}"
     os.makedirs(results_dir, exist_ok=True)
-    
+
     # Create environment file
     create_allure_environment(component_name, component_path)
-    
+
     # Check if test path exists
     full_test_path = Path(component_path) / test_path
     if not full_test_path.exists():
         print(f"Test path {full_test_path} does not exist for {component_name}")
         create_minimal_result(results_dir, component_name, "Test directory not found")
         return
-    
+
     # Run pytest with allure
     test_command = [
         "python", "-m", "pytest",
@@ -168,7 +112,7 @@ def run_component_tests(component):
         "-v",
         f"--junitxml={component['test_path']}/{component_name}-pytest-report.xml"
     ]
-    
+
     try:
         # Add timeout to prevent hanging
         print(f"Running command: {' '.join(test_command)}")
@@ -234,7 +178,7 @@ def create_minimal_result(results_dir, component_name, error_message):
         "start": 0,
         "stop": 0
     }
- 
+
     with open(f"{results_dir}/minimal-test-result.json", "w") as f:
         json.dump(minimal_result, f, indent=2)
 
@@ -259,13 +203,13 @@ def generate_allure_report(component):
     component_version = read_version(component['path'])
     results_dir = f"allure-results-{component_name}"
     report_dir = f"allure-report/{component_name}"
-    
+
     print(f"Generating Allure report for {component_name}...")
-    
+
     # The workflow now restores per-component history to allure-results-<component>/history
     # No need to copy a global history directory here
     # (Removed buggy block that copied allure-results/history to each component)
-    
+
     # Generate report
     allure_path = shutil.which("allure")
     allure_version = subprocess.run([allure_path,"--version"], capture_output=True, text=True, check=True)
@@ -289,9 +233,7 @@ def generate_allure_report(component):
         result = subprocess.run(generate_command, capture_output=True, text=True)
 
         print(f"Allure report generated for {component_name}")
-      
-        # TODO: Remove add_back_link_to_report entirely once the dashboard is live
-      
+
         # Copy history for next run
         if allure2_version:
             history_output = f"allure-report/allure-history/{component_name}"
@@ -300,7 +242,7 @@ def generate_allure_report(component):
                 shutil.copytree(f"{report_dir}/history", history_output, dirs_exist_ok=True)
 
             # Update summary.json with component name and version
-        
+
             json_file = os.path.join(report_dir, 'widgets', 'summary.json')
         else: 
             json_file = os.path.join(report_dir,'summary.json')
@@ -312,10 +254,10 @@ def generate_allure_report(component):
             data["reportName"] = f'{component_name} {component_version} - {data["reportName"]}'
         else: 
             data["name"] = f'{component_name} {component_version} - {data["name"]}'
-            
+
         with open(json_file, "w") as file:
             json.dump(data, file, indent=4)
-       
+
         # Update index.html title
         index_file = os.path.join(report_dir,'index.html')
         with open(index_file, "r") as file:
@@ -358,10 +300,10 @@ def generate_allure_report(component):
 def main():
     """Main function to orchestrate the report generation"""
     print("Starting enhanced Allure report generation...")
-    
+
     # Create main report directory
     os.makedirs("allure-report", exist_ok=True)
-    
+
     # Process each component
     processed_count = 0
     for component in COMPONENTS:
@@ -370,13 +312,13 @@ def main():
         print(f"Processing {component['display_name']}")
         print(f"Path: {component['path']}")
         print(f"{'='*50}")
-        
+
         if os.path.exists(component['path']):
             print(f"✓ Component path exists: {component['path']}")
-            
+
             # Run tests and generate results
             run_component_tests(component)
-            
+
             # Generate HTML report
             generate_allure_report(component)
             processed_count += 1
@@ -388,8 +330,8 @@ def main():
             create_allure_environment(component['name'], component['path'])
             create_minimal_result(results_dir, component['name'], "Component directory not found")
             generate_allure_report(component)
-    
-    print(f"\nEnhanced Allure report generation completed!")
+
+    print("\nEnhanced Allure report generation completed!")
     print(f"Processed {processed_count} components successfully.")
 
 if __name__ == "__main__":
