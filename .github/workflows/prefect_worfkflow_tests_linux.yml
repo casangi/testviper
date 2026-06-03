@@ -43,6 +43,7 @@ jobs:
       - name: Create test results directories
         run: |
           mkdir -p testviper-tests/${{ matrix.python-version }}
+          mkdir -p flowviper-tests/${{ matrix.python-version }}
           mkdir -p toolviper-tests/${{ matrix.python-version }}
           mkdir -p graphviper-tests/${{ matrix.python-version }}
           mkdir -p astroviper-tests/${{ matrix.python-version }}
@@ -53,11 +54,17 @@ jobs:
           --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-prefect-test-results-${{ matrix.python-version }}.xml" \
           --alluredir="testviper-tests/${{ matrix.python-version }}/allure-results"
           ls -l testviper-tests/${{ matrix.python-version }}/
-  
+      - name: Run Prefect flowviper integration tests
+        run: |
+          git clone https://github.com/casangi/flowviper.git
+          pytest -v flowviper/prefect_workflow \
+          --junitxml="flowviper-tests/${{ matrix.python-version }}/flowviper-prefect-test-results-${{ matrix.python-version }}.xml" \
+          --alluredir="flowviper-tests/${{ matrix.python-version }}/allure-results"
+          ls -l flowviper-tests/${{ matrix.python-version }}/
       - name: Generate Test Summary
         uses: test-summary/action@v2
         with:
-          paths: "/home/runner/work/testviper/testviper/testviper-tests/3.13/testviper-prefect-test-results-3.13.xml"
+          paths: "/home/runner/work/testviper/testviper/**/**/${{ matrix.python-version }}/*-prefect-test-results-${{ matrix.python-version }}.xml"
 
       - name: Generate Allure Reports
         run: |
@@ -70,12 +77,18 @@ jobs:
           name: test-results-${{ matrix.python-version }}
           path: |
             test-results/*.xml
-          if-no-files-found: ignore
-          
-      - name: Upload Allure Reports
+          if-no-files-found: ignore       
+      - name: Upload Allure Reports Testviper
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: allure-reports
           path: testviper-tests/${{ matrix.python-version }}/allure-report/
+          retention-days: 30
+      - name: Upload Allure Reports Flowviper
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-reports
+          path: flowviper-tests/${{ matrix.python-version }}/allure-report/
           retention-days: 30

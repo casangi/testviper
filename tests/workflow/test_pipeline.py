@@ -1,4 +1,5 @@
 import pytest
+import astroviper
 from prefect.testing.utilities import prefect_test_harness
 from example_pipeline import math_flow, compute_data
 
