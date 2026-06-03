@@ -1,6 +1,6 @@
 import pytest
 from prefect.testing.utilities import prefect_test_harness
-from testviper.tests.workflow.example_pipeline import math_flow, compute_data
+from example_pipeline import math_flow, compute_data
 
 # Automatically provide an isolated Prefect backend database for all tests
 @pytest.fixture(autouse=True, scope="session")
