@@ -1,0 +1,69 @@
+---
+name: Integration Tests on Branch - Linux
+
+on:
+  push:
+    branches: ["*"]
+
+jobs:
+  test:
+    name: >-
+      Prefect Workflow Tests on ${{ matrix.os }} /
+      Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.13"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+  
+      - name: Install testviper dependencies and components
+        run: |
+          make build-main  #installs under external
+          ls -l external
+      - name: Install prefect dependencies and components
+        run: |
+          pip install prefect
+          prefect version
+      - name: Install Allure CLI
+        run: |
+          wget -qO- https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.xz | tar -xJ
+          export PATH=$HOME/node-v24.12.0-linux-x64/bin:$PATH
+          npm install -g allure@3.1.0
+          which allure
+          allure --version
+      - name: Create test results directories
+        run: |
+          mkdir -p testviper-tests/${{ matrix.python-version }}
+          mkdir -p toolviper-tests/${{ matrix.python-version }}
+          mkdir -p graphviper-tests/${{ matrix.python-version }}
+          mkdir -p astroviper-tests/${{ matrix.python-version }}
+          
+      - name: Run Prefect testviper integration tests
+        run: |
+          pytest -v tests/workflow/ \
+          --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-test-results-${{ matrix.python-version }}.xml"
+          ls -l testviper-tests/${{ matrix.python-version }}/
+  
+      - name: Generate Test Summary
+        uses: test-summary/action@v2
+        with:
+          paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: |
+            test-results/*.xml
+          if-no-files-found: ignore
+          
