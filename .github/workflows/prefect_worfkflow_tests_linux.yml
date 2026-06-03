@@ -50,13 +50,18 @@ jobs:
       - name: Run Prefect testviper integration tests
         run: |
           pytest -v tests/workflow/ \
-          --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-test-results-${{ matrix.python-version }}.xml"
+          --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-prefect-test-results-${{ matrix.python-version }}.xml" \
+          --alluredir="testviper-tests/${{ matrix.python-version }}/allure-results"
           ls -l testviper-tests/${{ matrix.python-version }}/
   
       - name: Generate Test Summary
         uses: test-summary/action@v2
         with:
-          paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
+          paths: "/home/runner/work/testviper/testviper/testviper-tests/3.13/testviper-prefect-test-results-3.13.xml"
+
+      - name: Generate Allure Reports
+        run: |
+          allure generate "testviper-tests/${{ matrix.python-version }}/allure-results" --output "testviper-tests/${{ matrix.python-version }}/allure-report"
 
       - name: Upload test results
         if: always()
@@ -67,3 +72,10 @@ jobs:
             test-results/*.xml
           if-no-files-found: ignore
           
+      - name: Upload Allure Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-reports
+          path: testviper-tests/${{ matrix.python-version }}/allure-report/
+          retention-days: 30
