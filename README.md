@@ -137,6 +137,40 @@ pixi run pytest -v external/xradio/tests
 ...etc.
 ```
 
+## Prefect Workflow Usage
+Prefect workflow integration tests are located in `tests/workflow/`. These tests use Prefect flows and tasks, plus `prefect_test_harness` to run in an isolated local backend environment.
+
+### Install Prefect
+After creating your Python environment and installing the normal TestVIPER dependencies, install Prefect separately:
+```bash
+pip install prefect
+prefect version
+```
+
+### Run Prefect workflow tests locally
+```bash
+pytest -v tests/workflow/
+```
+
+### Run the example flow directly
+```bash
+python -c "from tests.workflow.example_pipeline import math_flow; print(math_flow(10, 5))"
+```
+
+### What the workflow tests cover
+- `tests/workflow/example_pipeline.py` defines a simple Prefect `@task` and `@flow`
+- `tests/workflow/test_pipeline.py` validates the flow and task behavior
+- Prefect is installed in CI and tests run with `pytest -v tests/workflow/`
+
+### CI integration
+The GitHub Actions workflow `.github/workflows/prefect_worfkflow_tests_linux.yml`:
+- checks out the repository
+- sets up Python
+- runs `make build-main` to install components
+- installs `prefect`
+- runs `pytest -v tests/workflow/`
+- generates Allure reports from the Prefect test results
+
 ## Central Dashboard for VIPER Ecosystem Integration Tests
 The Central Dashboard is available in:
 https://casangi.github.io/testviper/
