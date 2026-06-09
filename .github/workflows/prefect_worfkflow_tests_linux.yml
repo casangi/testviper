@@ -50,21 +50,28 @@ jobs:
           mkdir -p graphviper-tests/${{ matrix.python-version }}
           mkdir -p astroviper-tests/${{ matrix.python-version }}
 
-      - name: Run Prefect testviper integration tests
-        run: |
-          pytest -v tests/workflow/ \
-          --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-prefect-test-results-${{ matrix.python-version }}.xml" \
-          --alluredir="testviper-tests/${{ matrix.python-version }}/allure-results"
-          ls -l testviper-tests/${{ matrix.python-version }}/
+      #- name: Run Prefect testviper integration tests
+      #  run: |
+      #    pytest -v tests/workflow/ \
+      #    --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-prefect-test-results-${{ matrix.python-version }}.xml" \
+      #    --alluredir="testviper-tests/${{ matrix.python-version }}/allure-results"
+      #    ls -l testviper-tests/${{ matrix.python-version }}/
       ## Checkout private flowviper repo and run tests
       - name: Checkout flowviper
         uses: actions/checkout@v4
         with:
           repository: 'casangi/flowviper'
+          ref: '3-setup-flowviper-to-build-with-pyproject' # Temp branch for testing, change to main or default branch after testing
           path: 'flowviper' # Clones into $GITHUB_WORKSPACE/flowviper
+
+      - name: Run build flowviper
+        run: |
+          cd flowviper
+          pip install -e .
+          ls -l flowviper
       - name: Run Prefect flowviper integration tests
         run: |
-          pytest -v flowviper/prefect_workflow \
+          pytest -v tests/integration/ \
           --junitxml="flowviper-tests/${{ matrix.python-version }}/flowviper-prefect-test-results-${{ matrix.python-version }}.xml" \
           --alluredir="flowviper-tests/${{ matrix.python-version }}/allure-results"
           ls -l flowviper-tests/${{ matrix.python-version }}/
@@ -76,8 +83,8 @@ jobs:
       - name: Generate Allure Reports
         if: always()
         run: |
-          allure generate "testviper-tests/${{ matrix.python-version }}/allure-results" --output "testviper-tests/${{ matrix.python-version }}/allure-report"
-          # allure generate "flowviper-tests/${{ matrix.python-version }}/allure-results" --output "flowviper-tests/${{ matrix.python-version }}/allure-report"
+          #allure generate "testviper-tests/${{ matrix.python-version }}/allure-results" --output "testviper-tests/${{ matrix.python-version }}/allure-report"
+          allure generate "flowviper-tests/${{ matrix.python-version }}/allure-results" --output "flowviper-tests/${{ matrix.python-version }}/allure-report"
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
@@ -86,13 +93,13 @@ jobs:
           path: |
             test-results/*.xml
           if-no-files-found: ignore       
-      - name: Upload Allure Reports Testviper
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: allure-reports
-          path: testviper-tests/${{ matrix.python-version }}/allure-report/
-          retention-days: 30
+      #- name: Upload Allure Reports Testviper
+      #  uses: actions/upload-artifact@v4
+      #  if: always()
+      #  with:
+      #    name: allure-reports
+      #    path: testviper-tests/${{ matrix.python-version }}/allure-report/
+      #    retention-days: 30
       - name: Upload Allure Reports Flowviper
         uses: actions/upload-artifact@v4
         if: always()
