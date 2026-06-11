@@ -15,7 +15,10 @@ def prefect_test_fixture():
     """Run Prefect against a temporary local backend (no cluster)."""
     with prefect_test_harness():
         yield
-
+        
+@pytest.fixture(scope="module")
+def sample_fixture():
+    return "sample_data"
 
 @pytest.fixture
 def tmp_output_dir(tmp_path):
