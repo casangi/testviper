@@ -80,8 +80,8 @@ scripts/
 
 - **Mode A — Pre-baked snapshot**
   - Condition: `PREFETCHED_CI_DATA` is non-null and no force-live refresh is requested.
-  - Landing CI overview rows render from embedded JSON. No browser API calls on initial load.
-  - Project CI panels also render from baked `panel_workflows` data (latest run on any branch, including `head_branch`).
+  - Landing CI overview rows render from embedded JSON. No browser API calls on initial load. Failure rate pills and average duration are rendered from `failure_rate` / `avg_duration` fields baked into the snapshot.
+  - Project CI panels also render from baked `panel_workflows` data (latest run on any branch, including `head_branch`, plus baked stats).
 - **Mode B — Live**
   - Condition: `PREFETCHED_CI_DATA` is null, or user triggers Refresh.
   - Landing CI overview rows are fetched at runtime via the Worker proxy.
@@ -103,10 +103,12 @@ If `WORKER_URL` is empty, the dashboard falls back to direct unauthenticated
 
 | Endpoint | Purpose |
 |----------|---------|
-| `GET /repos/{owner}/{repo}/actions/workflows/{file}/runs?branch={branch}&per_page=1` | Single workflow run status (branch-specific) |
-| `GET /repos/{owner}/{repo}/actions/workflows/{file}/runs?per_page=1` | Workflow run status (any branch) |
+| `GET /repos/{owner}/{repo}/actions/workflows/{file}/runs?branch={branch}&per_page=20&status=completed` | Workflow run status + stats (branch-specific) |
+| `GET /repos/{owner}/{repo}/actions/workflows/{file}/runs?per_page=20&status=completed` | Workflow run status + stats (any branch) |
 | `GET /repos/{owner}/{repo}/actions/runs?per_page=30` | Recent branches discovery |
 | `GET /repos/{owner}/{repo}/actions/runs?per_page=5` | Coverage CI row |
+
+The first run in each response is used for `conclusion`, `updated_at`, and `head_branch`. All 20 completed runs are used to compute `failure_rate` and `avg_duration`; a minimum of 5 runs is required before these stats are emitted.
 
 **Codecov endpoint consumed:**
 
@@ -117,7 +119,7 @@ If `WORKER_URL` is empty, the dashboard falls back to direct unauthenticated
 **GitHub response fields consumed:**
 
 `workflow_runs[].conclusion`, `workflow_runs[].status`, `workflow_runs[].updated_at`,
-`workflow_runs[].head_branch`, `workflow_runs[].name`
+`workflow_runs[].run_started_at`, `workflow_runs[].head_branch`, `workflow_runs[].name`
 
 **Codecov response fields consumed:**
 
@@ -134,7 +136,7 @@ The build script generates these JavaScript runtime constants from the YAML:
 |----------|--------|
 | `PROJECTS` | `[{ id, name, categories: [{ id, label, type, url, codecov?, github?, workflows? }] }]` |
 | `CI_OVERVIEW_PROJECTS` | `[{ id, fixedBranch, workflows: [{ file, label }] }]` |
-| `PREFETCHED_CI_DATA` | `{ baked_at, projects: { [projectId]: { recent_branches?, workflows: { [file]: { conclusion, updated_at } }, panel_workflows?: { [file]: { conclusion, updated_at, head_branch } } } } }` |
+| `PREFETCHED_CI_DATA` | `{ baked_at, stats_sample, projects: { [projectId]: { recent_branches?, workflows: { [file]: { conclusion, updated_at, failure_rate, avg_duration } }, panel_workflows?: { [file]: { conclusion, updated_at, head_branch, failure_rate, avg_duration } } } } }` |
 | `WORKER_URL` | `string` (Cloudflare Worker URL or empty) |
 | `MAX_RECENT_BRANCHES` | `number` (from `dashboard.max_recent_branches`) |
 | `LANDING_TITLE` | `string` (HTML allowed) |
@@ -169,10 +171,15 @@ Selecting `repo` opens a new tab; the center panel stays unchanged.
 
 **CI panel (`ci-panel`)**: A header row matches the landing CI table: **CI Job
 Description**, **Branch**, **Status**, **Last Run** (same uppercase mono styling as
-`.ci-ov-table thead`). For each configured workflow, the app requests the latest
-workflow run (`GET .../actions/workflows/{file}/runs?per_page=1`). Each data row
-shows the workflow label, **branch** (GitHub `head_branch` for that run), conclusion/status,
-and relative time. If there is no run or the request fails, the branch cell shows an em dash.
+`.ci-ov-table thead`). For each configured workflow, the app fetches the last 20
+completed runs (`GET .../actions/workflows/{file}/runs?per_page=20&status=completed`).
+Each data row shows the workflow label, **branch** (`head_branch` of the latest run),
+conclusion/status, relative time, **failure rate pill** (colour-coded: green < 5 %, amber
+5–20 %, red > 20 %), and **average run duration**. Stats require at least 5 completed
+runs; below that threshold both values show `—`. If there is no run or the request
+fails, the row shows `—` in all cells. The panel footer shows a horizontal row of two
+links: **"View in Insights ↗"** (left, links to org-level GitHub Actions Insights) and
+**"View all runs ↗"** (right, links to the repository Actions page).
 
 ### Error handling and fallback
 
@@ -431,8 +438,8 @@ pytest scripts/tests/test_build_dashboard.py -v
 | `TestConfigValidation` | YAML has required fields, no duplicate IDs, valid category types, CI categories have workflows, coverage categories have codecov config |
 | `TestJsConfigGeneration` | All JS constants generated, project/overview arrays match YAML, Worker URL propagated, category type conversion (CI, coverage, repo) |
 | `TestBuildOutput` | Output is valid HTML, CSS and JS inlined, all JS constants present, no unresolved Jinja2 `{{ }}`, key DOM elements exist, reasonable file size |
-| `TestBakeDataStructure` | Baked data has correct structure (mocked API), every project/workflow present, panel_workflows present with head_branch, branches exclude main, ISO-8601 timestamp, graceful failure handling |
-| `TestApiHelpers` | `fetch_workflow_run` and `fetch_recent_branches` handle empty results, deduplication, and limits correctly |
+| `TestBakeDataStructure` | Baked data has correct structure (mocked API), every project/workflow present, `failure_rate` and `avg_duration` fields included, `panel_workflows` present with `head_branch`, branches exclude main, ISO-8601 timestamp, graceful failure handling |
+| `TestApiHelpers` | `fetch_workflow_run` and `fetch_workflow_run_any_branch` return stats fields (`failure_rate`, `avg_duration`) alongside run data; `fetch_recent_branches` handles empty results, deduplication, and limits correctly |
 | `TestConfigOutputConsistency` | Every project ID, workflow file, Worker URL, and theme label from YAML appears in the built HTML |
 
 ### CI workflow integration
@@ -469,7 +476,7 @@ python3 -m http.server 8000
 | Baked data               | Build with GITHUB_TOKEN, reload                  | "Snapshot from X ago" status   |
 | Live refresh             | Click "Refresh" link on landing                  | Status changes to "Live data"  |
 | Branch switching         | Select a non-main branch in dropdown             | Rows update with branch status |
-| Project CI panel         | Click a project → CI tab                         | Per-workflow status, branch, and time load |
+| Project CI panel         | Click a project → CI tab                         | Per-workflow status, branch, time, failure rate pill, and avg duration load; "View in Insights" and "View all runs" links appear in the footer |
 | Coverage panel           | Click a project → Coverage tab                   | Codecov data loads             |
 | Reports iframe           | Click a project → Reports tab                    | Allure report loads in iframe  |
 | Repo tab                 | Click a project → Repo tab                       | GitHub opens in new tab        |

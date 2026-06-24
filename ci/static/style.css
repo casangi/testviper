@@ -796,6 +796,11 @@ html, body {
   font-size: 12px;
   color: var(--muted2);
 }
+#ci-actions-row {
+  display: flex; flex-direction: row; align-items: center; gap: 16px;
+  justify-content: space-between;
+  position: relative; z-index: 1;
+}
 #ci-open {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 9px 16px;
@@ -803,7 +808,6 @@ html, body {
   font-size: 13px; color: var(--muted2); text-decoration: none;
   background: var(--surface2);
   transition: border-color 0.15s, color 0.15s;
-  align-self: flex-start; position: relative; z-index: 1;
 }
 #ci-open:hover { border-color: var(--accent); color: var(--accent); }
 #ci-open svg   { width: 13px; height: 13px; flex-shrink: 0; }
@@ -1011,3 +1015,89 @@ html, body {
 }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
+
+/* ══════════════════════════════════════════════════════════════════════
+   CI INSIGHTS METRICS — failure rate pills, stats columns, Insights link
+══════════════════════════════════════════════════════════════════════ */
+
+/* Shared stats column alignment (overview table th/td and CI panel divs) */
+.ci-ov-stat {
+  white-space: nowrap;
+  text-align: right;
+  padding-right: 1rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+.ci-ov-dur {
+  color: var(--muted);
+}
+
+/* Failure rate pill */
+.ci-rate-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.15em 0.5em;
+  border-radius: 999px;
+  min-width: 3.2em;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Severity colours — light themes */
+.ci-rate-good { background: #d1fae5; color: #065f46; }
+.ci-rate-warn { background: #fef3c7; color: #92400e; }
+.ci-rate-bad  { background: #fee2e2; color: #991b1b; }
+.ci-rate-none { background: transparent; color: var(--muted); font-weight: 400; }
+
+/* Dark / Slate overrides */
+[data-theme="dark"]  .ci-rate-good,
+[data-theme="slate"] .ci-rate-good { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"]  .ci-rate-warn,
+[data-theme="slate"] .ci-rate-warn { background: #78350f; color: #fcd34d; }
+[data-theme="dark"]  .ci-rate-bad,
+[data-theme="slate"] .ci-rate-bad  { background: #7f1d1d; color: #fca5a5; }
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .ci-rate-good { background: #064e3b; color: #6ee7b7; }
+  [data-theme="system"] .ci-rate-warn { background: #78350f; color: #fcd34d; }
+  [data-theme="system"] .ci-rate-bad  { background: #7f1d1d; color: #fca5a5; }
+}
+
+/* "View in Insights ↗" link in CI panel header */
+.ci-insights-link {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  opacity: 0.8;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.ci-insights-link:hover { opacity: 1; text-decoration: underline; }
+
+/* CI panel row stats divs */
+.ci-panel-rate {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 0.75rem;
+  flex-shrink: 0;
+}
+.ci-panel-dur {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Responsive: hide stats on narrow viewports */
+@media (max-width: 600px) {
+  .ci-ov-stat,
+  .ci-panel-rate,
+  .ci-panel-dur { display: none; }
+}
