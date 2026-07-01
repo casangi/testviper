@@ -178,7 +178,7 @@ conclusion/status, relative time, **failure rate pill** (colour-coded: green < 5
 5–20 %, red > 20 %), and **average run duration**. Stats require at least 5 completed
 runs; below that threshold both values show `—`. If there is no run or the request
 fails, the row shows `—` in all cells. The panel footer shows a horizontal row of two
-links: **"View in Insights ↗"** (left, links to org-level GitHub Actions Insights) and
+links: **"View in Insights ↗"** (left, links to the repository-level GitHub Actions Insights metrics page) and
 **"View all runs ↗"** (right, links to the repository Actions page).
 
 ### Error handling and fallback

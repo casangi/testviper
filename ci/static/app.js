@@ -268,7 +268,7 @@ function buildCIOverview(forceLive) {
     `<th style="width:100px">Branch</th>` +
     `<th style="width:96px">Status</th>` +
     `<th style="width:108px">Last Run</th>` +
-    `<th class="ci-ov-stat" style="width:110px">Fail rate (${sampleSize})</th>` +
+    `<th class="ci-ov-stat" style="width:110px" title="Failure rate over the last ${sampleSize} completed runs (min. 5 runs required)">Fail rate (last ${sampleSize})</th>` +
     `<th class="ci-ov-stat" style="width:90px">Avg duration</th>` +
     `</tr>`;
   table.appendChild(thead);
@@ -876,7 +876,7 @@ function showCIPanel(cat, projId) {
   const insightsLink = document.createElement('a');
   insightsLink.id        = 'ci-insights-link';
   insightsLink.className = 'ci-insights-link';
-  insightsLink.href      = `https://github.com/orgs/${owner}/actions/metrics/performance`;
+  insightsLink.href      = `https://github.com/${owner}/${repo}/actions/metrics/performance`;
   insightsLink.target    = '_blank';
   insightsLink.rel       = 'noopener noreferrer';
   insightsLink.textContent = 'View in Insights \u2197';
@@ -886,10 +886,12 @@ function showCIPanel(cat, projId) {
     `<div class="ci-row">
        <div class="ci-dot"></div>
        <div class="ci-label shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-panel-rate"><span class="ci-rate-pill ci-rate-none shimmer">&nbsp;</span></div>
        <div class="ci-panel-push" aria-hidden="true"></div>
        <div class="ci-branch shimmer" style="min-height:13px">&nbsp;</div>
        <div class="ci-status shimmer" style="min-height:13px">&nbsp;</div>
        <div class="ci-time shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-panel-dur shimmer" style="min-height:13px">&nbsp;</div>
      </div>`;
 
   const workflows = cat.workflows || [];
@@ -910,11 +912,11 @@ function showCIPanel(cat, projId) {
     row.innerHTML =
       `<div class="ci-dot"></div>
        <div class="ci-label">${wf.label}</div>
+       <div class="ci-panel-rate"><span class="ci-rate-pill ci-rate-none">\u2014</span></div>
        <div class="ci-panel-push" aria-hidden="true"></div>
        <div class="ci-branch">\u2014</div>
        <div class="ci-status">Fetching&#8230;</div>
        <div class="ci-time"></div>
-       <div class="ci-panel-rate"><span class="ci-rate-pill ci-rate-none">\u2014</span></div>
        <div class="ci-panel-dur">\u2014</div>`;
     rowsEl.appendChild(row);
 
