@@ -53,6 +53,11 @@ DEFAULT_OUT   = os.path.join(REPO_ROOT, "ci", "html", "dashboard.html")
 API_BASE = "https://api.github.com"
 BRANCH   = "main"
 
+# How many completed runs to fetch per workflow for statistics.
+STATS_SAMPLE = 20
+# Minimum completed runs required before emitting failure_rate / avg_duration.
+MIN_SAMPLE   = 5
+
 
 def _gh_get(path: str, token: str) -> dict:
     url = API_BASE + path
@@ -79,25 +84,62 @@ def _gh_get(path: str, token: str) -> dict:
         return {}
 
 
+def _compute_stats(runs: list) -> tuple:
+    """Return (failure_rate, avg_duration) from a list of completed run objects."""
+    if len(runs) < MIN_SAMPLE:
+        return None, None
+    failures = sum(1 for r in runs if r.get("conclusion") == "failure")
+    failure_rate = round(failures / len(runs) * 100, 1)
+    durations = []
+    for r in runs:
+        try:
+            start = datetime.fromisoformat(r["run_started_at"].replace("Z", "+00:00"))
+            end   = datetime.fromisoformat(r["updated_at"].replace("Z", "+00:00"))
+            s = (end - start).total_seconds()
+            if s > 0:
+                durations.append(s)
+        except (KeyError, ValueError):
+            pass
+    avg_duration = round(sum(durations) / len(durations)) if durations else None
+    return failure_rate, avg_duration
+
+
 def fetch_workflow_run(owner, repo, wf_file, branch, token):
+    """Fetch latest N completed runs for a workflow on a specific branch, with stats."""
     path = (
         f"/repos/{owner}/{repo}/actions/workflows/{wf_file}/runs"
-        f"?branch={branch}&per_page=1"
+        f"?branch={branch}&per_page={STATS_SAMPLE}&status=completed"
     )
     data = _gh_get(path, token)
     runs = data.get("workflow_runs", [])
-    return runs[0] if runs else None
+    if not runs:
+        return None
+    latest = runs[0]
+    failure_rate, avg_duration = _compute_stats(runs)
+    return {
+        **latest,
+        "failure_rate": failure_rate,
+        "avg_duration": avg_duration,
+    }
 
 
 def fetch_workflow_run_any_branch(owner, repo, wf_file, token):
-    """Fetch the latest run for a workflow on any branch (used by CI panels)."""
+    """Fetch latest N completed runs for a workflow on any branch, with stats."""
     path = (
         f"/repos/{owner}/{repo}/actions/workflows/{wf_file}/runs"
-        f"?per_page=1"
+        f"?per_page={STATS_SAMPLE}&status=completed"
     )
     data = _gh_get(path, token)
     runs = data.get("workflow_runs", [])
-    return runs[0] if runs else None
+    if not runs:
+        return None
+    latest = runs[0]
+    failure_rate, avg_duration = _compute_stats(runs)
+    return {
+        **latest,
+        "failure_rate": failure_rate,
+        "avg_duration": avg_duration,
+    }
 
 
 def fetch_recent_branches(owner, repo, token, max_branches=2):
@@ -213,10 +255,15 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
                 total_calls += 1
                 if run:
                     proj_data["workflows"][wf_file] = {
-                        "conclusion": run.get("conclusion") or run.get("status") or "unknown",
-                        "updated_at": run.get("updated_at", ""),
+                        "conclusion":   run.get("conclusion") or run.get("status") or "unknown",
+                        "updated_at":   run.get("updated_at", ""),
+                        "failure_rate": run.get("failure_rate"),
+                        "avg_duration": run.get("avg_duration"),
                     }
-                    print(proj_data["workflows"][wf_file]["conclusion"])
+                    conclusion = proj_data["workflows"][wf_file]["conclusion"]
+                    rate = run.get("failure_rate")
+                    rate_str = f"{rate}% fail" if rate is not None else "n/a"
+                    print(f"{conclusion}  [{rate_str}]")
                 else:
                     failures += 1
                     print("no data")
@@ -238,9 +285,11 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
                 total_calls += 1
                 if run:
                     panel_data[wf_file] = {
-                        "conclusion":  run.get("conclusion") or run.get("status") or "unknown",
-                        "updated_at":  run.get("updated_at", ""),
-                        "head_branch": run.get("head_branch", ""),
+                        "conclusion":   run.get("conclusion") or run.get("status") or "unknown",
+                        "updated_at":   run.get("updated_at", ""),
+                        "head_branch":  run.get("head_branch", ""),
+                        "failure_rate": run.get("failure_rate"),
+                        "avg_duration": run.get("avg_duration"),
                     }
                     print(panel_data[wf_file]["conclusion"])
                 else:
@@ -253,9 +302,11 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
                 total_calls += 1
                 if run:
                     panel_data[wf_file] = {
-                        "conclusion":  run.get("conclusion") or run.get("status") or "unknown",
-                        "updated_at":  run.get("updated_at", ""),
-                        "head_branch": run.get("head_branch", ""),
+                        "conclusion":   run.get("conclusion") or run.get("status") or "unknown",
+                        "updated_at":   run.get("updated_at", ""),
+                        "head_branch":  run.get("head_branch", ""),
+                        "failure_rate": run.get("failure_rate"),
+                        "avg_duration": run.get("avg_duration"),
                     }
                     print(panel_data[wf_file]["conclusion"])
                 else:
@@ -281,8 +332,9 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
     print(f"\nTotal API calls attempted: {total_calls}")
 
     payload = {
-        "baked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "projects": baked_projects,
+        "baked_at":     datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "stats_sample": STATS_SAMPLE,
+        "projects":     baked_projects,
     }
 
     if failures:

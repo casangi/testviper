@@ -455,7 +455,7 @@ class TestApiHelpers:
             return_value={"workflow_runs": [fake_run]},
         ):
             result = build_dashboard.fetch_workflow_run("org", "repo", "test.yml", "main", "tok")
-        assert result == fake_run
+        assert result == {**fake_run, "failure_rate": None, "avg_duration": None}
 
     def test_fetch_workflow_run_returns_none_on_empty(self):
         with mock.patch.object(
@@ -476,7 +476,7 @@ class TestApiHelpers:
             return_value={"workflow_runs": [fake_run]},
         ):
             result = build_dashboard.fetch_workflow_run_any_branch("org", "repo", "test.yml", "tok")
-        assert result == fake_run
+        assert result == {**fake_run, "failure_rate": None, "avg_duration": None}
 
     def test_fetch_workflow_run_any_branch_returns_none_on_empty(self):
         with mock.patch.object(
