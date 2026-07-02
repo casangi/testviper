@@ -726,18 +726,19 @@
       z-index: 1;
     }
     /* Same typography as .ci-ov-table thead th (landing page).
-       Grid: dot | label | push | branch | status | last run.
-       Label column is the only 1fr — branch uses a px max (no fr) so long job names are not squeezed.
-       Push widens the gap between job description and branch; branch padding 0 keeps Status close. */
+       Grid: dot | label | fail% | push | branch | status | last run | avg dur.
+       Label is the only 1fr; fail% and avg dur are fixed-width; push is a visual spacer. */
     .ci-panel-head-row {
       display: grid;
       grid-template-columns:
         9px
         minmax(0, 1fr)
-        minmax(80px, 120px)
-        minmax(112px, 200px)
-        100px
-        minmax(72px, 96px);
+        60px
+        minmax(40px, 70px)
+        minmax(80px, 160px)
+        90px
+        minmax(60px, 88px)
+        68px;
       column-gap: 10px;
       align-items: center;
       padding: 8px 8px 8px 14px;
@@ -767,16 +768,20 @@
       text-align: right;
       padding-right: 0;
     }
+    .ci-panel-head-rate { text-align: center; }
+    .ci-panel-head-dur  { text-align: right; }
 
     .ci-row {
       display: grid;
       grid-template-columns:
         9px
         minmax(0, 1fr)
-        minmax(80px, 120px)
-        minmax(112px, 200px)
-        100px
-        minmax(72px, 96px);
+        60px
+        minmax(40px, 70px)
+        minmax(80px, 160px)
+        90px
+        minmax(60px, 88px)
+        68px;
       column-gap: 10px;
       align-items: center;
       padding: 10px 8px 10px 14px;
@@ -805,6 +810,11 @@
       font-size: 12px;
       color: var(--muted2);
     }
+    #ci-actions-row {
+      display: flex; flex-direction: row; align-items: center; gap: 16px;
+      justify-content: space-between;
+      position: relative; z-index: 1;
+    }
     #ci-open {
       display: inline-flex; align-items: center; gap: 7px;
       padding: 9px 16px;
@@ -812,7 +822,6 @@
       font-size: 13px; color: var(--muted2); text-decoration: none;
       background: var(--surface2);
       transition: border-color 0.15s, color 0.15s;
-      align-self: flex-start; position: relative; z-index: 1;
     }
     #ci-open:hover { border-color: var(--accent); color: var(--accent); }
     #ci-open svg   { width: 13px; height: 13px; flex-shrink: 0; }
@@ -1021,6 +1030,89 @@
     @keyframes shimmer { to { background-position: -200% 0; } }
 
 
+    /* ══════════════════════════════════════════════════════════════════════
+       CI INSIGHTS METRICS — failure rate pills, stats columns, Insights link
+    ══════════════════════════════════════════════════════════════════════ */
+
+    /* Shared stats column alignment (overview table th/td and CI panel divs) */
+    .ci-ov-stat {
+      white-space: nowrap;
+      text-align: right;
+      padding-right: 1rem;
+      font-variant-numeric: tabular-nums;
+      font-size: 11px;
+    }
+
+    .ci-ov-dur {
+      color: var(--muted);
+    }
+
+    /* Failure rate pill */
+    .ci-rate-pill {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      padding: 0.15em 0.5em;
+      border-radius: 999px;
+      min-width: 3.2em;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* Severity colours — light themes */
+    .ci-rate-good { background: #d1fae5; color: #065f46; }
+    .ci-rate-warn { background: #fef3c7; color: #92400e; }
+    .ci-rate-bad  { background: #fee2e2; color: #991b1b; }
+    .ci-rate-none { background: transparent; color: var(--muted); font-weight: 400; }
+
+    /* Dark / Slate overrides */
+    [data-theme="dark"]  .ci-rate-good,
+    [data-theme="slate"] .ci-rate-good { background: #064e3b; color: #6ee7b7; }
+    [data-theme="dark"]  .ci-rate-warn,
+    [data-theme="slate"] .ci-rate-warn { background: #78350f; color: #fcd34d; }
+    [data-theme="dark"]  .ci-rate-bad,
+    [data-theme="slate"] .ci-rate-bad  { background: #7f1d1d; color: #fca5a5; }
+
+    @media (prefers-color-scheme: dark) {
+      [data-theme="system"] .ci-rate-good { background: #064e3b; color: #6ee7b7; }
+      [data-theme="system"] .ci-rate-warn { background: #78350f; color: #fcd34d; }
+      [data-theme="system"] .ci-rate-bad  { background: #7f1d1d; color: #fca5a5; }
+    }
+
+    /* "View in Insights ↗" link in CI panel header */
+    .ci-insights-link {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--accent);
+      text-decoration: none;
+      opacity: 0.8;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .ci-insights-link:hover { opacity: 1; text-decoration: underline; }
+
+    /* CI panel row stats divs */
+    .ci-panel-rate {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ci-panel-dur {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    /* Responsive: hide stats on narrow viewports */
+    @media (max-width: 600px) {
+      .ci-ov-stat,
+      .ci-panel-rate,
+      .ci-panel-dur { display: none; }
+    }
+
   </style>
 </head>
 <body>
@@ -1183,21 +1275,25 @@
           <div class="ci-panel-head-row" id="ci-panel-head-row">
             <span class="ci-panel-head-spacer" aria-hidden="true"></span>
             <span>CI Job Description</span>
+            <span class="ci-panel-head-rate">Fail %</span>
             <span class="ci-panel-push" aria-hidden="true"></span>
             <span class="ci-panel-head-branch">Branch</span>
             <span>Status</span>
             <span class="ci-panel-head-last">Last Run</span>
+            <span class="ci-panel-head-dur">Avg Dur</span>
           </div>
           <div id="ci-rows"></div>
         </div>
-        <a id="ci-open" href="#" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-            <polyline points="15,3 21,3 21,9"/>
-            <line x1="10" y1="14" x2="21" y2="3"/>
-          </svg>
-          View all runs &#x2197;
-        </a>
+        <div id="ci-actions-row">
+          <a id="ci-open" href="#" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+              <polyline points="15,3 21,3 21,9"/>
+              <line x1="10" y1="14" x2="21" y2="3"/>
+            </svg>
+            View all runs &#x2197;
+          </a>
+        </div>
       </div>
     </div>
 
@@ -1213,7 +1309,7 @@ const DEFAULT_THEME = "light";
 const THEME_LABELS = {"dark": "Dark", "light": "Light", "slate": "Slate", "system": "System"};
 const WORKER_URL = "https://viper-dashboard-proxy.scastro-287.workers.dev";
 const MAX_RECENT_BRANCHES = 4;
-const PREFETCHED_CI_DATA = {"baked_at":"2026-07-02T17:25:22Z","projects":{"testviper":{"workflows":{"integration_tests_linux.yml":{"conclusion":"success","updated_at":"2026-03-27T14:23:34Z"},"dispatch-receiver.yml":{"conclusion":"success","updated_at":"2026-03-19T17:39:52Z"},"python-tests-allure-report.yml":{"conclusion":"failure","updated_at":"2026-04-22T06:20:31Z"}},"panel_workflows":{"integration_tests_linux.yml":{"conclusion":"success","updated_at":"2026-07-01T12:59:07Z","head_branch":"50-add-link-to-github-insights-page"},"dispatch-receiver.yml":{"conclusion":"success","updated_at":"2026-03-19T17:39:52Z","head_branch":"main"},"python-tests-allure-report.yml":{"conclusion":"failure","updated_at":"2026-04-22T06:20:31Z","head_branch":"main"}},"recent_branches":["gh-pages","50-add-link-to-github-insights-page"]},"xradio":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-06-09T21:22:03Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-09T21:27:29Z"}},"panel_workflows":{"python-testing-linux.yml":{"conclusion":"failure","updated_at":"2026-06-26T15:59:49Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-24T13:08:34Z","head_branch":"545-calset-schema"},"black.yml":{"conclusion":"success","updated_at":"2026-06-26T15:59:54Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks"},"python-testing-basic-schema-install.yml":{"conclusion":"success","updated_at":"2026-06-26T15:59:58Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks"},"python-testing-casatools.yml":{"conclusion":"success","updated_at":"2026-06-24T13:17:33Z","head_branch":"545-calset-schema"},"python-testing-integration.yml":{"conclusion":"cancelled","updated_at":"2026-06-24T18:18:42Z","head_branch":"545-calset-schema"},"run-ipynb.yml":{"conclusion":"failure","updated_at":"2026-06-26T16:00:32Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks"}},"recent_branches":["454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks","545-calset-schema","585-replace-xradio-casacore-backends"]},"astroviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"in_progress","updated_at":"2026-07-02T14:10:21Z"},"python-testing-macos.yml":{"conclusion":"in_progress","updated_at":"2026-07-02T14:10:14Z"}},"panel_workflows":{"python-testing-linux.yml":{"conclusion":"in_progress","updated_at":"2026-07-02T14:10:21Z","head_branch":"main"},"python-testing-macos.yml":{"conclusion":"in_progress","updated_at":"2026-07-02T14:10:14Z","head_branch":"main"},"black.yml":{"conclusion":"success","updated_at":"2026-07-02T14:10:25Z","head_branch":"main"},"python-testing-integration.yml":{"conclusion":"in_progress","updated_at":"2026-07-02T14:10:12Z","head_branch":"main"},"run-ipynb.yml":{"conclusion":"failure","updated_at":"2026-07-02T14:13:18Z","head_branch":"main"}},"recent_branches":["187-implement-function-to-do-direction-frame-conversion","183-add-dask-parallelism-for-cube-single-field-imaging"]},"graphviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-06-16T01:06:33Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-16T01:08:31Z"}},"panel_workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-07-01T06:25:10Z","head_branch":"62-create-walking-skeleton-for-baseline-subtraction"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-07-01T06:26:38Z","head_branch":"62-create-walking-skeleton-for-baseline-subtraction"},"black.yml":{"conclusion":"success","updated_at":"2026-07-01T06:23:11Z","head_branch":"62-create-walking-skeleton-for-baseline-subtraction"},"python-testing-integration.yml":{"conclusion":"cancelled","updated_at":"2026-06-16T07:04:46Z","head_branch":"main"},"run-ipynb.yml":{"conclusion":"failure","updated_at":"2026-07-01T06:26:25Z","head_branch":"62-create-walking-skeleton-for-baseline-subtraction"}},"recent_branches":["62-create-walking-skeleton-for-baseline-subtraction","50-graphviper-changes-needed-for-astroviper-demonstrator"]},"toolviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-06-09T19:47:14Z"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-09T19:49:35Z"}},"panel_workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-06-12T05:29:08Z","head_branch":"42-documentation-and-single-dish-tools"},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-12T05:30:55Z","head_branch":"42-documentation-and-single-dish-tools"},"black.yml":{"conclusion":"success","updated_at":"2026-06-12T05:27:18Z","head_branch":"42-documentation-and-single-dish-tools"},"python-testing-integration.yml":{"conclusion":"cancelled","updated_at":"2026-06-10T01:44:51Z","head_branch":"main"},"run-ipynb.yml":{"conclusion":"success","updated_at":"2026-06-12T05:30:20Z","head_branch":"42-documentation-and-single-dish-tools"}},"recent_branches":["42-documentation-and-single-dish-tools","v0.1.3","graphviper-changes-needed-for-astroviper-demonstrator"]}}};
+const PREFETCHED_CI_DATA = {"baked_at":"2026-07-02T18:24:10Z","stats_sample":20,"projects":{"testviper":{"workflows":{"integration_tests_linux.yml":{"conclusion":"success","updated_at":"2026-03-27T14:23:34Z","failure_rate":30.0,"avg_duration":1129},"dispatch-receiver.yml":{"conclusion":"success","updated_at":"2026-03-19T17:39:52Z","failure_rate":0.0,"avg_duration":28},"python-tests-allure-report.yml":{"conclusion":"failure","updated_at":"2026-04-22T06:20:31Z","failure_rate":50.0,"avg_duration":816}},"panel_workflows":{"integration_tests_linux.yml":{"conclusion":"success","updated_at":"2026-07-01T12:59:07Z","head_branch":"50-add-link-to-github-insights-page","failure_rate":0.0,"avg_duration":766},"dispatch-receiver.yml":{"conclusion":"success","updated_at":"2026-03-19T17:39:52Z","head_branch":"main","failure_rate":0.0,"avg_duration":28},"python-tests-allure-report.yml":{"conclusion":"failure","updated_at":"2026-04-22T06:20:31Z","head_branch":"main","failure_rate":50.0,"avg_duration":816}},"recent_branches":["gh-pages","50-add-link-to-github-insights-page"]},"xradio":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-06-09T21:22:03Z","failure_rate":5.0,"avg_duration":1184},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-09T21:27:29Z","failure_rate":10.0,"avg_duration":1160}},"panel_workflows":{"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-24T13:08:34Z","head_branch":"545-calset-schema","failure_rate":5.0,"avg_duration":2641},"python-testing-linux.yml":{"conclusion":"failure","updated_at":"2026-06-26T15:59:49Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks","failure_rate":40.0,"avg_duration":1001},"black.yml":{"conclusion":"success","updated_at":"2026-06-26T15:59:54Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks","failure_rate":10.0,"avg_duration":176},"python-testing-basic-schema-install.yml":{"conclusion":"success","updated_at":"2026-06-26T15:59:58Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks","failure_rate":10.0,"avg_duration":94},"python-testing-casatools.yml":{"conclusion":"success","updated_at":"2026-06-24T13:17:33Z","head_branch":"545-calset-schema","failure_rate":15.0,"avg_duration":2708},"python-testing-integration.yml":{"conclusion":"cancelled","updated_at":"2026-06-24T18:18:42Z","head_branch":"545-calset-schema","failure_rate":5.0,"avg_duration":19876},"run-ipynb.yml":{"conclusion":"failure","updated_at":"2026-06-26T16:00:32Z","head_branch":"454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks","failure_rate":55.0,"avg_duration":728}},"recent_branches":["454-start-prototyping-functions-to-partition-asdms-into-msv4s-and-other-basic-tasks","545-calset-schema","585-replace-xradio-casacore-backends"]},"astroviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"cancelled","updated_at":"2026-05-22T19:24:58Z","failure_rate":55.0,"avg_duration":1430},"python-testing-macos.yml":{"conclusion":"cancelled","updated_at":"2026-05-22T19:25:05Z","failure_rate":50.0,"avg_duration":1638}},"panel_workflows":{"python-testing-macos.yml":{"conclusion":"cancelled","updated_at":"2026-07-02T08:25:59Z","head_branch":"187-implement-function-to-do-direction-frame-conversion","failure_rate":75.0,"avg_duration":12406},"python-testing-linux.yml":{"conclusion":"cancelled","updated_at":"2026-07-02T08:25:50Z","head_branch":"187-implement-function-to-do-direction-frame-conversion","failure_rate":70.0,"avg_duration":6791},"black.yml":{"conclusion":"success","updated_at":"2026-07-02T14:10:25Z","head_branch":"main","failure_rate":40.0,"avg_duration":18},"python-testing-integration.yml":{"conclusion":"cancelled","updated_at":"2026-07-02T08:25:49Z","head_branch":"187-implement-function-to-do-direction-frame-conversion","failure_rate":50.0,"avg_duration":8303},"run-ipynb.yml":{"conclusion":"failure","updated_at":"2026-07-02T14:13:18Z","head_branch":"main","failure_rate":100.0,"avg_duration":245}},"recent_branches":["187-implement-function-to-do-direction-frame-conversion","183-add-dask-parallelism-for-cube-single-field-imaging"]},"graphviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-06-16T01:06:33Z","failure_rate":0.0,"avg_duration":352},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-16T01:08:31Z","failure_rate":0.0,"avg_duration":568}},"panel_workflows":{"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-07-01T06:26:38Z","head_branch":"62-create-walking-skeleton-for-baseline-subtraction","failure_rate":5.0,"avg_duration":411},"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-07-01T06:25:10Z","head_branch":"62-create-walking-skeleton-for-baseline-subtraction","failure_rate":5.0,"avg_duration":128},"black.yml":{"conclusion":"success","updated_at":"2026-07-01T06:23:11Z","head_branch":"62-create-walking-skeleton-for-baseline-subtraction","failure_rate":15.0,"avg_duration":18},"python-testing-integration.yml":{"conclusion":"cancelled","updated_at":"2026-06-16T07:04:46Z","head_branch":"main","failure_rate":20.0,"avg_duration":8081},"run-ipynb.yml":{"conclusion":"failure","updated_at":"2026-07-01T06:26:25Z","head_branch":"62-create-walking-skeleton-for-baseline-subtraction","failure_rate":15.0,"avg_duration":198}},"recent_branches":["62-create-walking-skeleton-for-baseline-subtraction","50-graphviper-changes-needed-for-astroviper-demonstrator"]},"toolviper":{"workflows":{"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-06-09T19:47:14Z","failure_rate":0.0,"avg_duration":120},"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-09T19:49:35Z","failure_rate":0.0,"avg_duration":306}},"panel_workflows":{"python-testing-macos.yml":{"conclusion":"success","updated_at":"2026-06-12T05:30:55Z","head_branch":"42-documentation-and-single-dish-tools","failure_rate":0.0,"avg_duration":230},"python-testing-linux.yml":{"conclusion":"success","updated_at":"2026-06-12T05:29:08Z","head_branch":"42-documentation-and-single-dish-tools","failure_rate":0.0,"avg_duration":123},"black.yml":{"conclusion":"success","updated_at":"2026-06-12T05:27:18Z","head_branch":"42-documentation-and-single-dish-tools","failure_rate":0.0,"avg_duration":14},"python-testing-integration.yml":{"conclusion":"cancelled","updated_at":"2026-06-10T01:44:51Z","head_branch":"main","failure_rate":20.0,"avg_duration":5991},"run-ipynb.yml":{"conclusion":"success","updated_at":"2026-06-12T05:30:20Z","head_branch":"42-documentation-and-single-dish-tools","failure_rate":20.0,"avg_duration":641}},"recent_branches":["42-documentation-and-single-dish-tools","v0.1.3","graphviper-changes-needed-for-astroviper-demonstrator"]}}};
 const CI_OVERVIEW_PROJECTS = [{"id":"testviper","fixedBranch":false,"workflows":[{"file":"integration_tests_linux.yml","label":"Branch Python Tests (Linux)"},{"file":"dispatch-receiver.yml","label":"Repository Dispatch Receiver"},{"file":"python-tests-allure-report.yml","label":"Python Tests & Allure Reports"}]},{"id":"xradio","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"astroviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"graphviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]},{"id":"toolviper","fixedBranch":false,"workflows":[{"file":"python-testing-linux.yml","label":"Python Tests (Linux)"},{"file":"python-testing-macos.yml","label":"Python Tests (macOS)"}]}];
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1380,6 +1476,47 @@ function fetchWorkflowRow(owner, repo, file, branch, dotEl, statusEl, branchEl, 
     });
 }
 
+function fetchWorkflowRowWithStats(owner, repo, file, branch, dotEl, statusEl, branchEl, timeEl, ratePill, durTd) {
+  branchEl.textContent     = branch;
+  dotEl.style.background   = 'var(--border)';
+  statusEl.textContent     = 'Fetching\u2026';
+  statusEl.style.color     = '';
+  timeEl.textContent       = '';
+
+  fetch(
+    ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${file}/runs` +
+    `?branch=${encodeURIComponent(branch)}&per_page=20&status=completed`),
+    { headers: { 'Accept': 'application/vnd.github+json' } }
+  )
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => {
+      const runs = data.workflow_runs || [];
+      const run  = runs[0];
+      if (run) {
+        const [color, label] = CI_CONCLUSION_MAP[run.conclusion]
+          || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
+        dotEl.style.background = color;
+        statusEl.textContent   = label;
+        statusEl.style.color   = color;
+        timeEl.textContent     = relTime(new Date(run.updated_at));
+        const { failure_rate, avg_duration } = computeStats(runs);
+        ratePill.className   = 'ci-rate-pill ' + failureRateClass(failure_rate);
+        ratePill.textContent = failure_rate !== null ? failure_rate.toFixed(1) + '%' : '\u2014';
+        durTd.textContent    = fmtDuration(avg_duration);
+      } else {
+        statusEl.textContent = 'no runs found';
+        ratePill.textContent = '\u2014';
+        durTd.textContent    = '\u2014';
+      }
+    })
+    .catch(err => {
+      dotEl.style.background = 'var(--border)';
+      statusEl.textContent   = 'unavailable (' + err.message + ')';
+      ratePill.textContent   = '\u2014';
+      durTd.textContent      = '\u2014';
+    });
+}
+
 function refreshProjectRows(tbody, owner, repo, projId, workflows, branch) {
   workflows.forEach(wf => {
     const row = tbody.querySelector(`tr[data-proj="${projId}"][data-wf="${wf.file}"]`);
@@ -1388,7 +1525,11 @@ function refreshProjectRows(tbody, owner, repo, projId, workflows, branch) {
     const statusEl = row.querySelector('.ci-ov-status');
     const branchEl = row.querySelector('.ci-ov-branch');
     const timeEl   = row.querySelector('.ci-ov-time');
-    fetchWorkflowRow(owner, repo, wf.file, branch, dotEl, statusEl, branchEl, timeEl);
+    const ratePill = row.querySelector('.ci-rate-pill');
+    const durTd    = row.querySelector('.ci-ov-dur');
+    if (ratePill) { ratePill.className = 'ci-rate-pill ci-rate-none'; ratePill.textContent = '\u2014'; }
+    if (durTd)    { durTd.textContent = '\u2014'; }
+    fetchWorkflowRowWithStats(owner, repo, wf.file, branch, dotEl, statusEl, branchEl, timeEl, ratePill, durTd);
   });
 }
 
@@ -1432,6 +1573,7 @@ function buildCIOverview(forceLive) {
   const table = document.createElement('table');
   table.className = 'ci-ov-table';
 
+  const sampleSize = (PREFETCHED_CI_DATA && PREFETCHED_CI_DATA.stats_sample) || 20;
   const thead = document.createElement('thead');
   thead.innerHTML =
     `<tr>` +
@@ -1440,6 +1582,8 @@ function buildCIOverview(forceLive) {
     `<th style="width:100px">Branch</th>` +
     `<th style="width:96px">Status</th>` +
     `<th style="width:108px">Last Run</th>` +
+    `<th class="ci-ov-stat" style="width:110px" title="Failure rate over the last ${sampleSize} completed runs (min. 5 runs required)">Fail rate (last ${sampleSize})</th>` +
+    `<th class="ci-ov-stat" style="width:90px">Avg duration</th>` +
     `</tr>`;
   table.appendChild(thead);
 
@@ -1562,11 +1706,21 @@ function buildCIOverview(forceLive) {
       timeSpan.className = 'ci-ov-time';
       timeTd.appendChild(timeSpan);
 
+      const rateTd  = document.createElement('td');
+      rateTd.className = 'ci-ov-stat';
+      const ratePill = document.createElement('span');
+      rateTd.appendChild(ratePill);
+
+      const durTd = document.createElement('td');
+      durTd.className = 'ci-ov-stat ci-ov-dur';
+
       row.appendChild(dotTd);
       row.appendChild(labelTd);
       row.appendChild(branchTd);
       row.appendChild(statusTd);
       row.appendChild(timeTd);
+      row.appendChild(rateTd);
+      row.appendChild(durTd);
       tbody.appendChild(row);
 
       const wfBaked = projBaked ? (projBaked.workflows || {})[wf.file] : null;
@@ -1578,9 +1732,16 @@ function buildCIOverview(forceLive) {
         statusSpan.style.color = color;
         branchSpan.textContent = 'main';
         timeSpan.textContent   = relTime(new Date(wfBaked.updated_at));
+        ratePill.className     = 'ci-rate-pill ' + failureRateClass(wfBaked.failure_rate);
+        ratePill.textContent   = wfBaked.failure_rate !== null && wfBaked.failure_rate !== undefined
+          ? wfBaked.failure_rate.toFixed(1) + '%' : '\u2014';
+        durTd.textContent      = fmtDuration(wfBaked.avg_duration);
       } else {
         statusSpan.textContent = 'Fetching\u2026';
-        fetchWorkflowRow(owner, repo, wf.file, 'main', dot, statusSpan, branchSpan, timeSpan);
+        ratePill.className     = 'ci-rate-pill ci-rate-none';
+        ratePill.textContent   = '\u2014';
+        durTd.textContent      = '\u2014';
+        fetchWorkflowRowWithStats(owner, repo, wf.file, 'main', dot, statusSpan, branchSpan, timeSpan, ratePill, durTd);
       }
     });
   });
@@ -1917,6 +2078,40 @@ function relTime(date) {
   return Math.floor(s / 86400) + 'd ago';
 }
 
+function fmtDuration(seconds) {
+  if (seconds === null || seconds === undefined) return '\u2014';
+  const s = Math.round(seconds);
+  if (s < 60)   return s + 's';
+  if (s < 3600) { const m = Math.floor(s/60), r = s%60; return r ? `${m}m ${r}s` : `${m}m`; }
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return m ? `${h}h ${String(m).padStart(2,'0')}m` : `${h}h`;
+}
+
+function failureRateClass(rate) {
+  if (rate === null || rate === undefined) return 'ci-rate-none';
+  if (rate < 5)   return 'ci-rate-good';
+  if (rate <= 20) return 'ci-rate-warn';
+  return 'ci-rate-bad';
+}
+
+function computeStats(runs) {
+  const MIN_SAMPLE = 5;
+  if (!runs || runs.length < MIN_SAMPLE) return { failure_rate: null, avg_duration: null };
+  const failures = runs.filter(r => r.conclusion === 'failure').length;
+  const failure_rate = Math.round(failures / runs.length * 1000) / 10;
+  const durations = runs.reduce((acc, r) => {
+    if (r.run_started_at && r.updated_at) {
+      const s = (new Date(r.updated_at) - new Date(r.run_started_at)) / 1000;
+      if (s > 0) acc.push(s);
+    }
+    return acc;
+  }, []);
+  const avg_duration = durations.length
+    ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+    : null;
+  return { failure_rate, avg_duration };
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    IFRAME LOADER
 ══════════════════════════════════════════════════════════════════════════ */
@@ -1989,14 +2184,28 @@ function showCIPanel(cat, projId) {
   nameEl.textContent = owner + ' / ' + repo;
   openEl.href        = `https://github.com/${owner}/${repo}/actions`;
 
+  // Add "View in Insights ↗" link alongside the existing open link
+  const existingInsights = document.getElementById('ci-insights-link');
+  if (existingInsights) existingInsights.remove();
+  const insightsLink = document.createElement('a');
+  insightsLink.id        = 'ci-insights-link';
+  insightsLink.className = 'ci-insights-link';
+  insightsLink.href      = `https://github.com/${owner}/${repo}/actions/metrics/performance`;
+  insightsLink.target    = '_blank';
+  insightsLink.rel       = 'noopener noreferrer';
+  insightsLink.textContent = 'View in Insights \u2197';
+  document.getElementById('ci-actions-row').prepend(insightsLink);
+
   rowsEl.innerHTML =
     `<div class="ci-row">
        <div class="ci-dot"></div>
        <div class="ci-label shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-panel-rate"><span class="ci-rate-pill ci-rate-none shimmer">&nbsp;</span></div>
        <div class="ci-panel-push" aria-hidden="true"></div>
        <div class="ci-branch shimmer" style="min-height:13px">&nbsp;</div>
        <div class="ci-status shimmer" style="min-height:13px">&nbsp;</div>
        <div class="ci-time shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-panel-dur shimmer" style="min-height:13px">&nbsp;</div>
      </div>`;
 
   const workflows = cat.workflows || [];
@@ -2017,16 +2226,20 @@ function showCIPanel(cat, projId) {
     row.innerHTML =
       `<div class="ci-dot"></div>
        <div class="ci-label">${wf.label}</div>
+       <div class="ci-panel-rate"><span class="ci-rate-pill ci-rate-none">\u2014</span></div>
        <div class="ci-panel-push" aria-hidden="true"></div>
        <div class="ci-branch">\u2014</div>
        <div class="ci-status">Fetching&#8230;</div>
-       <div class="ci-time"></div>`;
+       <div class="ci-time"></div>
+       <div class="ci-panel-dur">\u2014</div>`;
     rowsEl.appendChild(row);
 
-    const dot    = row.querySelector('.ci-dot');
-    const branch = row.querySelector('.ci-branch');
-    const status = row.querySelector('.ci-status');
-    const time   = row.querySelector('.ci-time');
+    const dot      = row.querySelector('.ci-dot');
+    const branch   = row.querySelector('.ci-branch');
+    const status   = row.querySelector('.ci-status');
+    const time     = row.querySelector('.ci-time');
+    const ratePill = row.querySelector('.ci-rate-pill');
+    const durDiv   = row.querySelector('.ci-panel-dur');
 
     const baked = panelBaked && panelBaked[wf.file];
     if (baked) {
@@ -2037,16 +2250,21 @@ function showCIPanel(cat, projId) {
       status.textContent   = label;
       status.style.color   = color;
       time.textContent     = relTime(new Date(baked.updated_at));
+      ratePill.className   = 'ci-rate-pill ' + failureRateClass(baked.failure_rate);
+      ratePill.textContent = baked.failure_rate !== null && baked.failure_rate !== undefined
+        ? baked.failure_rate.toFixed(1) + '%' : '\u2014';
+      durDiv.textContent   = fmtDuration(baked.avg_duration);
       return;
     }
 
     fetch(
-      ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${wf.file}/runs?per_page=1`),
+      ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${wf.file}/runs?per_page=20&status=completed`),
       { headers: { 'Accept': 'application/vnd.github+json' } }
     )
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
-        const run = (data.workflow_runs || [])[0];
+        const runs = data.workflow_runs || [];
+        const run  = runs[0];
         if (run) {
           const [color, label] = CI_CONCLUSION_MAP[run.conclusion]
             || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
@@ -2055,6 +2273,10 @@ function showCIPanel(cat, projId) {
           status.textContent   = label;
           status.style.color   = color;
           time.textContent     = relTime(new Date(run.updated_at));
+          const { failure_rate, avg_duration } = computeStats(runs);
+          ratePill.className   = 'ci-rate-pill ' + failureRateClass(failure_rate);
+          ratePill.textContent = failure_rate !== null ? failure_rate.toFixed(1) + '%' : '\u2014';
+          durDiv.textContent   = fmtDuration(avg_duration);
         } else {
           branch.textContent = '\u2014';
           status.textContent = 'no runs found';
