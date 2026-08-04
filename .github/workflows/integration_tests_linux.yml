@@ -24,6 +24,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install GCC 14
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y "gcc-14" "g++-14"
+          # Make the requested compiler the one CMake/scikit-build-core picks up
+          # for the pip build below (env persists to later steps via GITHUB_ENV).
+          echo "CC=gcc-14" >> "$GITHUB_ENV"
+          echo "CXX=g++-14" >> "$GITHUB_ENV"
+          "g++-14" --version
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
