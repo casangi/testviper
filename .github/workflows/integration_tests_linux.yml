@@ -24,6 +24,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install GCC 14
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y "gcc-14" "g++-14"
+          # Make the requested compiler the one CMake/scikit-build-core picks up
+          # for the pip build below (env persists to later steps via GITHUB_ENV).
+          echo "CC=gcc-14" >> "$GITHUB_ENV"
+          echo "CXX=g++-14" >> "$GITHUB_ENV"
+          "g++-14" --version
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -33,14 +43,12 @@ jobs:
         run: |
           make build-main  #installs under external
           ls -l external
-
       - name: Create test results directories
         run: |
           mkdir -p testviper-tests/${{ matrix.python-version }}
           mkdir -p toolviper-tests/${{ matrix.python-version }}
           mkdir -p graphviper-tests/${{ matrix.python-version }}
           mkdir -p astroviper-tests/${{ matrix.python-version }}
-
       - name: Run testviper integration tests
         run: |
           pytest -v tests/integration/ \
@@ -60,7 +68,6 @@ jobs:
           --junitxml="xradio-tests/${{ matrix.python-version }}/xradio-test-results-${{ matrix.python-version }}.xml"
           ls -l .
           ls -l xradio-tests/${{ matrix.python-version }}
-
       - name: Run toolviper tests
         run: |
           pytest -v ./external/toolviper/tests/ \
@@ -70,7 +77,6 @@ jobs:
           --cov-report=xml:toolviper-tests/${{ matrix.python-version }}/coverage.xml \
           --junitxml="toolviper-tests/${{ matrix.python-version }}/toolviper-test-results-${{ matrix.python-version }}.xml"
           ls -l toolviper-tests/${{ matrix.python-version }}
-
       - name: Run graphviper tests
         run: |
           pytest -v ./external/graphviper/tests/ \
@@ -81,15 +87,15 @@ jobs:
           --junitxml="graphviper-tests/${{ matrix.python-version }}/graphviper-test-results-${{ matrix.python-version }}.xml"
           ls -l graphviper-tests/${{ matrix.python-version }}
 
-      # - name: Run astroviper tests
-      #   run: |
-      #     pytest -v ./external/astroviper/tests/ \
-      #     --cov=astroviper \
-      #     --no-cov-on-fail \
-      #     --doctest-modules \
-      #     --cov-report=xml:astroviper-tests/${{ matrix.python-version }}/coverage.xml \
-      #     --junitxml="astroviper-tests/${{ matrix.python-version }}/astroviper-test-results-${{ matrix.python-version }}.xml"
-      #     ls -l astroviper-tests/${{ matrix.python-version }}
+      - name: Run astroviper tests
+        run: |
+          pytest -v ./external/astroviper/tests/ \
+          --cov=astroviper \
+          --no-cov-on-fail \
+          --doctest-modules \
+          --cov-report=xml:astroviper-tests/${{ matrix.python-version }}/coverage.xml \
+          --junitxml="astroviper-tests/${{ matrix.python-version }}/astroviper-test-results-${{ matrix.python-version }}.xml"
+          ls -l astroviper-tests/${{ matrix.python-version }}
 
       # - name: Check CODECOV_TOKEN
       #   run: echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
@@ -130,4 +136,3 @@ jobs:
           path: |
             test-results/*.xml
           if-no-files-found: ignore
-          
