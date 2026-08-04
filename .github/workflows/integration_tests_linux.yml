@@ -43,14 +43,12 @@ jobs:
         run: |
           make build-main  #installs under external
           ls -l external
-
       - name: Create test results directories
         run: |
           mkdir -p testviper-tests/${{ matrix.python-version }}
           mkdir -p toolviper-tests/${{ matrix.python-version }}
           mkdir -p graphviper-tests/${{ matrix.python-version }}
           mkdir -p astroviper-tests/${{ matrix.python-version }}
-
       - name: Run testviper integration tests
         run: |
           pytest -v tests/integration/ \
@@ -70,7 +68,6 @@ jobs:
           --junitxml="xradio-tests/${{ matrix.python-version }}/xradio-test-results-${{ matrix.python-version }}.xml"
           ls -l .
           ls -l xradio-tests/${{ matrix.python-version }}
-
       - name: Run toolviper tests
         run: |
           pytest -v ./external/toolviper/tests/ \
@@ -80,7 +77,6 @@ jobs:
           --cov-report=xml:toolviper-tests/${{ matrix.python-version }}/coverage.xml \
           --junitxml="toolviper-tests/${{ matrix.python-version }}/toolviper-test-results-${{ matrix.python-version }}.xml"
           ls -l toolviper-tests/${{ matrix.python-version }}
-
       - name: Run graphviper tests
         run: |
           pytest -v ./external/graphviper/tests/ \
@@ -91,15 +87,15 @@ jobs:
           --junitxml="graphviper-tests/${{ matrix.python-version }}/graphviper-test-results-${{ matrix.python-version }}.xml"
           ls -l graphviper-tests/${{ matrix.python-version }}
 
-       - name: Run astroviper tests
-         run: |
-           pytest -v ./external/astroviper/tests/ \
-           --cov=astroviper \
-           --no-cov-on-fail \
-           --doctest-modules \
-           --cov-report=xml:astroviper-tests/${{ matrix.python-version }}/coverage.xml \
-           --junitxml="astroviper-tests/${{ matrix.python-version }}/astroviper-test-results-${{ matrix.python-version }}.xml"
-           ls -l astroviper-tests/${{ matrix.python-version }}
+      - name: Run astroviper tests
+        run: |
+          pytest -v ./external/astroviper/tests/ \
+          --cov=astroviper \
+          --no-cov-on-fail \
+          --doctest-modules \
+          --cov-report=xml:astroviper-tests/${{ matrix.python-version }}/coverage.xml \
+          --junitxml="astroviper-tests/${{ matrix.python-version }}/astroviper-test-results-${{ matrix.python-version }}.xml"
+          ls -l astroviper-tests/${{ matrix.python-version }}
 
       # - name: Check CODECOV_TOKEN
       #   run: echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
@@ -140,4 +136,3 @@ jobs:
           path: |
             test-results/*.xml
           if-no-files-found: ignore
-          
