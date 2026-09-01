@@ -1,0 +1,203 @@
+[[38;2;128;05;128m2026-09-01 00:57:21,537[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Number of frequency chunks ... : 5 
+[[38;2;128;05;128m2026-09-01 00:57:21,645[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 5 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (output_shard_channels): none; one file per written Zarr chunk.
+  chunking (node_task_image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent). 
+[[38;2;128;05;128m2026-09-01 00:57:30,831[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 9.326  (100.0%)
+    create empty image xds        0.002  (0%)
+    write empty image to disk     0.030  (0%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.026  (0%)
+    open processing set           0.080  (1%)
+    interpolate data coords       0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    generate dask graph           0.007  (0%)
+    compute dask graph            9.168  (98%)
+    consolidate metadata          0.010  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      9.326
+ sum of phases above           9.326  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-09-01 00:57:30,832[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER node-task timing: MEAN over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.073  (4.6%)
+    imaging weights               0.006  (9%)
+    gcf kernel                    0.000  (0%)
+    vis mask                      0.001  (1%)
+    uv-sampling grid (PSF)        0.012  (17%)
+    fft normalize (PSF)           0.008  (10%)
+    primary beam                  0.008  (11%)
+    pol transform                 0.003  (4%)
+    psf gaussian fit              0.033  (45%)
+    (unaccounted)                 0.002
+
+RESIDUAL UPDATE (summed over major cycles): 0.299  (18.7%)
+    gcf kernel                    0.001  (0%)
+    pol transform                 0.111  (37%)
+    degrid (model->vis)           0.020  (7%)
+    fft (degrid)                  0.029  (10%)
+    residual vis (obs-model)      0.005  (2%)
+    vis mask                      0.004  (1%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.080  (27%)
+    fft (grid)                    0.041  (14%)
+    (unaccounted)                 0.008
+
+MODEL UPDATE (summed over major cycles): 1.019  (63.7%)
+    iteration control             0.000  (0%)
+    make mask                     0.003  (0%)
+    deconvolve                    1.013  (99%)
+    convergence / merge           0.000  (0%)
+    (unaccounted)                 0.003
+
+RESTORE: 0.005  (0.3%)
+
+NODE I/O: 0.200  (12.5%)
+    make empty image              0.002  (1%)
+    load visibilities             0.142  (71%)
+    image statistics              0.019  (10%)
+    write image                   0.036  (18%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     1.601
+ sum of phases above           1.596  (99.7% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-09-01 00:57:30,833[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER node-task timing: MAX over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.079  (4.8%)
+    imaging weights               0.007  (8%)
+    gcf kernel                    0.000  (0%)
+    vis mask                      0.001  (1%)
+    uv-sampling grid (PSF)        0.013  (16%)
+    fft normalize (PSF)           0.008  (10%)
+    primary beam                  0.008  (10%)
+    pol transform                 0.003  (4%)
+    psf gaussian fit              0.038  (48%)
+    (unaccounted)                 0.001
+
+RESIDUAL UPDATE (summed over major cycles): 0.303  (18.4%)
+    gcf kernel                    0.001  (0%)
+    pol transform                 0.112  (37%)
+    degrid (model->vis)           0.022  (7%)
+    fft (degrid)                  0.032  (11%)
+    residual vis (obs-model)      0.006  (2%)
+    vis mask                      0.004  (1%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.080  (27%)
+    fft (grid)                    0.045  (15%)
+    (unaccounted)                 0.003
+
+MODEL UPDATE (summed over major cycles): 1.078  (65.2%)
+    iteration control             0.000  (0%)
+    make mask                     0.003  (0%)
+    deconvolve                    1.071  (99%)
+    convergence / merge           0.000  (0%)
+    (unaccounted)                 0.003
+
+RESTORE: 0.005  (0.3%)
+
+NODE I/O: 0.202  (12.2%)
+    make empty image              0.003  (1%)
+    load visibilities             0.143  (71%)
+    image statistics              0.020  (10%)
+    write image                   0.037  (18%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     1.652
+ sum of phases above           1.667  (101.0% of total accounted)
+================================================================ 
+multi_cycle_t12_c5_double channel 0 SKY_MODEL relative difference: 9.523921675775556e-15
+multi_cycle_t12_c5_double channel 0 SKY_RESIDUAL relative difference: 5.921569032003345e-14
+multi_cycle_t12_c5_double channel 0 PRIMARY_BEAM relative difference: 5.450625714664703e-10
+multi_cycle_t12_c5_double channel 0 SKY_RESTORED relative difference: 1.1771941024734894e-10
+multi_cycle_t12_c5_double channel 0 MASK relative difference: 0.0
+multi_cycle_t12_c5_double channel 1 SKY_MODEL relative difference: 4.6389127540260224e-15
+multi_cycle_t12_c5_double channel 1 SKY_RESIDUAL relative difference: 1.214244324409787e-13
+multi_cycle_t12_c5_double channel 1 PRIMARY_BEAM relative difference: 4.154005472933875e-10
+multi_cycle_t12_c5_double channel 1 SKY_RESTORED relative difference: 1.136984804158478e-10
+multi_cycle_t12_c5_double channel 1 MASK relative difference: 0.0
+multi_cycle_t12_c5_double channel 2 SKY_MODEL relative difference: 4.555660176113612e-15
+multi_cycle_t12_c5_double channel 2 SKY_RESIDUAL relative difference: 7.601317100031779e-14
+multi_cycle_t12_c5_double channel 2 PRIMARY_BEAM relative difference: 2.730747572510239e-10
+multi_cycle_t12_c5_double channel 2 SKY_RESTORED relative difference: 1.6900439499016758e-10
+multi_cycle_t12_c5_double channel 2 MASK relative difference: 0.0
+multi_cycle_t12_c5_double channel 3 SKY_MODEL relative difference: 8.206697792050469e-15
+multi_cycle_t12_c5_double channel 3 SKY_RESIDUAL relative difference: 8.82479730699174e-14
+multi_cycle_t12_c5_double channel 3 PRIMARY_BEAM relative difference: 1.3897695494424767e-10
+multi_cycle_t12_c5_double channel 3 SKY_RESTORED relative difference: 9.776099658982632e-11
+multi_cycle_t12_c5_double channel 3 MASK relative difference: 0.0
+multi_cycle_t12_c5_double channel 4 SKY_MODEL relative difference: 6.132882408045383e-15
+multi_cycle_t12_c5_double channel 4 SKY_RESIDUAL relative difference: 6.673873082693916e-14
+multi_cycle_t12_c5_double channel 4 PRIMARY_BEAM relative difference: 4.996003610813204e-16
+multi_cycle_t12_c5_double channel 4 SKY_RESTORED relative difference: 1.2143986814517474e-10
+multi_cycle_t12_c5_double channel 4 MASK relative difference: 0.0
+                                                   0  ...                4
+T_prep                                      0.072762  ...         0.069901
+T_prep_weights                              0.006639  ...         0.006654
+T_prep_make_point_spread_function           0.021801  ...         0.020792
+T_prep_primary_beam                         0.008138  ...         0.008085
+T_prep_transform_pol                        0.003242  ...         0.003187
+T_prep_psf_fit                              0.031357  ...         0.029641
+T_prep_gcf                                  0.000151  ...         0.000151
+T_prep_vis_mask                             0.000663  ...         0.000657
+T_prep_uv_sampling_grid                     0.012776  ...         0.011885
+T_prep_fft_norm                             0.007764  ...         0.007656
+T_residual_cycle                            0.301602  ...         0.294593
+T_model_update_cycle                        1.063257  ...         1.077558
+T_iteration_control                         0.000457  ...         0.000433
+T_convergence                               0.000275  ...         0.000324
+T_gcf                                       0.000778  ...         0.000788
+T_degrid                                     0.01968  ...         0.019245
+T_fft_degrid                                0.028826  ...         0.027854
+T_residual_vis                              0.005532  ...         0.005571
+T_grid                                      0.085979  ...         0.083835
+T_fft_grid                                   0.04463  ...         0.039744
+T_transform_pol                             0.110539  ...         0.111666
+T_vis_mask                                  0.003651  ...         0.003705
+T_uv_sampling_grid                               0.0  ...              0.0
+T_vis_grid                                  0.080431  ...         0.078116
+T_make_mask                                 0.003017  ...          0.00307
+T_deconvolve                                1.056534  ...         1.070731
+T_restore                                    0.00492  ...         0.005084
+task_id                                            0  ...                4
+n_channels                                         1  ...                1
+n_major_cycles                                     4  ...                4
+T_make_empty_image                          0.002283  ...         0.002331
+T_load                                      0.142805  ...         0.140859
+T_image_statistics                          0.019462  ...         0.019227
+T_write                                     0.035148  ...         0.036943
+T_image_cube_task                           1.647043  ...         1.651533
+start_unixtime                     1788224245.349585  ...  1788224248.9683
+hostname                               runnervmgx7h7  ...    runnervmgx7h7
+process_pid                                     4340  ...             4340
+thread_native_id                                4340  ...             4340
+worker_name                                     None  ...             None
+
+[40 rows x 5 columns]
+0    1.056534
+1    1.023138
+2    0.936152
+3    0.976260
+4    1.070731
+Name: T_deconvolve, dtype: float64
+0    0.301602
+1    0.296815
+2    0.297859
+3    0.303273
+4    0.294593
+Name: T_residual_cycle, dtype: float64
+0    1.647043
+1    1.614461
+2    1.525023
+3    1.566512
+4    1.651533
+Name: T_image_cube_task, dtype: float64
