@@ -3,7 +3,7 @@ name: Integration Tests with Allure Report
 
 on:
   push:
-    branches: ["main"]
+    branches: ["60-create-a-dispatch-to-benchviper"]
     paths-ignore:
       - '**.md'
       - '**.rst'
@@ -73,21 +73,6 @@ jobs:
         echo "CXX=g++-14" >> "$GITHUB_ENV"
         "g++-14" --version
         
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        
-    - name: Install testviper dependencies
-      run: |
-        pwd
-        make build-testviper
-        
-    - name: Clone and install component repositories
-      run: |
-        make build-main
-        ls -l external/
-
     - name: Install Allure CLI
       run: |
         wget -qO- https://nodejs.org/dist/v24.12.0/node-v24.12.0-linux-x64.tar.xz | tar -xJ
@@ -100,99 +85,33 @@ jobs:
         #sudo mv allure-2.24.1 /opt/allure
         #sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
         
-    - name: Checkout gh-pages for history
-      uses: actions/checkout@v4
-      if: always()
-      continue-on-error: true
+    - name: Repository Dispatch to benchviper
+      uses: actions/github-script@v6
       with:
-        ref: gh-pages
-        path: gh-pages
-        
-    - name: Copy Allure history for each component
-      if: always()
-      continue-on-error: true
-      run: |
-        ALLURE_VERSION="$(allure --version)"
-        if [[ $ALLURE_VERSION == 2* ]]; then
-          echo "Allure version 2 detected: $ALLURE_VERSION"
-          for comp in testviper toolviper xradio graphviper astroviper; do
-            if [ -d "gh-pages/main/allure-history/$comp" ]; then
-              mkdir -p "allure-results-$comp/history"
-              cp -r "gh-pages/main/allure-history/$comp/." "allure-results-$comp/history/"
-              echo "Copied history for $comp"
-            else
-              echo "No previous history for $comp"
-            fi
-          done
-        elif [[ $ALLURE_VERSION == 3* ]]; then
-          echo "Allure version 3 detected: $ALLURE_VERSION"
-          for comp in testviper toolviper xradio graphviper astroviper; do
-          if [ -d "gh-pages/main/allure3-history/$comp" ]; then
-            echo "history exists for $comp, copying..."
-            ls "gh-pages/main/allure3-history/$comp"
-          else
-            echo "creating history directory for $comp..."
-            mkdir -p "gh-pages/main/allure3-history/$comp"
-          fi
-          done
-          ls gh-pages/main/allure3-history/
-        else
-          echo "Unknown Allure version: $ALLURE_VERSION"
-          exit 1
-        fi
-      
-    # - name: Run tests and generate coverage
-    #   run: |
-    #     python scripts/test_runner_with_coverage.py
-      
-    - name: Run tests and generate Allure reports with history
-      run: python scripts/enhanced_report_generator.py
-      
-    # - name: Generate enhanced summary report with CodeCov links
-    #   run: python scripts/enhanced_summary_generator.py
-      
-    - name: Upload Allure Reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: allure-reports
-        path: allure-report/
-        retention-days: 30
-        
-    - name: Generate Test Summary
-      uses: test-summary/action@v2
-      with:
-        paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
-        
-    - name: Deploy history to gh-pages
-      uses: peaceiris/actions-gh-pages@v4
-      if: always()
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: gh-pages/main/
-        publish_branch: gh-pages
-        destination_dir: main
-        keep_files: true
-        force_orphan: false
-        
-    - name: Deploy report to gh-pages
-      uses: peaceiris/actions-gh-pages@v4
-      if: always()
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: allure-report
-        publish_branch: gh-pages
-        destination_dir: main
-        keep_files: true
-        force_orphan: false
-    - name: Check subprocess return codes
-      run: |
-        FILE="subprocess_return_code.txt"
-        TARGET_STRING="0"
-        while IFS= read -r line; do
-          if [ "$line" != "$TARGET_STRING" ]; then
-            echo "Found non-zero return code: $line"
-            exit 1
-          fi
-        done < "$FILE"
-        echo "All Component subprocesses returned zero exit code."
+        github-token: ${{ secrets.TESTVIPER_DISPATCH_TOKEN }}
+        script: |
+          const payload = {
+            event_type: 'benchmark-test-trigger',
+            client_payload: {
+              repository: '${{ github.repository }}',
+              ref: '${{ github.ref }}',
+              sha: '${{ github.sha }}',
+              actor: '${{ github.actor }}',
+              workflow: '${{ github.workflow }}',
+              run_id: '${{ github.run_id }}',
+              run_number: '${{ github.run_number }}',
+              component: '${{ github.event.repository.name }}'
+            }
+          };
+          
+          // Send repository dispatch to target repository
+          await github.rest.repos.createDispatchEvent({
+            owner: 'casangi',
+            repo: 'testviper',
+            event_type: payload.event_type,
+            client_payload: payload.client_payload
+          });
+          
+          // Note: repository_dispatch is repository-wide and not branch-specific.
+
+          console.log('Repository dispatch sent successfully to testviper');
