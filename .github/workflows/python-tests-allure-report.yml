@@ -196,3 +196,35 @@ jobs:
           fi
         done < "$FILE"
         echo "All Component subprocesses returned zero exit code."
+        
+    - name: Repository Dispatch to benchviper
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.TESTVIPER_DISPATCH_TOKEN }}
+        script: |
+          const payload = {
+            event_type: 'benchmark-test-trigger',
+            client_payload: {
+              repository: '${{ github.repository }}',
+              ref: '${{ github.ref }}',
+              sha: '${{ github.sha }}',
+              actor: '${{ github.actor }}',
+              workflow: '${{ github.workflow }}',
+              run_id: '${{ github.run_id }}',
+              run_number: '${{ github.run_number }}',
+              component: '${{ github.event.inputs.source_repository }}'
+
+            }
+          };
+          
+          // Send repository dispatch to target repository
+          await github.rest.repos.createDispatchEvent({
+            owner: 'casangi',
+            repo: 'benchviper',
+            event_type: payload.event_type,
+            client_payload: payload.client_payload
+          });
+          
+          // Note: repository_dispatch is repository-wide and not branch-specific.
+
+          console.log('Repository dispatch sent successfully to benchviper');
