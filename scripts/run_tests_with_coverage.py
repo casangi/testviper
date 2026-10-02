@@ -2,17 +2,19 @@
 """
 Test runner with coverage collection for all components
 """
+
 import subprocess
 import sys
-import os
 from pathlib import Path
+
 
 def run_command(cmd, cwd=None):
     """Run a command and handle errors"""
     print(f"Running: {cmd}")
     try:
-        result = subprocess.run(cmd, shell=True, cwd=cwd, check=True, 
-                              capture_output=True, text=True)
+        result = subprocess.run(
+            cmd, shell=True, cwd=cwd, check=True, capture_output=True, text=True
+        )
         print(result.stdout)
         return True
     except subprocess.CalledProcessError as e:
@@ -21,23 +23,25 @@ def run_command(cmd, cwd=None):
         print(f"stderr: {e.stderr}")
         return False
 
+
 def ensure_dir(path):
     """Ensure directory exists"""
     Path(path).mkdir(parents=True, exist_ok=True)
 
+
 def main():
     """Run all tests with coverage collection"""
-    
+
     # Ensure directories exist
     ensure_dir("allure-results/integration")
-    ensure_dir("allure-results/toolviper") 
+    ensure_dir("allure-results/toolviper")
     ensure_dir("allure-results/xradio")
     ensure_dir("allure-results/graphviper")
     ensure_dir("allure-results/astroviper")
     ensure_dir("coverage")
-    
+
     success = True
-    
+
     # Run Integration Tests (testviper)
     print("*" * 50)
     print("Running TestVIPER Integration Tests")
@@ -52,7 +56,7 @@ def main():
     """
     if not run_command(cmd):
         success = False
-    
+
     # Run Toolviper Component Tests
     print("*" * 50)
     print("Running ToolVIPER Tests")
@@ -67,7 +71,7 @@ def main():
     """
     if not run_command(cmd):
         success = False
-    
+
     # Run Xradio Component Tests
     print("*" * 50)
     print("Running XRADIO Component Tests")
@@ -82,12 +86,12 @@ def main():
     """
     if not run_command(cmd):
         success = False
-    
+
     print("=" * 50)
     print("Test execution completed")
     print("=" * 50)
 
-     # Run GraphVIPER Component Tests
+    # Run GraphVIPER Component Tests
     print("=" * 50)
     print("Running GraphVIPER Tests")
     print("=" * 50)
@@ -101,11 +105,11 @@ def main():
     """
     if not run_command(cmd):
         success = False
-    
+
     print("*" * 50)
     print("Test execution completed")
     print("*" * 50)
-   
+
     # Run AstroVIPER Component Tests
     print("*" * 50)
     print("Running AstroVIPER Tests")
@@ -120,16 +124,17 @@ def main():
     """
     if not run_command(cmd):
         success = False
-    
+
     print("*" * 50)
     print("Test execution completed")
     print("*" * 50)
-   
+
     # List generated files
     run_command("ls -la allure-results/")
     run_command("ls -la coverage/")
-    
+
     return success
+
 
 if __name__ == "__main__":
     success = main()

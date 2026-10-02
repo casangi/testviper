@@ -72,14 +72,14 @@ Creates the main dashboard with:
 Each component is configured with:
 ```python
 {
-    'name': 'component_name',
-    'display_name': 'Display Name',
-    'description': 'Component description',
-    'path': 'relative/path',
-    'test_path': 'tests',
-    'icon': '🔬',
-    'codecov_url': 'https://app.codecov.io/gh/casangi/component_name',
-    'codecov_badge': 'https://codecov.io/gh/casangi/component_name/branch/main/graph/badge.svg'
+    "name": "component_name",
+    "display_name": "Display Name",
+    "description": "Component description",
+    "path": "relative/path",
+    "test_path": "tests",
+    "icon": "🔬",
+    "codecov_url": "https://app.codecov.io/gh/casangi/component_name",
+    "codecov_badge": "https://codecov.io/gh/casangi/component_name/branch/main/graph/badge.svg",
 }
 ```
 

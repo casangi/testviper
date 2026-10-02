@@ -1,13 +1,24 @@
 ---
 name: Integration Tests on Branch - Linux
 
+# Push to a branch: Python 3.13 only.
+# Pull request / push to main: Python 3.12, 3.13 and 3.14.
 on:
   push:
-    branches-ignore: ["main"]
     paths-ignore:
       - '**.md'
       - '**.rst'
   pull_request:
+
+concurrency:
+  # A newer push to the same branch/PR cancels the older run. Each run on main
+  # gets its own group, so merges are never queued behind or cancelled by
+  # each other.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -16,13 +27,21 @@ jobs:
       Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.13"]
+        python-version: ${{ fromJson((github.event_name == 'push' && github.ref != 'refs/heads/main') && '["3.13"]' || '["3.12", "3.13", "3.14"]') }}
+    env:
+      # TODO: remove once the toolviper, xradio, graphviper and astroviper
+      # main branches (installed by `make build-main`) declare
+      # requires-python "<3.15"; until then pip refuses them on 3.14.
+      PIP_IGNORE_REQUIRES_PYTHON: "1"
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Install GCC 14
         run: |
@@ -35,10 +54,10 @@ jobs:
           "g++-14" --version
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
-  
+
       - name: Install testviper dependencies and components
         run: |
           make build-main  #installs under external
@@ -54,7 +73,7 @@ jobs:
           pytest -v tests/integration/ \
           --junitxml="testviper-tests/${{ matrix.python-version }}/testviper-test-results-${{ matrix.python-version }}.xml"
           ls -l testviper-tests/${{ matrix.python-version }}/
-  
+
       - name: Create xradio test results directory
         run: mkdir -p xradio-tests/${{ matrix.python-version }}
 
@@ -97,42 +116,12 @@ jobs:
           --junitxml="astroviper-tests/${{ matrix.python-version }}/astroviper-test-results-${{ matrix.python-version }}.xml"
           ls -l astroviper-tests/${{ matrix.python-version }}
 
-      # - name: Check CODECOV_TOKEN
-      #   run: echo "CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }}"
-
-      # - name: Upload code coverage results to Codecov
-      #   uses: codecov/codecov-action@v5
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}  # Use the passed token from workflow_call
-      #     slug: ${{ github.repository }}
-
-      # - name: Upload test stats to Codecov
-      #   if: ${{ !cancelled() }}
-      #   uses: codecov/test-results-action@v1
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     slug: casangi/testviper
-
-#       - name: Setup Testspace
-#         uses: testspace-com/setup-testspace@v1
-#         with:
-#           domain: 'casangi'
-#           project: 'testviper-${{ matrix.python-version }}'
-
-#       - name: Publish test results to Testspace
-#         run: |
-#           testspace "[Python ${{ matrix.python-version }}/Unit Tests/testviper]testviper-tests/${{ matrix.python-version }}/*.xml"
-#           testspace "[Python ${{ matrix.python-version }}/Unit Tests/toolviper]toolviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
-#           testspace "[Python ${{ matrix.python-version }}/Unit Tests/xradio]xradio-tests/${{ matrix.python-version }}/*.xml" --link=codecov
-#           testspace "[Python ${{ matrix.python-version }}/Unit Tests/graphviper]graphviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov
-# #          testspace "[Python ${{ matrix.python-version }}/Unit Tests/astroviper]astroviper-tests/${{ matrix.python-version }}/*.xml" --link=codecov 
-#         if: always()
-
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.python-version }}
+          # The junit and coverage files are written to <component>-tests/<python-version>/.
           path: |
-            test-results/*.xml
+            *-tests/${{ matrix.python-version }}/*.xml
           if-no-files-found: ignore

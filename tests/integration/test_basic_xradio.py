@@ -1,8 +1,8 @@
 import pytest
 import xarray as xr
 from xradio.measurement_set.measurement_set_xdt import (
-    MeasurementSetXdt,
     InvalidAccessorLocation,
+    MeasurementSetXdt,
 )
 
 
@@ -21,6 +21,7 @@ class TestBasicXradio:
 
         with pytest.raises(InvalidAccessorLocation, match="not a MSv4 node"):
             assert ms_xdt.sel()
+
 
 if __name__ == "__main__":
     pytest.main(["-v", "-s", __file__])

@@ -30,8 +30,8 @@ REPO_ROOT = os.path.normpath(os.path.join(SCRIPTS_DIR, ".."))
 sys.path.insert(0, SCRIPTS_DIR)
 import build_dashboard  # noqa: E402
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(scope="session")
 def config():
@@ -60,15 +60,19 @@ def built_html():
 # 1. Source file integrity
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 class TestSourceFiles:
     """All source files required by the build must exist and be non-empty."""
 
-    @pytest.mark.parametrize("path,label", [
-        (build_dashboard.CONFIG_PATH,   "projects.yaml"),
-        (build_dashboard.TEMPLATE_PATH, "base.html"),
-        (build_dashboard.CSS_PATH,      "style.css"),
-        (build_dashboard.JS_PATH,       "app.js"),
-    ])
+    @pytest.mark.parametrize(
+        "path,label",
+        [
+            (build_dashboard.CONFIG_PATH, "projects.yaml"),
+            (build_dashboard.TEMPLATE_PATH, "base.html"),
+            (build_dashboard.CSS_PATH, "style.css"),
+            (build_dashboard.JS_PATH, "app.js"),
+        ],
+    )
     def test_source_file_exists_and_nonempty(self, path, label):
         assert os.path.isfile(path), f"{label} not found at {path}"
         assert os.path.getsize(path) > 0, f"{label} is empty"
@@ -82,8 +86,8 @@ class TestSourceFiles:
 # 2. YAML config validation
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TestConfigValidation:
 
+class TestConfigValidation:
     def test_has_dashboard_section(self, config):
         assert "dashboard" in config
         dash = config["dashboard"]
@@ -112,9 +116,7 @@ class TestConfigValidation:
     def test_every_project_has_overview_workflows(self, config):
         for proj in config["projects"]:
             wfs = proj.get("overview_workflows", [])
-            assert len(wfs) >= 1, (
-                f"Project '{proj['id']}' has no overview_workflows"
-            )
+            assert len(wfs) >= 1, f"Project '{proj['id']}' has no overview_workflows"
             for wf in wfs:
                 assert "file" in wf, f"Workflow missing 'file' in {proj['id']}"
                 assert "label" in wf, f"Workflow missing 'label' in {proj['id']}"
@@ -167,8 +169,8 @@ class TestConfigValidation:
 # 3. JS config generation
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TestJsConfigGeneration:
 
+class TestJsConfigGeneration:
     def test_generate_js_config_no_bake(self, config):
         js = build_dashboard.generate_js_config(config, None)
         assert "const PROJECTS =" in js
@@ -222,12 +224,19 @@ class TestJsConfigGeneration:
 
     def test_yaml_categories_to_js_ci(self):
         proj = {
-            "id": "test", "name": "Test", "owner": "org", "repo": "r",
-            "categories": [{
-                "id": "ci", "label": "CI", "type": "ci",
-                "url": "https://example.com",
-                "workflows": [{"file": "test.yml", "label": "Test"}],
-            }],
+            "id": "test",
+            "name": "Test",
+            "owner": "org",
+            "repo": "r",
+            "categories": [
+                {
+                    "id": "ci",
+                    "label": "CI",
+                    "type": "ci",
+                    "url": "https://example.com",
+                    "workflows": [{"file": "test.yml", "label": "Test"}],
+                }
+            ],
         }
         cats = build_dashboard.yaml_categories_to_js(proj)
         assert len(cats) == 1
@@ -236,12 +245,19 @@ class TestJsConfigGeneration:
 
     def test_yaml_categories_to_js_coverage(self):
         proj = {
-            "id": "test", "name": "Test", "owner": "org", "repo": "r",
-            "categories": [{
-                "id": "cov", "label": "Coverage", "type": "coverage",
-                "url": "https://codecov.io/test",
-                "codecov": {"service": "github", "owner": "org", "repo": "r"},
-            }],
+            "id": "test",
+            "name": "Test",
+            "owner": "org",
+            "repo": "r",
+            "categories": [
+                {
+                    "id": "cov",
+                    "label": "Coverage",
+                    "type": "coverage",
+                    "url": "https://codecov.io/test",
+                    "codecov": {"service": "github", "owner": "org", "repo": "r"},
+                }
+            ],
         }
         cats = build_dashboard.yaml_categories_to_js(proj)
         assert cats[0]["codecov"] == {"service": "github", "owner": "org", "repo": "r"}
@@ -249,11 +265,18 @@ class TestJsConfigGeneration:
 
     def test_yaml_categories_to_js_repo(self):
         proj = {
-            "id": "test", "name": "Test", "owner": "org", "repo": "r",
-            "categories": [{
-                "id": "repo", "label": "Repo", "type": "repo",
-                "url": "https://github.com/org/r",
-            }],
+            "id": "test",
+            "name": "Test",
+            "owner": "org",
+            "repo": "r",
+            "categories": [
+                {
+                    "id": "repo",
+                    "label": "Repo",
+                    "type": "repo",
+                    "url": "https://github.com/org/r",
+                }
+            ],
         }
         cats = build_dashboard.yaml_categories_to_js(proj)
         assert "github" not in cats[0]
@@ -264,8 +287,8 @@ class TestJsConfigGeneration:
 # 4. Full build output validation
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TestBuildOutput:
 
+class TestBuildOutput:
     def test_html_is_valid_document(self, built_html):
         assert built_html.startswith("<!DOCTYPE html>")
         assert "<html" in built_html
@@ -305,9 +328,15 @@ class TestBuildOutput:
 
     def test_key_html_elements_present(self, built_html):
         for element_id in [
-            "projbar", "brand", "proj-tabs", "theme-switcher",
-            "catbar", "cat-tabs",
-            "landing", "hero-card", "ci-overview",
+            "projbar",
+            "brand",
+            "proj-tabs",
+            "theme-switcher",
+            "catbar",
+            "cat-tabs",
+            "landing",
+            "hero-card",
+            "ci-overview",
             "main-frame",
             "launch-panel",
             "coverage-panel",
@@ -327,19 +356,21 @@ class TestBuildOutput:
 # 5. Baked data structure (mocked API)
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TestBakeDataStructure:
 
+class TestBakeDataStructure:
     @staticmethod
     def _mock_gh_get(path, token):
         if "workflows" in path and "runs" in path:
             return {
-                "workflow_runs": [{
-                    "conclusion": "success",
-                    "status": "completed",
-                    "updated_at": "2025-06-01T12:00:00Z",
-                    "head_branch": "main",
-                    "name": "Test Workflow",
-                }]
+                "workflow_runs": [
+                    {
+                        "conclusion": "success",
+                        "status": "completed",
+                        "updated_at": "2025-06-01T12:00:00Z",
+                        "head_branch": "main",
+                        "name": "Test Workflow",
+                    }
+                ]
             }
         if "actions/runs" in path:
             return {
@@ -353,7 +384,9 @@ class TestBakeDataStructure:
         return {}
 
     def test_bake_returns_valid_structure(self, config):
-        with mock.patch.object(build_dashboard, "_gh_get", side_effect=self._mock_gh_get):
+        with mock.patch.object(
+            build_dashboard, "_gh_get", side_effect=self._mock_gh_get
+        ):
             result = build_dashboard.bake_ci_data(config, "fake-token")
 
         assert result is not None
@@ -379,7 +412,9 @@ class TestBakeDataStructure:
                 assert "recent_branches" in proj_data
 
     def test_bake_panel_workflows_present(self, config):
-        with mock.patch.object(build_dashboard, "_gh_get", side_effect=self._mock_gh_get):
+        with mock.patch.object(
+            build_dashboard, "_gh_get", side_effect=self._mock_gh_get
+        ):
             result = build_dashboard.bake_ci_data(config, "fake-token")
 
         assert result is not None
@@ -405,7 +440,9 @@ class TestBakeDataStructure:
                 )
 
     def test_bake_recent_branches_excludes_main(self, config):
-        with mock.patch.object(build_dashboard, "_gh_get", side_effect=self._mock_gh_get):
+        with mock.patch.object(
+            build_dashboard, "_gh_get", side_effect=self._mock_gh_get
+        ):
             result = build_dashboard.bake_ci_data(config, "fake-token")
 
         for proj in config["projects"]:
@@ -414,7 +451,9 @@ class TestBakeDataStructure:
                 assert "main" not in branches
 
     def test_bake_timestamp_is_iso8601(self, config):
-        with mock.patch.object(build_dashboard, "_gh_get", side_effect=self._mock_gh_get):
+        with mock.patch.object(
+            build_dashboard, "_gh_get", side_effect=self._mock_gh_get
+        ):
             result = build_dashboard.bake_ci_data(config, "fake-token")
 
         assert re.match(
@@ -446,23 +485,29 @@ class TestBakeDataStructure:
 # 6. API helper unit tests
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TestApiHelpers:
 
+class TestApiHelpers:
     def test_fetch_workflow_run_returns_first_run(self):
         fake_run = {"conclusion": "success", "updated_at": "2025-01-01T00:00:00Z"}
         with mock.patch.object(
-            build_dashboard, "_gh_get",
+            build_dashboard,
+            "_gh_get",
             return_value={"workflow_runs": [fake_run]},
         ):
-            result = build_dashboard.fetch_workflow_run("org", "repo", "test.yml", "main", "tok")
+            result = build_dashboard.fetch_workflow_run(
+                "org", "repo", "test.yml", "main", "tok"
+            )
         assert result == {**fake_run, "failure_rate": None, "avg_duration": None}
 
     def test_fetch_workflow_run_returns_none_on_empty(self):
         with mock.patch.object(
-            build_dashboard, "_gh_get",
+            build_dashboard,
+            "_gh_get",
             return_value={"workflow_runs": []},
         ):
-            result = build_dashboard.fetch_workflow_run("org", "repo", "test.yml", "main", "tok")
+            result = build_dashboard.fetch_workflow_run(
+                "org", "repo", "test.yml", "main", "tok"
+            )
         assert result is None
 
     def test_fetch_workflow_run_any_branch_returns_first_run(self):
@@ -472,24 +517,34 @@ class TestApiHelpers:
             "head_branch": "feature-x",
         }
         with mock.patch.object(
-            build_dashboard, "_gh_get",
+            build_dashboard,
+            "_gh_get",
             return_value={"workflow_runs": [fake_run]},
         ):
-            result = build_dashboard.fetch_workflow_run_any_branch("org", "repo", "test.yml", "tok")
+            result = build_dashboard.fetch_workflow_run_any_branch(
+                "org", "repo", "test.yml", "tok"
+            )
         assert result == {**fake_run, "failure_rate": None, "avg_duration": None}
 
     def test_fetch_workflow_run_any_branch_returns_none_on_empty(self):
         with mock.patch.object(
-            build_dashboard, "_gh_get",
+            build_dashboard,
+            "_gh_get",
             return_value={"workflow_runs": []},
         ):
-            result = build_dashboard.fetch_workflow_run_any_branch("org", "repo", "test.yml", "tok")
+            result = build_dashboard.fetch_workflow_run_any_branch(
+                "org", "repo", "test.yml", "tok"
+            )
         assert result is None
 
     def test_fetch_workflow_run_any_branch_no_branch_param(self):
         """Verify the API path does not include a branch query parameter."""
-        with mock.patch.object(build_dashboard, "_gh_get", return_value={"workflow_runs": []}) as m:
-            build_dashboard.fetch_workflow_run_any_branch("org", "repo", "test.yml", "tok")
+        with mock.patch.object(
+            build_dashboard, "_gh_get", return_value={"workflow_runs": []}
+        ) as m:
+            build_dashboard.fetch_workflow_run_any_branch(
+                "org", "repo", "test.yml", "tok"
+            )
         called_path = m.call_args[0][0]
         assert "branch=" not in called_path
 
@@ -501,18 +556,18 @@ class TestApiHelpers:
             {"head_branch": "feat-b"},
         ]
         with mock.patch.object(
-            build_dashboard, "_gh_get",
+            build_dashboard,
+            "_gh_get",
             return_value={"workflow_runs": runs},
         ):
             result = build_dashboard.fetch_recent_branches("org", "repo", "tok", 5)
         assert result == ["feat-a", "feat-b"]
 
     def test_fetch_recent_branches_respects_limit(self):
-        runs = [
-            {"head_branch": f"branch-{i}"} for i in range(10)
-        ]
+        runs = [{"head_branch": f"branch-{i}"} for i in range(10)]
         with mock.patch.object(
-            build_dashboard, "_gh_get",
+            build_dashboard,
+            "_gh_get",
             return_value={"workflow_runs": runs},
         ):
             result = build_dashboard.fetch_recent_branches("org", "repo", "tok", 2)
@@ -523,8 +578,8 @@ class TestApiHelpers:
 # 7. Config-to-output consistency
 # ═══════════════════════════════════════════════════════════════════════════
 
-class TestConfigOutputConsistency:
 
+class TestConfigOutputConsistency:
     def test_all_project_ids_in_output(self, config, built_html):
         for proj in config["projects"]:
             assert f'"{proj["id"]}"' in built_html, (

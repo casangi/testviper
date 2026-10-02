@@ -18,13 +18,13 @@ A new version of the Allure Reports will be created in the gh-pages branch and d
 ### Main Steps
 
 1. **Listen for Dispatch Events**
-   - Uses: `actions/github-script@v6` from `.github/workflows/dispatch-receiver.yml` to trigger the execution of tests.
+   - Uses: `actions/github-script@v9` from `.github/workflows/dispatch-receiver.yml` to trigger the execution of tests.
 
 1. **Checkout Repository**
    - Uses `actions/checkout` to clone the main repository.
 
 2. **Set Up Python**
-   - Installs Python 3.12 using `actions/setup-python`.
+   - Installs Python 3.13 using `actions/setup-python`.
 
 3. **Install Dependencies**
    - Runs `make build-testviper` to install dependencies for the main project.
