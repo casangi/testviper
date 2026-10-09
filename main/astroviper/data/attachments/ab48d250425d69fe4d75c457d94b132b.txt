@@ -1,0 +1,162 @@
+[[38;2;128;05;128m2026-10-09 02:58:35,855[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m simulate_processing_set: 48 times x 903 baselines x 5 channels x 2 polarizations in 4 x 2 chunks. 
+[[38;2;128;05;128m2026-10-09 02:58:38,178[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ simulate_processing_set timing
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 2.149  (92.2%)
+    build coordinates + MSv4 metadata    0.008  (0%)
+    determine chunks + parallel coords    0.000  (0%)
+    create empty MSv4 on disk     0.198  (9%)
+    interpolate data coords       0.000  (0%)
+    create map/reduce graph       0.003  (0%)
+    generate dask graph           0.023  (1%)
+    compute dask graph            1.841  (86%)
+    consolidate metadata + schema check    0.075  (3%)
+
+----------------------------------------------------------------
+ TOTAL (T_total)               2.331
+ sum of phases above           2.149  (92.2% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-10-09 02:58:38,283[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Number of frequency chunks ... : 5 
+[[38;2;128;05;128m2026-10-09 02:58:38,372[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 5 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent). 
+[[38;2;128;05;128m2026-10-09 02:58:49,563[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 11.317  (100.0%)
+    create empty image xds        0.002  (0%)
+    write empty image to disk     0.035  (0%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.032  (0%)
+    open processing set           0.055  (0%)
+    interpolate data coords       0.000  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    generate dask graph           0.008  (0%)
+    compute dask graph           11.169  (99%)
+    consolidate metadata          0.014  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)     11.318
+ sum of phases above          11.317  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-10-09 02:58:49,565[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER node-task timing: MEAN over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.350  (5.3%)
+    imaging weights               0.003  (1%)
+    gcf kernel                    0.001  (0%)
+    vis mask                      0.001  (0%)
+    uv-sampling grid (PSF)        0.033  (9%)
+    fft normalize (PSF)           0.126  (36%)
+    primary beam                  0.028  (8%)
+    pol transform                 0.009  (2%)
+    psf gaussian fit              0.142  (41%)
+    (unaccounted)                 0.007
+
+RESIDUAL UPDATE (summed over imaging cycles): 3.727  (56.9%)
+    gcf kernel                    0.008  (0%)
+    pol transform                 0.654  (18%)
+    degrid (model->vis)           0.237  (6%)
+    fft (degrid)                  0.864  (23%)
+    residual vis (obs-model)      0.045  (1%)
+    vis mask                      0.016  (0%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.798  (21%)
+    fft (grid)                    1.028  (28%)
+    (unaccounted)                 0.076
+
+MODEL UPDATE (summed over imaging cycles): 1.564  (23.9%)
+    iteration control             0.001  (0%)
+    make mask                     0.007  (0%)
+    deconvolve                    1.542  (99%)
+    convergence / merge           0.001  (0%)
+    (unaccounted)                 0.013
+
+RESTORE: 0.020  (0.3%)
+
+PRIMARY-BEAM CORRECTION: 0.012  (0.2%)
+
+NODE I/O: 0.835  (12.7%)
+    make empty image              0.003  (0%)
+    load visibilities             0.368  (44%)
+    channel loop bookkeeping      0.004  (1%)
+    image statistics              0.149  (18%)
+    write image                   0.310  (37%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     6.555
+ sum of phases above           6.507  (99.3% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-10-09 02:58:49,566[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER node-task timing: MAX over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.483  (6.4%)
+    imaging weights               0.007  (1%)
+    gcf kernel                    0.003  (1%)
+    vis mask                      0.001  (0%)
+    uv-sampling grid (PSF)        0.039  (8%)
+    fft normalize (PSF)           0.409  (84%)
+    primary beam                  0.045  (9%)
+    pol transform                 0.013  (3%)
+    psf gaussian fit              0.224  (46%)
+    (unaccounted)                -0.258
+
+RESIDUAL UPDATE (summed over imaging cycles): 4.180  (55.5%)
+    gcf kernel                    0.023  (1%)
+    pol transform                 0.738  (18%)
+    degrid (model->vis)           0.278  (7%)
+    fft (degrid)                  1.007  (24%)
+    residual vis (obs-model)      0.071  (2%)
+    vis mask                      0.019  (0%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.862  (21%)
+    fft (grid)                    1.214  (29%)
+    (unaccounted)                -0.032
+
+MODEL UPDATE (summed over imaging cycles): 1.814  (24.1%)
+    iteration control             0.001  (0%)
+    make mask                     0.010  (1%)
+    deconvolve                    1.787  (98%)
+    convergence / merge           0.001  (0%)
+    (unaccounted)                 0.014
+
+RESTORE: 0.037  (0.5%)
+
+PRIMARY-BEAM CORRECTION: 0.024  (0.3%)
+
+NODE I/O: 1.244  (16.5%)
+    make empty image              0.005  (0%)
+    load visibilities             0.398  (32%)
+    channel loop bookkeeping      0.005  (0%)
+    image statistics              0.295  (24%)
+    write image                   0.542  (44%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     7.526
+ sum of phases above           7.783  (103.4% of total accounted)
+================================================================ 
+
+mode two_hands: correlations ['XX', 'YY'], Stokes ['I', 'Q']; threshold 3.3e-06 Jy
+Stokes I: max |error| / true I 7.2e+03, max |error| / allowance 0.246, floor rms 1.5e-05, floor peak 3.71e-05, residual rms 1.83e-06 Jy
+Stokes Q: max |error| / true I 0.294, max |error| / allowance 0.129, floor rms 6.48e-06, floor peak 2.57e-05, residual rms 9.95e-07 Jy
+clean dynamic range per channel: [26922.69189952 27269.72736054 29101.4708161  28198.94971705
+ 27152.27372439]
+beam FWHM (arcsec) per channel: [4.14957873 4.13253489 4.11471247 4.09277389 4.07274071]
+   chan stokes  n_cycles  iter_total  peakres_start  peakres_final  stop_code_imaging
+0     0      I        16        4553       0.509662       0.000003                  2
+1     1      I        16        4622       0.504258       0.000003                  2
+2     2      I        16        4492       0.497641      -0.000003                  2
+3     3      I        16        4445       0.497328       0.000003                  2
+4     4      I        17        4782       0.503167      -0.000003                  2
+5     0      Q        16        1722      -0.117818      -0.000003                  2
+6     1      Q        16        1778       0.113541       0.000003                  2
+7     2      Q        16        1971       0.111266      -0.000003                  2
+8     3      Q        16        1967       0.110661      -0.000003                  2
+9     4      Q        17        1775      -0.116151       0.000003                  2
+simulate 2.3 s, image 11.4 s
