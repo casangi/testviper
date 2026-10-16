@@ -24,7 +24,6 @@ This repository runs integration and component tests against VIPER components in
 - Python 3.12, 3.13 or 3.14
 - git
 - pip >= 24.1 (recommended)
-- macOS users need conda to install `python-casacore` (not required for the default build), but required to run tests.
 
 ### What gets installed
 - Components (editable) from local clones under `external/`:
@@ -33,17 +32,9 @@ This repository runs integration and component tests against VIPER components in
 
 Components are synced by `scripts/sync_components.sh` and installed via `requirements/main.txt` using editable local paths (PEP 508–compliant).
 
+CASA table access (XRADIO's MSv2 conversion) comes from [arcae](https://github.com/ska-sa/arcae), which the components' `[all]` extras install from pip on Linux and macOS; no conda environment is needed.
+
 ### Quick start (all components on main)
-
-#### Using Conda for macOS
-Use conda-forge to install the python-casacore library as a dependency for xradio.
-
-```bash
-conda create --name testviper-venv python=3.13 --no-default-packages
-conda activate testviper-venv
-conda install -c conda-forge python-casacore
-make build-main
-```
 
 #### Using a Python Virtual Environment
 ```bash
