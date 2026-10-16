@@ -3,35 +3,38 @@
 Generate summary HTML report with links to individual component reports
 -------  OUTDATED --------
 """
+
 import json
 import os
-import xml.etree.ElementTree as ET
-from pathlib import Path
-from datetime import datetime
 import sys
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from pathlib import Path
+
 
 def parse_coverage_xml(xml_path):
     """Parse coverage XML file and extract metrics"""
     try:
         if not os.path.exists(xml_path):
             return {"line_rate": 0, "lines_covered": 0, "lines_valid": 0}
-            
+
         tree = ET.parse(xml_path)
         root = tree.getroot()
-        
-        line_rate = float(root.get('line-rate', 0))
-        lines_covered = int(root.get('lines-covered', 0))
-        lines_valid = int(root.get('lines-valid', 0))
-        
+
+        line_rate = float(root.get("line-rate", 0))
+        lines_covered = int(root.get("lines-covered", 0))
+        lines_valid = int(root.get("lines-valid", 0))
+
         return {
             "line_rate": line_rate,
             "lines_covered": lines_covered,
             "lines_valid": lines_valid,
-            "percentage": round(line_rate * 100, 2)
+            "percentage": round(line_rate * 100, 2),
         }
     except Exception as e:
         print(f"Error parsing coverage XML {xml_path}: {e}")
         return {"line_rate": 0, "lines_covered": 0, "lines_valid": 0, "percentage": 0}
+
 
 def parse_allure_summary(report_path):
     """Parse Allure report summary from widgets"""
@@ -39,42 +42,43 @@ def parse_allure_summary(report_path):
         widgets_path = os.path.join(report_path, "widgets", "summary.json")
         if not os.path.exists(widgets_path):
             return {"total": 0, "passed": 0, "failed": 0, "broken": 0, "skipped": 0}
-            
-        with open(widgets_path, 'r') as f:
+
+        with open(widgets_path) as f:
             data = json.load(f)
-            
-        statistic = data.get('statistic', {})
+
+        statistic = data.get("statistic", {})
         return {
-            "total": statistic.get('total', 0),
-            "passed": statistic.get('passed', 0),
-            "failed": statistic.get('failed', 0),
-            "broken": statistic.get('broken', 0),
-            "skipped": statistic.get('skipped', 0)
+            "total": statistic.get("total", 0),
+            "passed": statistic.get("passed", 0),
+            "failed": statistic.get("failed", 0),
+            "broken": statistic.get("broken", 0),
+            "skipped": statistic.get("skipped", 0),
         }
     except Exception as e:
         print(f"Error parsing Allure summary {report_path}: {e}")
         return {"total": 0, "passed": 0, "failed": 0, "broken": 0, "skipped": 0}
 
+
 def generate_summary_html():
     """Generate the main summary HTML page"""
-    
+
     # Get test statistics
     integration_stats = parse_allure_summary("allure-report/integration")
     toolviper_stats = parse_allure_summary("allure-report/toolviper")
     xradio_stats = parse_allure_summary("allure-report/xradio")
     graphviper_stats = parse_allure_summary("allure-report/graphviper")
     astroviper_stats = parse_allure_summary("allure-report/astroviper")
-    
+
     # Get coverage statistics
     integration_coverage = parse_coverage_xml("coverage/coverage-integration.xml")
     toolviper_coverage = parse_coverage_xml("coverage/coverage-toolviper.xml")
     xradio_coverage = parse_coverage_xml("coverage/coverage-xradio.xml")
     graphviper_coverage = parse_coverage_xml("coverage/coverage-graphviper.xml")
     astroviper_coverage = parse_coverage_xml("coverage/coverage-astroviper.xml")
-    
+
     # Generate timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC")
-    
+
     html_content = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -286,19 +290,19 @@ def generate_summary_html():
                 <div class="overall-grid">
                     <div class="overall-metric">
                         <h4>Total Tests</h4>
-                        <div class="value">{integration_stats['total'] + toolviper_stats['total'] + xradio_stats['total']}</div>
+                        <div class="value">{integration_stats["total"] + toolviper_stats["total"] + xradio_stats["total"]}</div>
                     </div>
                     <div class="overall-metric">
                         <h4>Passed</h4>
-                        <div class="value passed">{integration_stats['passed'] + toolviper_stats['passed'] + xradio_stats['passed']}</div>
+                        <div class="value passed">{integration_stats["passed"] + toolviper_stats["passed"] + xradio_stats["passed"]}</div>
                     </div>
                     <div class="overall-metric">
                         <h4>Failed</h4>
-                        <div class="value failed">{integration_stats['failed'] + toolviper_stats['failed'] + xradio_stats['failed']}</div>
+                        <div class="value failed">{integration_stats["failed"] + toolviper_stats["failed"] + xradio_stats["failed"]}</div>
                     </div>
                     <div class="overall-metric">
                         <h4>Avg Coverage</h4>
-                        <div class="value">{round((integration_coverage['percentage'] + toolviper_coverage['percentage'] + xradio_coverage['percentage']) / 3, 1)}%</div>
+                        <div class="value">{round((integration_coverage["percentage"] + toolviper_coverage["percentage"] + xradio_coverage["percentage"]) / 3, 1)}%</div>
                     </div>
                 </div>
             </div>
@@ -312,26 +316,26 @@ def generate_summary_html():
                     <div class="card-body">
                         <div class="metrics-row">
                             <span class="metric-label">Total Tests:</span>
-                            <span class="metric-value">{integration_stats['total']}</span>
+                            <span class="metric-value">{integration_stats["total"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Passed:</span>
-                            <span class="metric-value passed">{integration_stats['passed']}</span>
+                            <span class="metric-value passed">{integration_stats["passed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Failed:</span>
-                            <span class="metric-value failed">{integration_stats['failed']}</span>
+                            <span class="metric-value failed">{integration_stats["failed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Skipped:</span>
-                            <span class="metric-value skipped">{integration_stats['skipped']}</span>
+                            <span class="metric-value skipped">{integration_stats["skipped"]}</span>
                         </div>
                         
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
-                            <div class="coverage-fill" style="width: {integration_coverage['percentage']}%"></div>
+                            <div class="coverage-fill" style="width: {integration_coverage["percentage"]}%"></div>
                         </div>
-                        <div class="coverage-text">{integration_coverage['percentage']}% ({integration_coverage['lines_covered']}/{integration_coverage['lines_valid']} lines)</div>
+                        <div class="coverage-text">{integration_coverage["percentage"]}% ({integration_coverage["lines_covered"]}/{integration_coverage["lines_valid"]} lines)</div>
                         
                         <a href="integration/index.html" class="report-link">View Full Report</a>
                     </div>
@@ -345,26 +349,26 @@ def generate_summary_html():
                     <div class="card-body">
                         <div class="metrics-row">
                             <span class="metric-label">Total Tests:</span>
-                            <span class="metric-value">{toolviper_stats['total']}</span>
+                            <span class="metric-value">{toolviper_stats["total"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Passed:</span>
-                            <span class="metric-value passed">{toolviper_stats['passed']}</span>
+                            <span class="metric-value passed">{toolviper_stats["passed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Failed:</span>
-                            <span class="metric-value failed">{toolviper_stats['failed']}</span>
+                            <span class="metric-value failed">{toolviper_stats["failed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Skipped:</span>
-                            <span class="metric-value skipped">{toolviper_stats['skipped']}</span>
+                            <span class="metric-value skipped">{toolviper_stats["skipped"]}</span>
                         </div>
                         
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
-                            <div class="coverage-fill" style="width: {toolviper_coverage['percentage']}%"></div>
+                            <div class="coverage-fill" style="width: {toolviper_coverage["percentage"]}%"></div>
                         </div>
-                        <div class="coverage-text">{toolviper_coverage['percentage']}% ({toolviper_coverage['lines_covered']}/{toolviper_coverage['lines_valid']} lines)</div>
+                        <div class="coverage-text">{toolviper_coverage["percentage"]}% ({toolviper_coverage["lines_covered"]}/{toolviper_coverage["lines_valid"]} lines)</div>
                         
                         <a href="toolviper/index.html" class="report-link">View Full Report</a>
                     </div>
@@ -378,26 +382,26 @@ def generate_summary_html():
                     <div class="card-body">
                         <div class="metrics-row">
                             <span class="metric-label">Total Tests:</span>
-                            <span class="metric-value">{xradio_stats['total']}</span>
+                            <span class="metric-value">{xradio_stats["total"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Passed:</span>
-                            <span class="metric-value passed">{xradio_stats['passed']}</span>
+                            <span class="metric-value passed">{xradio_stats["passed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Failed:</span>
-                            <span class="metric-value failed">{xradio_stats['failed']}</span>
+                            <span class="metric-value failed">{xradio_stats["failed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Skipped:</span>
-                            <span class="metric-value skipped">{xradio_stats['skipped']}</span>
+                            <span class="metric-value skipped">{xradio_stats["skipped"]}</span>
                         </div>
                         
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
-                            <div class="coverage-fill" style="width: {xradio_coverage['percentage']}%"></div>
+                            <div class="coverage-fill" style="width: {xradio_coverage["percentage"]}%"></div>
                         </div>
-                        <div class="coverage-text">{xradio_coverage['percentage']}% ({xradio_coverage['lines_covered']}/{xradio_coverage['lines_valid']} lines)</div>
+                        <div class="coverage-text">{xradio_coverage["percentage"]}% ({xradio_coverage["lines_covered"]}/{xradio_coverage["lines_valid"]} lines)</div>
                         
                         <a href="xradio/index.html" class="report-link">View Full Report</a>
                     </div>
@@ -411,26 +415,26 @@ def generate_summary_html():
                     <div class="card-body">
                         <div class="metrics-row">
                             <span class="metric-label">Total Tests:</span>
-                            <span class="metric-value">{graphviper_stats['total']}</span>
+                            <span class="metric-value">{graphviper_stats["total"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Passed:</span>
-                            <span class="metric-value passed">{graphviper_stats['passed']}</span>
+                            <span class="metric-value passed">{graphviper_stats["passed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Failed:</span>
-                            <span class="metric-value failed">{graphviper_stats['failed']}</span>
+                            <span class="metric-value failed">{graphviper_stats["failed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Skipped:</span>
-                            <span class="metric-value skipped">{graphviper_stats['skipped']}</span>
+                            <span class="metric-value skipped">{graphviper_stats["skipped"]}</span>
                         </div>
                         
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
-                            <div class="coverage-fill" style="width: {graphviper_coverage['percentage']}%"></div>
+                            <div class="coverage-fill" style="width: {graphviper_coverage["percentage"]}%"></div>
                         </div>
-                        <div class="coverage-text">{graphviper_coverage['percentage']}% ({graphviper_coverage['lines_covered']}/{graphviper_coverage['lines_valid']} lines)</div>
+                        <div class="coverage-text">{graphviper_coverage["percentage"]}% ({graphviper_coverage["lines_covered"]}/{graphviper_coverage["lines_valid"]} lines)</div>
                         
                         <a href="graphviper/index.html" class="report-link">View Full Report</a>
                     </div>
@@ -444,26 +448,26 @@ def generate_summary_html():
                     <div class="card-body">
                         <div class="metrics-row">
                             <span class="metric-label">Total Tests:</span>
-                            <span class="metric-value">{astroviper_stats['total']}</span>
+                            <span class="metric-value">{astroviper_stats["total"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Passed:</span>
-                            <span class="metric-value passed">{astroviper_stats['passed']}</span>
+                            <span class="metric-value passed">{astroviper_stats["passed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Failed:</span>
-                            <span class="metric-value failed">{astroviper_stats['failed']}</span>
+                            <span class="metric-value failed">{astroviper_stats["failed"]}</span>
                         </div>
                         <div class="metrics-row">
                             <span class="metric-label">Skipped:</span>
-                            <span class="metric-value skipped">{astroviper_stats['skipped']}</span>
+                            <span class="metric-value skipped">{astroviper_stats["skipped"]}</span>
                         </div>
                         
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
-                            <div class="coverage-fill" style="width: {astroviper_coverage['percentage']}%"></div>
+                            <div class="coverage-fill" style="width: {astroviper_coverage["percentage"]}%"></div>
                         </div>
-                        <div class="coverage-text">{astroviper_coverage['percentage']}% ({astroviper_coverage['lines_covered']}/{astroviper_coverage['lines_valid']} lines)</div>
+                        <div class="coverage-text">{astroviper_coverage["percentage"]}% ({astroviper_coverage["lines_covered"]}/{astroviper_coverage["lines_valid"]} lines)</div>
                         
                         <a href="astroviper/index.html" class="report-link">View Full Report</a>
                     </div>
@@ -478,33 +482,35 @@ def generate_summary_html():
 </body>
 </html>
 """
-    
+
     # Write the HTML file
     output_path = "allure-report/index.html"
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(html_content)
-    
+
     print(f"Summary report generated: {output_path}")
     return True
+
 
 def main():
     """Generate summary report"""
     try:
         # Ensure output directory exists
         Path("allure-report").mkdir(parents=True, exist_ok=True)
-        
+
         success = generate_summary_html()
-        
+
         if success:
             print("Summary report generation completed successfully")
         else:
             print("Summary report generation failed")
-            
+
         return success
-        
+
     except Exception as e:
         print(f"Error generating summary report: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = main()

@@ -1,6 +1,7 @@
 ---
 name: Integration Tests on Branch - Linux
 
+# Push to a branch: Python 3.13 only. Pull request: Python 3.12, 3.13 and 3.14.
 on:
   push:
     branches-ignore: ["main"]
@@ -16,13 +17,19 @@ jobs:
       Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.13"]
+        python-version: ${{ fromJson(github.event_name == 'push' && '["3.13"]' || '["3.12", "3.13", "3.14"]') }}
+    env:
+      # TODO: remove once the toolviper, xradio, graphviper and astroviper
+      # main branches (installed by `make build-main`) declare
+      # requires-python "<3.15"; until then pip refuses them on 3.14.
+      PIP_IGNORE_REQUIRES_PYTHON: "1"
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install GCC 14
         run: |
@@ -35,7 +42,7 @@ jobs:
           "g++-14" --version
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
   
@@ -130,9 +137,10 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.python-version }}
+          # The junit and coverage files are written to <component>-tests/<python-version>/.
           path: |
-            test-results/*.xml
+            *-tests/${{ matrix.python-version }}/*.xml
           if-no-files-found: ignore
