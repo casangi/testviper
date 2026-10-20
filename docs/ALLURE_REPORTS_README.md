@@ -6,7 +6,7 @@ This enhanced system provides comprehensive test reporting for Integration tests
 
 ### 🔍 Individual Component Reports
 - **TestVIPER Integration**: Workflow integration tests
-- **ToolVIPER**: ToolVIPER component tests  
+- **ToolVIPER**: ToolVIPER component tests
 - **XRadio**: Xarray radio astronomy data IO tests
 - **GraphVIPER**: Tests for Dask based MapReduce for Multi-Xarray datasets
 - **AstroVIPER**: Radio interferometry data processing tests
@@ -112,7 +112,7 @@ The system automatically:
 allure-history/
 └── {component_name}/
     ├── history.json          # Test execution trends
-    ├── trend.json           # Performance trends  
+    ├── trend.json           # Performance trends
     └── categories.json      # Test categorization
 ```
 
@@ -125,7 +125,7 @@ Each component card includes:
 
 ### CodeCov URLs
 - **TestVIPER**: https://app.codecov.io/gh/casangi/testviper
-- **ToolVIPER**: https://app.codecov.io/gh/casangi/toolviper  
+- **ToolVIPER**: https://app.codecov.io/gh/casangi/toolviper
 - **XRadio**: https://app.codecov.io/gh/casangi/xradio
 - **GraphVIPER**: https://app.codecov.io/gh/casangi/graphviper
 - **AstroVIPER**: https://app.codecov.io/gh/casangi/astroviper
@@ -137,7 +137,7 @@ Each component card includes:
 2. Ensure component repository has `tests/` directory
 3. Update workflow if special dependencies needed
 
-### Styling Modifications  
+### Styling Modifications
 - **Summary Page**: Edit `enhanced_summary_generator.py` CSS section
 - **Individual Reports**: Modify `add_back_link_to_report()` function
 - **Icons**: Update component configuration icons
@@ -171,4 +171,3 @@ Each script provides verbose output including:
 - Test execution results
 - Report generation progress
 - File creation confirmations
-

@@ -92,14 +92,14 @@ def generate_summary_html():
             padding: 0;
             box-sizing: border-box;
         }}
-        
+
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }}
-        
+
         .container {{
             max-width: 1200px;
             margin: 0 auto;
@@ -108,36 +108,36 @@ def generate_summary_html():
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }}
-        
+
         .header {{
             background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
             color: white;
             padding: 30px;
             text-align: center;
         }}
-        
+
         .header h1 {{
             font-size: 2.5rem;
             margin-bottom: 10px;
             font-weight: 700;
         }}
-        
+
         .header p {{
             font-size: 1.1rem;
             opacity: 0.9;
         }}
-        
+
         .content {{
             padding: 40px;
         }}
-        
+
         .summary-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 30px;
             margin-bottom: 40px;
         }}
-        
+
         .component-card {{
             background: white;
             border-radius: 15px;
@@ -145,27 +145,27 @@ def generate_summary_html():
             overflow: hidden;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }}
-        
+
         .component-card:hover {{
             transform: translateY(-5px);
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
         }}
-        
+
         .card-header {{
             padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }}
-        
+
         .card-header h3 {{
             font-size: 1.4rem;
             margin-bottom: 5px;
         }}
-        
+
         .card-body {{
             padding: 25px;
         }}
-        
+
         .metrics-row {{
             display: flex;
             justify-content: space-between;
@@ -175,22 +175,22 @@ def generate_summary_html():
             background: #f8f9fa;
             border-radius: 8px;
         }}
-        
+
         .metric-label {{
             font-weight: 600;
             color: #555;
         }}
-        
+
         .metric-value {{
             font-weight: 700;
             font-size: 1.1rem;
         }}
-        
+
         .passed {{ color: #27ae60; }}
         .failed {{ color: #e74c3c; }}
         .broken {{ color: #f39c12; }}
         .skipped {{ color: #95a5a6; }}
-        
+
         .coverage-bar {{
             width: 100%;
             height: 20px;
@@ -199,19 +199,19 @@ def generate_summary_html():
             overflow: hidden;
             margin: 10px 0;
         }}
-        
+
         .coverage-fill {{
             height: 100%;
             background: linear-gradient(90deg, #27ae60 0%, #2ecc71 100%);
             transition: width 0.3s ease;
         }}
-        
+
         .coverage-text {{
             text-align: center;
             font-weight: 600;
             margin-top: 5px;
         }}
-        
+
         .report-link {{
             display: inline-block;
             margin-top: 20px;
@@ -225,13 +225,13 @@ def generate_summary_html():
             transition: all 0.3s ease;
             width: 100%;
         }}
-        
+
         .report-link:hover {{
             background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
         }}
-        
+
         .overall-stats {{
             background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: white;
@@ -240,35 +240,35 @@ def generate_summary_html():
             margin-bottom: 30px;
             text-align: center;
         }}
-        
+
         .overall-stats h2 {{
             margin-bottom: 20px;
             font-size: 1.8rem;
         }}
-        
+
         .overall-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
         }}
-        
+
         .overall-metric {{
             background: rgba(255, 255, 255, 0.1);
             padding: 15px;
             border-radius: 10px;
         }}
-        
+
         .overall-metric h4 {{
             font-size: 0.9rem;
             opacity: 0.8;
             margin-bottom: 5px;
         }}
-        
+
         .overall-metric .value {{
             font-size: 1.5rem;
             font-weight: 700;
         }}
-        
+
         .footer {{
             text-align: center;
             padding: 20px;
@@ -283,7 +283,7 @@ def generate_summary_html():
             <h1>🧪 Test & Coverage Summary</h1>
             <p>Generated on {timestamp}</p>
         </div>
-        
+
         <div class="content">
             <div class="overall-stats">
                 <h2>Overall Statistics</h2>
@@ -306,7 +306,7 @@ def generate_summary_html():
                     </div>
                 </div>
             </div>
-            
+
             <div class="summary-grid">
                 <div class="component-card">
                     <div class="card-header">
@@ -330,17 +330,17 @@ def generate_summary_html():
                             <span class="metric-label">Skipped:</span>
                             <span class="metric-value skipped">{integration_stats["skipped"]}</span>
                         </div>
-                        
+
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
                             <div class="coverage-fill" style="width: {integration_coverage["percentage"]}%"></div>
                         </div>
                         <div class="coverage-text">{integration_coverage["percentage"]}% ({integration_coverage["lines_covered"]}/{integration_coverage["lines_valid"]} lines)</div>
-                        
+
                         <a href="integration/index.html" class="report-link">View Full Report</a>
                     </div>
                 </div>
-                
+
                 <div class="component-card">
                     <div class="card-header">
                         <h3>🛠️ ToolViper</h3>
@@ -363,17 +363,17 @@ def generate_summary_html():
                             <span class="metric-label">Skipped:</span>
                             <span class="metric-value skipped">{toolviper_stats["skipped"]}</span>
                         </div>
-                        
+
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
                             <div class="coverage-fill" style="width: {toolviper_coverage["percentage"]}%"></div>
                         </div>
                         <div class="coverage-text">{toolviper_coverage["percentage"]}% ({toolviper_coverage["lines_covered"]}/{toolviper_coverage["lines_valid"]} lines)</div>
-                        
+
                         <a href="toolviper/index.html" class="report-link">View Full Report</a>
                     </div>
                 </div>
-                
+
                 <div class="component-card">
                     <div class="card-header">
                         <h3>📡 XRadio</h3>
@@ -396,13 +396,13 @@ def generate_summary_html():
                             <span class="metric-label">Skipped:</span>
                             <span class="metric-value skipped">{xradio_stats["skipped"]}</span>
                         </div>
-                        
+
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
                             <div class="coverage-fill" style="width: {xradio_coverage["percentage"]}%"></div>
                         </div>
                         <div class="coverage-text">{xradio_coverage["percentage"]}% ({xradio_coverage["lines_covered"]}/{xradio_coverage["lines_valid"]} lines)</div>
-                        
+
                         <a href="xradio/index.html" class="report-link">View Full Report</a>
                     </div>
                 </div>
@@ -429,17 +429,17 @@ def generate_summary_html():
                             <span class="metric-label">Skipped:</span>
                             <span class="metric-value skipped">{graphviper_stats["skipped"]}</span>
                         </div>
-                        
+
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
                             <div class="coverage-fill" style="width: {graphviper_coverage["percentage"]}%"></div>
                         </div>
                         <div class="coverage-text">{graphviper_coverage["percentage"]}% ({graphviper_coverage["lines_covered"]}/{graphviper_coverage["lines_valid"]} lines)</div>
-                        
+
                         <a href="graphviper/index.html" class="report-link">View Full Report</a>
                     </div>
                 </div>
-                
+
                 <div class="component-card">
                     <div class="card-header">
                         <h3>📡 AstroVIPER</h3>
@@ -462,19 +462,19 @@ def generate_summary_html():
                             <span class="metric-label">Skipped:</span>
                             <span class="metric-value skipped">{astroviper_stats["skipped"]}</span>
                         </div>
-                        
+
                         <h4 style="margin-top: 20px; margin-bottom: 10px;">Coverage</h4>
                         <div class="coverage-bar">
                             <div class="coverage-fill" style="width: {astroviper_coverage["percentage"]}%"></div>
                         </div>
                         <div class="coverage-text">{astroviper_coverage["percentage"]}% ({astroviper_coverage["lines_covered"]}/{astroviper_coverage["lines_valid"]} lines)</div>
-                        
+
                         <a href="astroviper/index.html" class="report-link">View Full Report</a>
                     </div>
-                </div>  
+                </div>
             </div>
         </div>
-        
+
         <div class="footer">
             <p>Generated by TestViper CI/CD Pipeline</p>
         </div>

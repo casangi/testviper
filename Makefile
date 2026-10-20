@@ -32,7 +32,7 @@ build-main: sync-components
 	pip install -r requirements/main.txt
 	pip install -r requirements/base.txt
 
-test-main: 
+test-main:
 	python -m pytest -v external/toolviper/tests --junitxml=toolviper-test-results.xml
 	python -m pytest -v external/xradio/tests --junitxml=xradio-test-results.xml
 	python -m pytest -v external/graphviper/tests --junitxml=graphviper-test-results.xml
@@ -40,7 +40,7 @@ test-main:
 
 # INSTALL and TEST LATEST PyPI versions of COMPONENTS
 # --------------------------------------------------------------
-build-latest: 
+build-latest:
 	pip install -r requirements/latest.txt
 
 # TBD: how to run version of tests compatible with latest PyPI versions

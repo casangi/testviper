@@ -1,6 +1,6 @@
 # GitHub Workflows Overview
 
-This folder contains the active CI/CD automation for `testviper`.  
+This folder contains the active CI/CD automation for `testviper`.
 This page summarizes each workflow's scope and when it executes.
 
 ## Active workflows

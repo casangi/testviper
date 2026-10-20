@@ -35,7 +35,7 @@ from jinja2 import Environment
 # Paths (relative to repo root)
 # ---------------------------------------------------------------------------
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(__file__)
 REPO_ROOT = os.path.normpath(os.path.join(SCRIPT_DIR, ".."))
 
 CONFIG_PATH = os.path.join(REPO_ROOT, "ci", "config", "projects.yaml")

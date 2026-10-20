@@ -23,7 +23,7 @@ from unittest import mock
 import pytest
 import yaml
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(__file__)
 SCRIPTS_DIR = os.path.dirname(SCRIPT_DIR)
 REPO_ROOT = os.path.normpath(os.path.join(SCRIPTS_DIR, ".."))
 

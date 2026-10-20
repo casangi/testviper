@@ -5,7 +5,7 @@ This document outlines the steps performed by the GitHub Actions workflow for in
 ## Workflow Overview
 
 A repository dispatch is implemented in TestVIPER to trigger the execution of integration tests everytime there is
-a merge to the main branch of any of the VIPER components: ToolVIPER, XRADIO, GraphVIPER and AstroVIPER. 
+a merge to the main branch of any of the VIPER components: ToolVIPER, XRADIO, GraphVIPER and AstroVIPER.
 
 The dispatch sender is implemented for all components in `toolviper/.github/workflows/python-testing-integration.yml`, which will send a dispatch on the event of a merge to main in one of the components, conditionally that the workflow with tests runs successfully in the component repository.
 
@@ -93,4 +93,4 @@ installing base.txt from the requirements.
 ## Notes
 - Allure trend charts require that each component's history is preserved and restored individually.
 - The workflow ensures that history is copied for each component before report generation, and saved after.
-- The summary dashboard provides links to individual reports and coverage information. 
+- The summary dashboard provides links to individual reports and coverage information.
