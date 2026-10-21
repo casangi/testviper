@@ -45,7 +45,7 @@ on:
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Log dispatch information
       if: github.event_name == 'workflow_dispatch'
@@ -59,10 +59,10 @@ jobs:
         echo "Source run ID: ${{ github.event.inputs.source_run_id }}"
         echo "Source run number: ${{ github.event.inputs.source_run_number }}"
         echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
-    
+
     - name: Checkout repository
       uses: actions/checkout@v7
-      
+
     - name: Install GCC 14
       run: |
         sudo apt-get update
@@ -72,17 +72,17 @@ jobs:
         echo "CC=gcc-14" >> "$GITHUB_ENV"
         echo "CXX=g++-14" >> "$GITHUB_ENV"
         "g++-14" --version
-        
+
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
         python-version: '3.13'
-        
+
     - name: Install testviper dependencies
       run: |
         pwd
         make build-testviper
-        
+
     - name: Clone and install component repositories
       run: |
         make build-main
@@ -99,7 +99,7 @@ jobs:
         #wget -qO- https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz | tar -xz
         #sudo mv allure-2.24.1 /opt/allure
         #sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
-        
+
     - name: Checkout gh-pages for history
       uses: actions/checkout@v7
       if: always()
@@ -107,7 +107,7 @@ jobs:
       with:
         ref: gh-pages
         path: gh-pages
-        
+
     - name: Copy Allure history for each component
       if: always()
       continue-on-error: true
@@ -140,17 +140,17 @@ jobs:
           echo "Unknown Allure version: $ALLURE_VERSION"
           exit 1
         fi
-      
+
     # - name: Run tests and generate coverage
     #   run: |
     #     python scripts/test_runner_with_coverage.py
-      
+
     - name: Run tests and generate Allure reports with history
       run: python scripts/enhanced_report_generator.py
-      
+
     # - name: Generate enhanced summary report with CodeCov links
     #   run: python scripts/enhanced_summary_generator.py
-      
+
     - name: Upload Allure Reports
       uses: actions/upload-artifact@v7
       if: always()
@@ -158,12 +158,12 @@ jobs:
         name: allure-reports
         path: allure-report/
         retention-days: 30
-        
+
     - name: Generate Test Summary
       uses: test-summary/action@v2
       with:
         paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
-        
+
     - name: Deploy history to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       if: always()
@@ -174,7 +174,7 @@ jobs:
         destination_dir: main
         keep_files: true
         force_orphan: false
-        
+
     - name: Deploy report to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       if: always()
@@ -196,7 +196,7 @@ jobs:
           fi
         done < "$FILE"
         echo "All Component subprocesses returned zero exit code."
-        
+
     - name: Repository Dispatch to benchviper
       uses: actions/github-script@v9
       with:
@@ -216,7 +216,7 @@ jobs:
 
             }
           };
-          
+
           // Send repository dispatch to target repository
           await github.rest.repos.createDispatchEvent({
             owner: 'casangi',
@@ -224,7 +224,7 @@ jobs:
             event_type: payload.event_type,
             client_payload: payload.client_payload
           });
-          
+
           // Note: repository_dispatch is repository-wide and not branch-specific.
 
           console.log('Repository dispatch sent successfully to benchviper');

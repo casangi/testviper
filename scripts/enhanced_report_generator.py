@@ -324,7 +324,7 @@ def generate_allure_report(component):
     <style>
         body {{ font-family: Arial, sans-serif; margin: 40px; }}
         .error {{ background: #f8d7da; color: #721c24; padding: 20px; border-radius: 8px; }}
-        .back-link {{ display: inline-block; margin-top: 20px; padding: 10px 20px; 
+        .back-link {{ display: inline-block; margin-top: 20px; padding: 10px 20px;
                      background: #007bff; color: white; text-decoration: none; border-radius: 4px; }}
     </style>
 </head>
