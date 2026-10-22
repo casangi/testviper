@@ -1,0 +1,35 @@
+[[38;2;128;05;128m2026-10-22 21:47:25,617[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Keeping only partitions for requested processor types. From the ConfigDescription table, with 2 rows, 2 rows are kept for processor types ['CORRELATOR', 'SPECTROMETER', 'RADIOMETER'] 
+[[38;2;128;05;128m2026-10-22 21:47:25,618[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Keeping only partitions for requested spectral resolution types. From the ConfigDescription table, with 2 rows, 2 rows are kept for spectral resolution types ['FULL_RESOLUTION', 'BASEBAND_WIDE'] 
+len(partition_groups)=1, while partitioning_df.shape[0]=1
+[[38;2;128;05;128m2026-10-22 21:47:25,631[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Note: tricky/possibly manipulated ASDM => applying lists->ndarray fix, partitions_list=[{'time': Timestamp('2024-08-10 09:57:31.200000048'), 'fieldId': 0, 'configDescriptionId': 0, 'scanNumber': 1, 'subscanNumber': 1, 'stateId': 0, 'dataUID': 'uid://A002/X11b94a6/X119f', 'BDFPath': '/monkypatched_path/foo', 'execBlockId': 0, 'dataDescriptionId': 0, 'processorType': 'RADIOMETER', 'spectralType': 'BASEBAND_WIDE', 'spectralWindowId': 0, 'polOrHoloId': 0, 'sourceId': 0, 'scanIntent': 0}] 
+[[38;2;128;05;128m2026-10-22 21:47:25,632[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m  ===> After lists->ndarray fix, partitions_list=[{'time': array([Timestamp('2024-08-10 09:57:31.200000048')], dtype=object), 'fieldId': array([0]), 'configDescriptionId': array([0]), 'scanNumber': array([1]), 'subscanNumber': array([1]), 'stateId': array([0]), 'dataUID': array(['uid://A002/X11b94a6/X119f'], dtype='<U25'), 'BDFPath': array(['/monkypatched_path/foo'], dtype='<U22'), 'execBlockId': array([0]), 'dataDescriptionId': array([0]), 'processorType': array(['RADIOMETER'], dtype='<U10'), 'spectralType': array(['BASEBAND_WIDE'], dtype='<U13'), 'spectralWindowId': array([0]), 'polOrHoloId': array([0]), 'sourceId': array([0]), 'scanIntent': array([0])}] 
+[[38;2;128;05;128m2026-10-22 21:47:25,632[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m  Time taken in create_partitions(): 0.016391 seconds 
+[[38;2;128;05;128m2026-10-22 21:47:25,632[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Opening partition for: execBlock [0], dataDescription: [0], scanIntent: ['CALIBRATE_POINTING', 'CALIBRATE_WVR'], field: [0], scan: [1], subscan: [1], state: [0] 
+[[38;2;128;05;128m2026-10-22 21:47:25,645[0m] [38;2;220;20;60m   ERROR[0m[38;2;112;128;144m      client: [0m [[38;2;220;20;60merror[0m]: Continuing despite failure to open partition, with partition_descr={'time': array([Timestamp('2024-08-10 09:57:31.200000048')], dtype=object), 'fieldId': array([0]), 'configDescriptionId': array([0]), 'scanNumber': array([1]), 'subscanNumber': array([1]), 'stateId': array([0]), 'dataUID': array(['uid://A002/X11b94a6/X119f'], dtype='<U25'), 'BDFPath': array(['/monkypatched_path/foo'], dtype='<U22'), 'execBlockId': array([0]), 'dataDescriptionId': array([0]), 'processorType': array(['RADIOMETER'], dtype='<U10'), 'spectralType': array(['BASEBAND_WIDE'], dtype='<U13'), 'spectralWindowId': array([0]), 'polOrHoloId': array([0]), 'sourceId': array([0]), 'scanIntent': ['CALIBRATE_POINTING', 'CALIBRATE_WVR']}.
+Error: Some error when loading times from BDF
+
+Traceback: Traceback (most recent call last):
+  File "/home/runner/work/testviper/testviper/external/xradio/src/xradio/measurement_set/_utils/_asdm/open_asdm.py", line 115, in open_asdm
+    msv4_xdt = open_partition(
+        asdm,
+    ...<2 lines>...
+        pointing_for_only_spectral_resolution_types,
+    )
+  File "/home/runner/work/testviper/testviper/external/xradio/src/xradio/measurement_set/_utils/_asdm/open_partition.py", line 73, in open_partition
+    correlated_xds, num_antenna, spw_id, is_single_dish = create_correlated_xds(
+                                                          ~~~~~~~~~~~~~~~~~~~~~^
+        asdm, partition_descr
+        ^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/runner/work/testviper/testviper/external/xradio/src/xradio/measurement_set/_utils/_asdm/open_partition.py", line 200, in create_correlated_xds
+    ) = create_coordinates(asdm, partition_descr, is_single_dish)
+        ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/testviper/testviper/external/xradio/src/xradio/measurement_set/_utils/_asdm/open_partition.py", line 427, in create_coordinates
+    load_times_from_partition_bdfs(partition_descr["BDFPath"], scans_metadata_df)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/testviper/testviper/external/xradio/tests/unit/measurement_set/_utils/_asdm/test_open_asdm.py", line 87, in mock_unreliable_load_times_from_partition_bdfs
+    raise RuntimeError("Some error when loading times from BDF")
+RuntimeError: Some error when loading times from BDF
+
+
