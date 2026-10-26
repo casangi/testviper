@@ -1,0 +1,147 @@
+INFO     toolviper:logger.py:78 simulate_processing_set: 48 times x 903 baselines x 5 channels x 2 polarizations in 8 x 1 chunks.
+INFO     toolviper:logger.py:78 ================================================================
+ simulate_processing_set timing
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 1.877  (93.1%)
+    build coordinates + MSv4 metadata    0.006  (0%)
+    determine chunks + parallel coords    0.000  (0%)
+    create empty MSv4 on disk     0.136  (7%)
+    interpolate data coords       0.000  (0%)
+    create map/reduce graph       0.002  (0%)
+    generate dask graph           0.016  (1%)
+    compute dask graph            1.665  (89%)
+    consolidate metadata + schema check    0.052  (3%)
+
+----------------------------------------------------------------
+ TOTAL (T_total)               2.017
+ sum of phases above           1.877  (93.1% of total accounted)
+================================================================
+INFO     toolviper:logger.py:78 Number of frequency chunks ... : 5
+INFO     toolviper:logger.py:78 Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 5 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent).
+INFO     toolviper:logger.py:78 ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 7.852  (100.0%)
+    create empty image xds        0.002  (0%)
+    write empty image to disk     0.024  (0%)
+    determine chunks + parallel coords    0.000  (0%)
+    create empty data vars on disk    0.022  (0%)
+    open processing set           0.039  (0%)
+    interpolate data coords       0.000  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    generate dask graph           0.005  (0%)
+    compute dask graph            7.749  (99%)
+    consolidate metadata          0.009  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      7.853
+ sum of phases above           7.852  (100.0% of total accounted)
+================================================================
+INFO     toolviper:logger.py:78 ================================================================
+ AstroVIPER node-task timing: MEAN over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.221  (4.9%)
+    imaging weights               0.004  (2%)
+    gcf kernel                    0.000  (0%)
+    vis mask                      0.001  (0%)
+    uv-sampling grid (PSF)        0.023  (11%)
+    fft normalize (PSF)           0.040  (18%)
+    primary beam                  0.015  (7%)
+    pol transform                 0.003  (2%)
+    psf gaussian fit              0.129  (58%)
+    (unaccounted)                 0.006
+
+RESIDUAL UPDATE (summed over imaging cycles): 2.773  (61.6%)
+    gcf kernel                    0.000  (0%)
+    pol transform                 0.400  (14%)
+    degrid (model->vis)           0.226  (8%)
+    fft (degrid)                  0.644  (23%)
+    residual vis (obs-model)      0.024  (1%)
+    vis mask                      0.015  (1%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.652  (24%)
+    fft (grid)                    0.743  (27%)
+    (unaccounted)                 0.069
+
+STOP TEST (summed over residual updates): 0.083  (1.8%)
+
+MODEL UPDATE (summed over imaging cycles): 0.777  (17.3%)
+    cycle control                 0.001  (0%)
+    make mask                     0.006  (1%)
+    deconvolve                    0.755  (97%)
+    convergence / merge           0.001  (0%)
+    (unaccounted)                 0.015
+
+RESTORE: 0.022  (0.5%)
+
+PRIMARY-BEAM CORRECTION: 0.009  (0.2%)
+
+NODE I/O: 0.589  (13.1%)
+    make empty image              0.002  (0%)
+    load visibilities             0.267  (45%)
+    channel loop bookkeeping      0.003  (1%)
+    image statistics              0.151  (26%)
+    write image                   0.167  (28%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     4.499
+ sum of phases above           4.474  (99.4% of total accounted)
+================================================================
+INFO     toolviper:logger.py:78 ================================================================
+ AstroVIPER node-task timing: MAX over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.397  (7.4%)
+    imaging weights               0.007  (2%)
+    gcf kernel                    0.000  (0%)
+    vis mask                      0.001  (0%)
+    uv-sampling grid (PSF)        0.029  (7%)
+    fft normalize (PSF)           0.042  (11%)
+    primary beam                  0.021  (5%)
+    pol transform                 0.004  (1%)
+    psf gaussian fit              0.306  (77%)
+    (unaccounted)                -0.012
+
+RESIDUAL UPDATE (summed over imaging cycles): 3.072  (57.6%)
+    gcf kernel                    0.000  (0%)
+    pol transform                 0.450  (15%)
+    degrid (model->vis)           0.403  (13%)
+    fft (degrid)                  0.709  (23%)
+    residual vis (obs-model)      0.030  (1%)
+    vis mask                      0.027  (1%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.675  (22%)
+    fft (grid)                    0.956  (31%)
+    (unaccounted)                -0.178
+
+STOP TEST (summed over residual updates): 0.175  (3.3%)
+
+MODEL UPDATE (summed over imaging cycles): 0.978  (18.3%)
+    cycle control                 0.001  (0%)
+    make mask                     0.010  (1%)
+    deconvolve                    0.952  (97%)
+    convergence / merge           0.001  (0%)
+    (unaccounted)                 0.013
+
+RESTORE: 0.031  (0.6%)
+
+PRIMARY-BEAM CORRECTION: 0.022  (0.4%)
+
+NODE I/O: 1.210  (22.7%)
+    make empty image              0.002  (0%)
+    load visibilities             0.303  (25%)
+    channel loop bookkeeping      0.004  (0%)
+    image statistics              0.493  (41%)
+    write image                   0.408  (34%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     5.331
+ sum of phases above           5.885  (110.4% of total accounted)
+================================================================
