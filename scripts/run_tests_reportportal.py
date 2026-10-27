@@ -109,8 +109,8 @@ def run_component_tests(component, run_info):
     ## Setup launch data for RP
     launch_description = (f"{component_name}\n\n"
                           "Testviper Info:\n"
-                          f"- SHA: {run_info["testviper_sha"]}\n"
-                          f"- ref: {run_info["testviper_ref"]}\n"
+                          f"- SHA: {run_info['testviper_sha']}\n"
+                          f"- ref: {run_info['testviper_ref']}\n"
                           )
     # Run pytest with reportportal
     test_command = [
@@ -120,19 +120,19 @@ def run_component_tests(component, run_info):
         "--reportportal",
         f"--rp-launch \"{component_display_name}\"",
         f"--rp-launch-description \"{launch_description}\"",
-        f"-o \"rp_launch_attributes=source_repo:{run_info["source_repo"]}\"",
-        f"-o \"rp_launch_attributes=source_ref:{run_info["source_ref"]}\"",
-        f"-o \"rp_launch_attributes=source_sha:{run_info["source_sha"]}\"",
-        f"-o \"rp_launch_attributes=source_actor:{run_info["source_actor"]}\"",
-        f"-o \"rp_launch_attributes=source_workflow:{run_info["source_workflow"]}\"",
-        f"-o \"rp_launch_attributes=source_run_id:{run_info["source_run_id"]}\"",
-        f"-o \"rp_launch_attributes=source_run_number:{run_info["source_run_number"]}\"",
-        f"-o \"rp_launch_attributes=triggered_by:{run_info["triggered_by"]}\"",
-        f"-o \"rp_launch_attributes=testviper_sha:{run_info["testviper_sha"]}\"",
-        f"-o \"rp_launch_attributes=testviper_ref:{run_info["testviper_ref"]}\"",
-        f"-o \"rp_launch_attributes=testviper_run_id:{run_info["run_id"]}\"",
-        f"-o \"rp_launch_attributes=runner_arch:{run_info["runner_arch"]}\"",
-        f"-o \"rp_launch_attributes=runner_os:{run_info["runner_os"]}\"",
+        f"-o \"rp_launch_attributes=source_repo:{run_info['source_repo']}\"",
+        f"-o \"rp_launch_attributes=source_ref:{run_info['source_ref']}\"",
+        f"-o \"rp_launch_attributes=source_sha:{run_info['source_sha']}\"",
+        f"-o \"rp_launch_attributes=source_actor:{run_info['source_actor']}\"",
+        f"-o \"rp_launch_attributes=source_workflow:{run_info['source_workflow']}\"",
+        f"-o \"rp_launch_attributes=source_run_id:{run_info['source_run_id']}\"",
+        f"-o \"rp_launch_attributes=source_run_number:{run_info['source_run_number']}\"",
+        f"-o \"rp_launch_attributes=triggered_by:{run_info['triggered_by']}\"",
+        f"-o \"rp_launch_attributes=testviper_sha:{run_info['testviper_sha']}\"",
+        f"-o \"rp_launch_attributes=testviper_ref:{run_info['testviper_ref']}\"",
+        f"-o \"rp_launch_attributes=testviper_run_id:{run_info['run_id']}\"",
+        f"-o \"rp_launch_attributes=runner_arch:{run_info['runner_arch']}\"",
+        f"-o \"rp_launch_attributes=runner_os:{run_info['runner_os']}\"",
         str(full_test_path),
         "--tb=short",
         "-v",
@@ -165,14 +165,14 @@ def main():
 
     run_info = get_run_info()
     print("Using this source information:")
-    print(f"source_repo: {run_info["source_repo"]}")
-    print(f"source_ref: {run_info["source_ref"]}")
-    print(f"source_sha: {run_info["source_sha"]}")
-    print(f"source_actor: {run_info["source_actor"]}")
-    print(f"source_workflow: {run_info["source_workflow"]}")
-    print(f"source_run_id: {run_info["source_run_id"]}")
-    print(f"source_run_number: {run_info["source_run_number"]}")
-    print(f"triggered_by: {run_info["triggered_by"]}")
+    print(f"source_repo: {run_info['source_repo']}")
+    print(f"source_ref: {run_info['source_ref']}")
+    print(f"source_sha: {run_info['source_sha']}")
+    print(f"source_actor: {run_info['source_actor']}")
+    print(f"source_workflow: {run_info['source_workflow']}")
+    print(f"source_run_id: {run_info['source_run_id']}")
+    print(f"source_run_number: {run_info['source_run_number']}")
+    print(f"triggered_by: {run_info['triggered_by']}")
 
     # Process each component
     processed_count = 0
