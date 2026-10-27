@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-Enhanced Allure Report Generator
-Generates individual Allure reports for each component with history preservation
-and back links to the summary page.
+Runs pytest for each component and publishes each as a separate Launch to ReportPortal
 """
 
 import os
