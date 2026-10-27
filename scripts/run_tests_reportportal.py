@@ -5,10 +5,8 @@ Runs pytest for each component and publishes each as a separate Launch to Report
 
 import os
 import subprocess
-import sys
 import tomllib
 from pathlib import Path
-
 
 # Component configurations
 COMPONENTS = [
@@ -95,7 +93,7 @@ def run_component_tests(component, run_info):
     """Run tests for a specific component and generate Allure results"""
     component_name = component["name"]
     component_path = component["path"]
-    component_display_name = component["display_name"] 
+    component_display_name = component["display_name"]
     test_path = component["test_path"]
 
     print(f"Running tests for {component_name}...")
@@ -107,32 +105,33 @@ def run_component_tests(component, run_info):
         return
 
     ## Setup launch data for RP
-    launch_description = (f"{component_name}\n\n"
-                          "Testviper Info:\n"
-                          f"- SHA: {run_info['testviper_sha']}\n"
-                          f"- ref: {run_info['testviper_ref']}\n"
-                          )
+    launch_description = (
+        f"{component_name}\n\n"
+        "Testviper Info:\n"
+        f"- SHA: {run_info['testviper_sha']}\n"
+        f"- ref: {run_info['testviper_ref']}\n"
+    )
     # Run pytest with reportportal
     test_command = [
         "python",
         "-m",
         "pytest",
         "--reportportal",
-        f"--rp-launch \"{component_display_name}\"",
-        f"--rp-launch-description \"{launch_description}\"",
-        f"-o \"rp_launch_attributes=source_repo:{run_info['source_repo']}\"",
-        f"-o \"rp_launch_attributes=source_ref:{run_info['source_ref']}\"",
-        f"-o \"rp_launch_attributes=source_sha:{run_info['source_sha']}\"",
-        f"-o \"rp_launch_attributes=source_actor:{run_info['source_actor']}\"",
-        f"-o \"rp_launch_attributes=source_workflow:{run_info['source_workflow']}\"",
-        f"-o \"rp_launch_attributes=source_run_id:{run_info['source_run_id']}\"",
-        f"-o \"rp_launch_attributes=source_run_number:{run_info['source_run_number']}\"",
-        f"-o \"rp_launch_attributes=triggered_by:{run_info['triggered_by']}\"",
-        f"-o \"rp_launch_attributes=testviper_sha:{run_info['testviper_sha']}\"",
-        f"-o \"rp_launch_attributes=testviper_ref:{run_info['testviper_ref']}\"",
-        f"-o \"rp_launch_attributes=testviper_run_id:{run_info['run_id']}\"",
-        f"-o \"rp_launch_attributes=runner_arch:{run_info['runner_arch']}\"",
-        f"-o \"rp_launch_attributes=runner_os:{run_info['runner_os']}\"",
+        f'--rp-launch "{component_display_name}"',
+        f'--rp-launch-description "{launch_description}"',
+        f'-o "rp_launch_attributes=source_repo:{run_info["source_repo"]}"',
+        f'-o "rp_launch_attributes=source_ref:{run_info["source_ref"]}"',
+        f'-o "rp_launch_attributes=source_sha:{run_info["source_sha"]}"',
+        f'-o "rp_launch_attributes=source_actor:{run_info["source_actor"]}"',
+        f'-o "rp_launch_attributes=source_workflow:{run_info["source_workflow"]}"',
+        f'-o "rp_launch_attributes=source_run_id:{run_info["source_run_id"]}"',
+        f'-o "rp_launch_attributes=source_run_number:{run_info["source_run_number"]}"',
+        f'-o "rp_launch_attributes=triggered_by:{run_info["triggered_by"]}"',
+        f'-o "rp_launch_attributes=testviper_sha:{run_info["testviper_sha"]}"',
+        f'-o "rp_launch_attributes=testviper_ref:{run_info["testviper_ref"]}"',
+        f'-o "rp_launch_attributes=testviper_run_id:{run_info["run_id"]}"',
+        f'-o "rp_launch_attributes=runner_arch:{run_info["runner_arch"]}"',
+        f'-o "rp_launch_attributes=runner_os:{run_info["runner_os"]}"',
         str(full_test_path),
         "--tb=short",
         "-v",
