@@ -1,0 +1,422 @@
+[[38;2;128;05;128m2026-10-27 18:38:06,564[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Number of frequency chunks ... : 5 
+[[38;2;128;05;128m2026-10-27 18:38:06,640[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 5 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent). 
+[[38;2;128;05;128m2026-10-27 18:38:09,549[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 3.012  (99.9%)
+    create empty image xds        0.002  (0%)
+    write empty image to disk     0.027  (1%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.022  (1%)
+    open processing set           0.052  (2%)
+    interpolate data coords       0.000  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    generate dask graph           0.005  (0%)
+    compute dask graph            2.894  (96%)
+    consolidate metadata          0.009  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      3.014
+ sum of phases above           3.012  (99.9% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-10-27 18:38:09,550[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER node-task timing: MEAN over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.050  (13.3%)
+    imaging weights               0.004  (8%)
+    gcf kernel                    0.000  (0%)
+    vis mask                      0.000  (1%)
+    uv-sampling grid (PSF)        0.017  (34%)
+    fft normalize (PSF)           0.005  (10%)
+    primary beam                  0.002  (5%)
+    pol transform                 0.002  (5%)
+    psf gaussian fit              0.017  (35%)
+    (unaccounted)                 0.001
+
+RESIDUAL UPDATE (summed over imaging cycles): 0.124  (32.6%)
+    gcf kernel                    0.000  (0%)
+    pol transform                 0.025  (20%)
+    degrid (model->vis)           0.009  (7%)
+    fft (degrid)                  0.007  (6%)
+    residual vis (obs-model)      0.002  (2%)
+    vis mask                      0.001  (1%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.063  (51%)
+    fft (grid)                    0.014  (11%)
+    (unaccounted)                 0.003
+
+STOP TEST (summed over residual updates): 0.001  (0.4%)
+
+MODEL UPDATE (summed over imaging cycles): 0.025  (6.7%)
+    cycle control                 0.000  (0%)
+    make mask                     0.002  (9%)
+    deconvolve                    0.022  (88%)
+    convergence / merge           0.000  (0%)
+    (unaccounted)                 0.001
+
+RESTORE: 0.005  (1.2%)
+
+PRIMARY-BEAM CORRECTION: 0.000  (0.0%)
+
+NODE I/O: 0.171  (45.0%)
+    make empty image              0.002  (1%)
+    load visibilities             0.117  (68%)
+    channel loop bookkeeping      0.002  (1%)
+    image statistics              0.014  (8%)
+    write image                   0.036  (21%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     0.381
+ sum of phases above           0.377  (99.1% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-10-27 18:38:09,551[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER node-task timing: MAX over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.053  (13.5%)
+    imaging weights               0.005  (8%)
+    gcf kernel                    0.000  (0%)
+    vis mask                      0.000  (1%)
+    uv-sampling grid (PSF)        0.018  (35%)
+    fft normalize (PSF)           0.006  (12%)
+    primary beam                  0.002  (5%)
+    pol transform                 0.002  (5%)
+    psf gaussian fit              0.018  (35%)
+    (unaccounted)                 0.000
+
+RESIDUAL UPDATE (summed over imaging cycles): 0.135  (34.4%)
+    gcf kernel                    0.000  (0%)
+    pol transform                 0.027  (20%)
+    degrid (model->vis)           0.010  (7%)
+    fft (degrid)                  0.009  (6%)
+    residual vis (obs-model)      0.003  (2%)
+    vis mask                      0.001  (1%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.066  (49%)
+    fft (grid)                    0.016  (12%)
+    (unaccounted)                 0.003
+
+STOP TEST (summed over residual updates): 0.002  (0.4%)
+
+MODEL UPDATE (summed over imaging cycles): 0.026  (6.5%)
+    cycle control                 0.000  (0%)
+    make mask                     0.002  (9%)
+    deconvolve                    0.023  (89%)
+    convergence / merge           0.000  (0%)
+    (unaccounted)                 0.000
+
+RESTORE: 0.005  (1.3%)
+
+PRIMARY-BEAM CORRECTION: 0.000  (0.0%)
+
+NODE I/O: 0.189  (48.1%)
+    make empty image              0.002  (1%)
+    load visibilities             0.131  (69%)
+    channel loop bookkeeping      0.003  (1%)
+    image statistics              0.016  (8%)
+    write image                   0.038  (20%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     0.393
+ sum of phases above           0.410  (104.2% of total accounted)
+================================================================ 
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+imaging_metadata_pd:
+     T_prep  T_prep_weights  T_prep_make_point_spread_function  T_prep_primary_beam  T_prep_transform_pol  T_prep_psf_fit  T_prep_gcf  T_prep_vis_mask  T_prep_uv_sampling_grid  T_prep_fft_norm  T_residual_update  T_stop_test  T_model_update  T_cycle_control  T_convergence     T_gcf  T_degrid  T_fft_degrid  T_residual_vis    T_grid  T_fft_grid  T_transform_pol  T_vis_mask  T_uv_sampling_grid  T_vis_grid  T_make_mask  T_deconvolve  T_restore  T_correct_sky_by_primary_beam  task_id  n_channels  n_cycles  n_cycles_total  T_channel_bookkeeping  T_make_empty_image    T_load  T_image_statistics   T_write  T_image_cube_task  start_unixtime       hostname  process_pid  thread_native_id worker_name
+0  0.050391        0.004282                           0.023045             0.002408              0.002349        0.017292    0.000010         0.000451                 0.017143         0.005049           0.120745     0.001449        0.025477         0.000072       0.000057  0.000020  0.008461      0.006983        0.002131  0.063473    0.012666         0.024866    0.001027                 0.0    0.061543     0.002302      0.022280   0.004532                            0.0        0           1         1               1               0.002361            0.001603  0.114731            0.014163  0.034188           0.373004    1.793126e+09  runnervmr9t6g       116335            116335        None
+1  0.049049        0.004230                           0.022056             0.002248              0.002213        0.017277    0.000008         0.000418                 0.016461         0.004799           0.124807     0.001534        0.024875         0.000069       0.000056  0.000020  0.008645      0.007172        0.002196  0.065566    0.013448         0.025551    0.001094                 0.0    0.063546     0.002238      0.021883   0.004884                            0.0        1           1         1               1               0.002379            0.002095  0.111729            0.015516  0.037754           0.378188    1.793126e+09  runnervmr9t6g       116335            116335        None
+2  0.050434        0.004096                           0.024026             0.002235              0.002241        0.016774    0.000009         0.000456                 0.016766         0.006415           0.135189     0.001558        0.025368         0.000071       0.000061  0.000021  0.009643      0.008703        0.002527  0.068142    0.016450         0.027397    0.001101                 0.0    0.065992     0.002369      0.022102   0.005084                            0.0        2           1         1               1               0.002729            0.001604  0.114069            0.015426  0.038363           0.393300    1.793126e+09  runnervmr9t6g       116335            116335        None
+3  0.049383        0.004170                           0.022296             0.002263              0.002259        0.017404    0.000009         0.000442                 0.016729         0.004739           0.120762     0.001468        0.025331         0.000070       0.000060  0.000019  0.008415      0.006777        0.002107  0.063462    0.012985         0.024811    0.001010                 0.0    0.061447     0.002271      0.022186   0.004653                            0.0        3           1         1               1               0.002354            0.001939  0.113375            0.013741  0.034231           0.370822    1.793126e+09  runnervmr9t6g       116335            116335        None
+4  0.053147        0.004513                           0.024293             0.002443              0.002471        0.018466    0.000009         0.000483                 0.018339         0.005136           0.118176     0.001370        0.025653         0.000067       0.000054  0.000017  0.008568      0.006669        0.001972  0.062989    0.011988         0.024030    0.001001                 0.0    0.061356     0.002270      0.022704   0.004360                            0.0        4           1         1               1               0.002326            0.001990  0.130645            0.013138  0.033410           0.387426    1.793126e+09  runnervmr9t6g       116335            116335        None
+imaging_dict (global channel numbering):
+==============================================================================
+Key(time=0, pol=0, chan=0)  -  Stokes I
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0715015
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231109
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72763e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :         0      stop
+  iter_done              :       100         0
+  start_model_flux       :         0
+  model_flux             :  0.939059
+  start_peakres          :  0.357508
+  start_peakres_nomask   :  0.357508
+  peakres                :  0.086421 0.0865096
+  peakres_nomask         :  0.135308  0.116943
+  masksum                :     42417     42417
+  model_update_stop_code :         1
+
+==============================================================================
+Key(time=0, pol=1, chan=0)  -  Stokes Q
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0208603
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231109
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72763e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :         0      stop
+  iter_done              :       100         0
+  start_model_flux       :         0
+  model_flux             : 0.0720126
+  start_peakres          :  0.104302
+  start_peakres_nomask   :  0.120551
+  peakres                :  0.070258 0.0718768
+  peakres_nomask         :   0.11936  0.119131
+  masksum                :     42417     42417
+  model_update_stop_code :         1
+
+==============================================================================
+Key(time=0, pol=0, chan=1)  -  Stokes I
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0670215
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231074
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72763e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :          0       stop
+  iter_done              :        100          0
+  start_model_flux       :          0
+  model_flux             :   0.808008
+  start_peakres          :   0.335107
+  start_peakres_nomask   :   0.335107
+  peakres                : -0.0864981  0.0861258
+  peakres_nomask         :  -0.120412   0.120031
+  masksum                :      42417      42417
+  model_update_stop_code :          1
+
+==============================================================================
+Key(time=0, pol=1, chan=1)  -  Stokes Q
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0210041
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231074
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72763e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :          0       stop
+  iter_done              :        100          0
+  start_model_flux       :          0
+  model_flux             :   0.175755
+  start_peakres          :  -0.105021
+  start_peakres_nomask   :  -0.118253
+  peakres                : -0.0737178  0.0743557
+  peakres_nomask         :  -0.116254   0.115147
+  masksum                :      42417      42417
+  model_update_stop_code :          1
+
+==============================================================================
+Key(time=0, pol=0, chan=2)  -  Stokes I
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0676041
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231157
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72764e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :          0       stop
+  iter_done              :        100          0
+  start_model_flux       :          0
+  model_flux             :   0.912275
+  start_peakres          :    0.33802
+  start_peakres_nomask   :    0.33802
+  peakres                : -0.0850021  0.0840778
+  peakres_nomask         :   0.130888   0.115726
+  masksum                :      42417      42417
+  model_update_stop_code :          1
+
+==============================================================================
+Key(time=0, pol=1, chan=2)  -  Stokes Q
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0260228
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231157
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72764e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :         0      stop
+  iter_done              :       100         0
+  start_model_flux       :         0
+  model_flux             : 0.0305088
+  start_peakres          :  0.130114
+  start_peakres_nomask   :  0.130114
+  peakres                : 0.0723638 0.0732449
+  peakres_nomask         :  0.112286  0.107886
+  masksum                :     42417     42417
+  model_update_stop_code :         1
+
+==============================================================================
+Key(time=0, pol=0, chan=3)  -  Stokes I
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0650031
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231181
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72764e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :         0      stop
+  iter_done              :       100         0
+  start_model_flux       :         0
+  model_flux             :  0.789238
+  start_peakres          :  0.325015
+  start_peakres_nomask   :  0.325015
+  peakres                : 0.0884405 0.0898701
+  peakres_nomask         : -0.112888  0.109734
+  masksum                :     42417     42417
+  model_update_stop_code :         1
+
+==============================================================================
+Key(time=0, pol=1, chan=3)  -  Stokes Q
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0265517
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231181
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72764e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :          0       stop
+  iter_done              :        100          0
+  start_model_flux       :          0
+  model_flux             : -0.0307331
+  start_peakres          :   0.132758
+  start_peakres_nomask   :   0.132758
+  peakres                :  0.0761917  0.0770618
+  peakres_nomask         :  -0.101383  0.0987094
+  masksum                :      42417      42417
+  model_update_stop_code :          1
+
+==============================================================================
+Key(time=0, pol=0, chan=4)  -  Stokes I
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0706692
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231184
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72765e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :         0      stop
+  iter_done              :       100         0
+  start_model_flux       :         0
+  model_flux             :  0.736766
+  start_peakres          :  0.353346
+  start_peakres_nomask   :  0.353346
+  peakres                :  0.085908 0.0857756
+  peakres_nomask         :  0.117902  0.114572
+  masksum                :     42417     42417
+  model_update_stop_code :         1
+
+==============================================================================
+Key(time=0, pol=1, chan=4)  -  Stokes Q
+------------------------------------------------------------------------------
+Parameters:
+  max_iter            : 100
+  threshold_per_cycle : 0.0221101
+  gain                : 0.1
+  min_psf_fraction    : 0.05
+  max_psf_fraction    : 0.2
+  max_psf_sidelobe    : 0.231184
+  stop_code           : StopCode(imaging=1, model_update=1)
+  frequency           : 3.72765e+11
+  time                : 0
+  stop_description    : Reached max_iter
+Per-cycle history (1 cycle and the closing stop test):
+  cycle                  :          0       stop
+  iter_done              :        100          0
+  start_model_flux       :          0
+  model_flux             : -0.0842102
+  start_peakres          :    0.11055
+  start_peakres_nomask   :    0.11055
+  peakres                : -0.0732964  0.0733929
+  peakres_nomask         :  -0.105289   0.101326
+  masksum                :      42417      42417
+  model_update_stop_code :          1
+
+niter100_t1 channel 0 SKY_MODEL relative difference: 3.903246371927839e-16
+niter100_t1 channel 0 SKY_RESIDUAL relative difference: 1.9284152856925555e-14
+niter100_t1 channel 0 PRIMARY_BEAM relative difference: 5.551115123125783e-16
+niter100_t1 channel 0 SKY_RESTORED relative difference: 1.0731460612694756e-10
+niter100_t1 channel 0 MASK relative difference: 0.0
+niter100_t1 channel 1 SKY_MODEL relative difference: 2.70885393763773e-16
+niter100_t1 channel 1 SKY_RESIDUAL relative difference: 2.7878517169993488e-14
+niter100_t1 channel 1 PRIMARY_BEAM relative difference: 5.551115123125783e-16
+niter100_t1 channel 1 SKY_RESTORED relative difference: 8.183703119833102e-11
+niter100_t1 channel 1 MASK relative difference: 0.0
+niter100_t1 channel 2 SKY_MODEL relative difference: 6.053517334164708e-16
+niter100_t1 channel 2 SKY_RESIDUAL relative difference: 3.2647965554253097e-14
+niter100_t1 channel 2 PRIMARY_BEAM relative difference: 1.2212453270876722e-15
+niter100_t1 channel 2 SKY_RESTORED relative difference: 6.277759161506074e-11
+niter100_t1 channel 2 MASK relative difference: 0.0
+niter100_t1 channel 3 SKY_MODEL relative difference: 7.059524608980704e-16
+niter100_t1 channel 3 SKY_RESIDUAL relative difference: 3.692851774850907e-14
+niter100_t1 channel 3 PRIMARY_BEAM relative difference: 5.551115123125783e-16
+niter100_t1 channel 3 SKY_RESTORED relative difference: 1.7584549730426184e-10
+niter100_t1 channel 3 MASK relative difference: 0.0
+niter100_t1 channel 4 SKY_MODEL relative difference: 3.9313346512478286e-16
+niter100_t1 channel 4 SKY_RESIDUAL relative difference: 2.9312667210373726e-14
+niter100_t1 channel 4 PRIMARY_BEAM relative difference: 5.551115123125783e-16
+niter100_t1 channel 4 SKY_RESTORED relative difference: 6.89516110009421e-11
+niter100_t1 channel 4 MASK relative difference: 0.0
