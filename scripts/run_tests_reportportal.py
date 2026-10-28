@@ -50,20 +50,21 @@ COMPONENTS = [
 
 def get_run_info():
     """Get run source info from env vars"""
+    unset_value = "None"
     return {
-        "source_repo": os.getenv("TV_SOURCE_REPO"),
-        "source_ref": os.getenv("TV_SOURCE_REF"),
-        "source_sha": os.getenv("TV_SOURCE_SHA"),
-        "source_actor": os.getenv("TV_SOURCE_ACTOR"),
-        "source_workflow": os.getenv("TV_SOURCE_WORKFLOW"),
-        "source_run_id": os.getenv("TV_SOURCE_RUN_ID"),
-        "source_run_number": os.getenv("TV_SOURCE_RUN_NUMBER"),
-        "triggered_by": os.getenv("TV_TRIGGERED_BY"),
-        "testviper_sha": os.getenv("GITHUB_SHA"),
-        "testviper_ref": os.getenv("GITHUB_REF_NAME"),
-        "run_id": os.getenv("GITHUB_RUN_ID"),
-        "runner_arch": os.getenv("RUNNER_ARCH"),
-        "runner_os": os.getenv("RUNNER_OS"),
+        "source_repo": os.getenv("TV_SOURCE_REPO", unset_value),
+        "source_ref": os.getenv("TV_SOURCE_REF", unset_value),
+        "source_sha": os.getenv("TV_SOURCE_SHA", unset_value),
+        "source_actor": os.getenv("TV_SOURCE_ACTOR", unset_value),
+        "source_workflow": os.getenv("TV_SOURCE_WORKFLOW", unset_value),
+        "source_run_id": os.getenv("TV_SOURCE_RUN_ID", unset_value),
+        "source_run_number": os.getenv("TV_SOURCE_RUN_NUMBER", unset_value),
+        "triggered_by": os.getenv("TV_TRIGGERED_BY", unset_value),
+        "testviper_sha": os.getenv("GITHUB_SHA", unset_value),
+        "testviper_ref": os.getenv("GITHUB_REF_NAME", unset_value),
+        "run_id": os.getenv("GITHUB_RUN_ID", unset_value),
+        "runner_arch": os.getenv("RUNNER_ARCH", unset_value),
+        "runner_os": os.getenv("RUNNER_OS", unset_value),
     }
 
 
@@ -90,7 +91,7 @@ def read_version(path_to_toml):
 
 
 def run_component_tests(component, run_info):
-    """Run tests for a specific component and generate Allure results"""
+    """Run tests for a specific component and publish results to ReportPortal"""
     component_name = component["name"]
     component_path = component["path"]
     component_display_name = component["display_name"]
@@ -104,38 +105,39 @@ def run_component_tests(component, run_info):
         print(f"Test path {full_test_path} does not exist for {component_name}")
         return
 
-    ## Setup launch data for RP
-    launch_description = (
-        f"{component_name}\n\n"
-        "Testviper Info:\n"
-        f"- SHA: {run_info['testviper_sha']}\n"
-        f"- ref: {run_info['testviper_ref']}\n"
-    )
     # Run pytest with reportportal
     test_command = [
         "python",
         "-m",
         "pytest",
         "--reportportal",
-        f'--rp-launch "{component_display_name}"',
-        f'--rp-launch-description "{launch_description}"',
-        f'-o "rp_launch_attributes=source_repo:{run_info["source_repo"]}"',
-        f'-o "rp_launch_attributes=source_ref:{run_info["source_ref"]}"',
-        f'-o "rp_launch_attributes=source_sha:{run_info["source_sha"]}"',
-        f'-o "rp_launch_attributes=source_actor:{run_info["source_actor"]}"',
-        f'-o "rp_launch_attributes=source_workflow:{run_info["source_workflow"]}"',
-        f'-o "rp_launch_attributes=source_run_id:{run_info["source_run_id"]}"',
-        f'-o "rp_launch_attributes=source_run_number:{run_info["source_run_number"]}"',
-        f'-o "rp_launch_attributes=triggered_by:{run_info["triggered_by"]}"',
-        f'-o "rp_launch_attributes=testviper_sha:{run_info["testviper_sha"]}"',
-        f'-o "rp_launch_attributes=testviper_ref:{run_info["testviper_ref"]}"',
-        f'-o "rp_launch_attributes=testviper_run_id:{run_info["run_id"]}"',
-        f'-o "rp_launch_attributes=runner_arch:{run_info["runner_arch"]}"',
-        f'-o "rp_launch_attributes=runner_os:{run_info["runner_os"]}"',
+        "--rp-launch",
+        str(component_name),
+        "--rp-launch-description",
+        str(component_display_name),
         str(full_test_path),
         "--tb=short",
         "-v",
     ]
+
+    launch_attributes = [
+        "source_repo",
+        "source_ref",
+        "source_sha",
+        "source_actor",
+        "source_workflow",
+        "source_run_id",
+        "source_run_number",
+        "triggered_by",
+        "testviper_sha",
+        "testviper_ref",
+        "run_id",
+        "runner_arch",
+        "runner_os",
+    ]
+
+    for key in launch_attributes:
+        test_command.extend(["-o", f"rp_launch_attributes={key}:{run_info[key]}"])
 
     try:
         # Add timeout to prevent hanging
