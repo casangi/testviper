@@ -1,0 +1,144 @@
+INFO     client:logger.py:78 Number of frequency chunks ... : 2
+INFO     client:logger.py:78 Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 2 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  output format: FITS (one file per kept image variable); each node task pwrites its channel block directly. Zarr sharding and chunking parameters (image_sharding, image_chunking) do not apply to FITS.
+INFO     client:logger.py:78 ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.946  (99.9%)
+    create empty image xds        0.002  (0%)
+    write empty image to disk     0.000  (0%)
+    determine chunks + parallel coords    0.000  (0%)
+    create empty data vars on disk    0.017  (2%)
+    open processing set           0.046  (5%)
+    interpolate data coords       0.000  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    generate dask graph           0.002  (0%)
+    compute dask graph            0.877  (93%)
+    consolidate metadata          0.000  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.947
+ sum of phases above           0.946  (99.9% of total accounted)
+================================================================
+INFO     client:logger.py:78 ================================================================
+ AstroVIPER node-task timing: MEAN over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.044  (20.1%)
+    imaging weights               0.001  (3%)
+    gcf kernel                    0.000  (0%)
+    vis mask                      0.000  (1%)
+    uv-sampling grid (PSF)        0.003  (6%)
+    fft normalize (PSF)           0.003  (7%)
+    primary beam                  0.001  (3%)
+    pol transform                 0.003  (7%)
+    psf gaussian fit              0.031  (70%)
+    (unaccounted)                 0.001
+
+RESIDUAL UPDATE (summed over imaging cycles): 0.130  (59.8%)
+    gcf kernel                    0.000  (0%)
+    pol transform                 0.074  (57%)
+    degrid (model->vis)           0.005  (4%)
+    fft (degrid)                  0.009  (7%)
+    residual vis (obs-model)      0.003  (2%)
+    vis mask                      0.002  (2%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.015  (11%)
+    fft (grid)                    0.017  (13%)
+    (unaccounted)                 0.006
+
+STOP TEST (summed over residual updates): 0.001  (0.6%)
+
+MODEL UPDATE (summed over imaging cycles): 0.013  (5.8%)
+    cycle control                 0.000  (2%)
+    make mask                     0.003  (25%)
+    deconvolve                    0.008  (59%)
+    convergence / merge           0.000  (2%)
+    (unaccounted)                 0.002
+
+RESTORE: 0.003  (1.6%)
+
+PRIMARY-BEAM CORRECTION: 0.000  (0.1%)
+
+NODE I/O: 0.022  (10.1%)
+    make empty image              0.002  (10%)
+    load visibilities             0.002  (10%)
+    channel loop bookkeeping      0.002  (11%)
+    image statistics              0.008  (35%)
+    write image                   0.007  (34%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     0.218
+ sum of phases above           0.214  (98.1% of total accounted)
+================================================================
+INFO     client:logger.py:78 ================================================================
+ AstroVIPER node-task timing: MAX over frequency chunks (seconds)
+================================================================
+
+PREPARATION (once per chunk): 0.048  (21.6%)
+    imaging weights               0.001  (2%)
+    gcf kernel                    0.000  (0%)
+    vis mask                      0.000  (1%)
+    uv-sampling grid (PSF)        0.003  (6%)
+    fft normalize (PSF)           0.003  (7%)
+    primary beam                  0.001  (3%)
+    pol transform                 0.003  (6%)
+    psf gaussian fit              0.035  (73%)
+    (unaccounted)                 0.001
+
+RESIDUAL UPDATE (summed over imaging cycles): 0.130  (58.7%)
+    gcf kernel                    0.000  (0%)
+    pol transform                 0.075  (57%)
+    degrid (model->vis)           0.005  (4%)
+    fft (degrid)                  0.009  (7%)
+    residual vis (obs-model)      0.003  (2%)
+    vis mask                      0.002  (2%)
+    uv-sampling grid              0.000  (0%)
+    vis grid (vis->image)         0.015  (11%)
+    fft (grid)                    0.017  (13%)
+    (unaccounted)                 0.005
+
+STOP TEST (summed over residual updates): 0.001  (0.6%)
+
+MODEL UPDATE (summed over imaging cycles): 0.013  (5.8%)
+    cycle control                 0.000  (2%)
+    make mask                     0.003  (26%)
+    deconvolve                    0.008  (59%)
+    convergence / merge           0.000  (2%)
+    (unaccounted)                 0.002
+
+RESTORE: 0.003  (1.6%)
+
+PRIMARY-BEAM CORRECTION: 0.000  (0.1%)
+
+NODE I/O: 0.022  (10.0%)
+    make empty image              0.002  (10%)
+    load visibilities             0.002  (10%)
+    channel loop bookkeeping      0.002  (11%)
+    image statistics              0.008  (34%)
+    write image                   0.008  (34%)
+
+----------------------------------------------------------------
+ TOTAL (T_image_cube_task)     0.222
+ sum of phases above           0.218  (98.4% of total accounted)
+================================================================
+WARNING  client:logger.py:78 The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute
+WARNING  client:logger.py:78 The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute
+INFO     client:logger.py:78 moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB)
+INFO     client:logger.py:78 Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64})
+WARNING  client:logger.py:78 The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute
+INFO     client:logger.py:78 Time to compute() moments 0.43474864959716797s
+WARNING  client:logger.py:78 The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute
+INFO     client:logger.py:78 moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB)
+INFO     client:logger.py:78 Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64})
+WARNING  client:logger.py:78 The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute
+INFO     client:logger.py:78 Time to compute() moments 0.4719414710998535s
+WARNING  client:logger.py:78 The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute
+INFO     client:logger.py:78 moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB)
+INFO     client:logger.py:78 Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64})
+WARNING  client:logger.py:78 The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute
+INFO     client:logger.py:78 Time to compute() moments 0.45009493827819824s
+INFO     client:logger.py:78 Report written to /tmp/pytest-of-runner/pytest-3/test_pdf_report_of_fits_output0/cube_report.pdf
