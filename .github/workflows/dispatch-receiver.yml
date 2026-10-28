@@ -46,6 +46,32 @@ jobs:
 
           console.log('Successfully triggered python-tests-allure-report workflow');
 
+    - name: Trigger python-tests-reportportal workflow
+      uses: actions/github-script@v9
+      with:
+        script: |
+          const payload = context.payload.client_payload;
+
+          // Trigger the python-tests-reportportal workflow
+          await github.rest.actions.createWorkflowDispatch({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'python-tests-reportportal.yml',
+            ref: 'main',
+            inputs: {
+              'source_repository': payload.repository || '',
+              'source_ref': payload.ref || '',
+              'source_sha': payload.sha || '',
+              'source_actor': payload.actor || '',
+              'source_workflow': payload.workflow || '',
+              'source_run_id': payload.run_id || '',
+              'source_run_number': payload.run_number || '',
+              'triggered_by': 'repository_dispatch'
+            }
+          });
+
+          console.log('Successfully triggered python-tests-reportportal workflow');
+
     - name: Notify source repository of workflow trigger
       uses: actions/github-script@v9
       with:
