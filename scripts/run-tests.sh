@@ -57,7 +57,7 @@ then
     exit 1
 fi
 
-FULL_TEST_PATH="$( cd -- "$( dirname -- "${BASE_PATH}/${TESTS_PATH}" )" &> /dev/null && pwd )"
+FULL_TEST_PATH="${BASE_PATH}/${TESTS_PATH}"
 if [ ! -d "$FULL_TEST_PATH" ]
 then
     echo "Test path $FULL_TEST_PATH does not exist for $COMPONENT_NAME!"
@@ -106,17 +106,22 @@ LAUNCH_ATTRIBUTES="'python:${PYTHON_VERSION}' 'component:${COMPONENT_NAME}' 'ver
 [[ -n "$TV_SOURCE_RUN_NUMBER" ]] && LAUNCH_ATTRIBUTES+=" 'source_run_number:${TV_SOURCE_RUN_NUMBER}'"
 [[ -n "$TV_TRIGGERED_BY" ]] && LAUNCH_ATTRIBUTES+=" 'triggered_by:${TV_TRIGGERED_BY}'"
 
-echo "+-------------------------------------------------------------------------"
-echo "| launch_attributes: ${LAUNCH_ATTRIBUTES}"
-echo "+-------------------------------------------------------------------------"
-
 DEBUG=""
 if [[ -n "$RUNNER_DEBUG" ]]
 then
     DEBUG="--log-cli-level=DEBUG"
 fi
 
-pytest "$DEBUG" \
+echo "+-------------------------------------------------------------------------"
+echo "| About to run:"
+echo "| python -m pytest $DEBUG \\"
+echo "|     --reportportal \\"
+echo "|     --rp-launch \"$COMPONENT_NAME $COMPONENT_VERSION\" \\"
+echo "|     -o \"rp_launch_attributes=${LAUNCH_ATTRIBUTES}\" \\"
+echo "|     $FULL_TEST_PATH"
+echo "+-------------------------------------------------------------------------"
+
+python -m pytest "$DEBUG" \
     --reportportal \
     --rp-launch "$COMPONENT_NAME $COMPONENT_VERSION" \
     -o "rp_launch_attributes=${LAUNCH_ATTRIBUTES}" \
