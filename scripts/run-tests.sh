@@ -64,10 +64,12 @@ then
     exit 1
 fi
 
-COMPONENT_VERSION="$(python3 ./scripts/read_version.py "${BASE_PATH}")"
+PYTHON_VERSION="$(python --version | awk '{print $2}')"
+COMPONENT_VERSION="$(python ./scripts/read_version.py "${BASE_PATH}")"
 
 echo "+-------------------------------------------------------------------------"
 echo "| Running tests for $COMPONENT_NAME $COMPONENT_VERSION"
+echo "| Python: $PYTHON_VERSION"
 echo "+-------------------------------------------------------------------------"
 echo "| TV_SOURCE_REPO: $TV_SOURCE_REPO"
 echo "| TV_SOURCE_REF: $TV_SOURCE_REF"
@@ -86,13 +88,23 @@ echo "| GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
 echo "+-------------------------------------------------------------------------"
 
 ## Build launch attributes string
-LAUNCH_ATTRIBUTES="'testviper_sha:${GITHUB_SHA}'"
-LAUNCH_ATTRIBUTES+=" 'testviper_ref:${GITHUB_REF_NAME}'"
-LAUNCH_ATTRIBUTES+=" 'testviper_ref:${GITHUB_REF_NAME}'"
-LAUNCH_ATTRIBUTES+=" 'run_id:${GITHUB_RUN_ID}'"
-LAUNCH_ATTRIBUTES+=" 'runner_arch:${RUNNER_ARCH}'"
-LAUNCH_ATTRIBUTES+=" 'runner_os:${RUNNER_OS}'"
-LAUNCH_ATTRIBUTES+=" 'event_name:${GITHUB_EVENT_NAME}'"
+LAUNCH_ATTRIBUTES="'python:${PYTHON_VERSION}' 'version:${COMPONENT_VERSION}'"
+
+[[ -n "$GITHUB_SHA" ]] && LAUNCH_ATTRIBUTES+=" 'testviper_sha:${GITHUB_SHA}'"
+[[ -n "$GITHUB_REF_NAME" ]] && LAUNCH_ATTRIBUTES+=" 'testviper_ref:${GITHUB_REF_NAME}'"
+[[ -n "$GITHUB_RUN_ID" ]] && LAUNCH_ATTRIBUTES+=" 'run_id:${GITHUB_RUN_ID}'"
+[[ -n "$RUNNER_ARCH" ]] && LAUNCH_ATTRIBUTES+=" 'arch:${RUNNER_ARCH}'"
+[[ -n "$RUNNER_OS" ]] && LAUNCH_ATTRIBUTES+=" 'os:${RUNNER_OS}'"
+[[ -n "$GITHUB_EVENT_NAME" ]] && LAUNCH_ATTRIBUTES+=" 'event_name:${GITHUB_EVENT_NAME}'"
+
+[[ -n "$TV_SOURCE_REPO" ]] && LAUNCH_ATTRIBUTES+=" 'source_repo:${TV_SOURCE_REPO}'"
+[[ -n "$TV_SOURCE_REF" ]] && LAUNCH_ATTRIBUTES+=" 'source_ref:${TV_SOURCE_REF}'"
+[[ -n "$TV_SOURCE_SHA" ]] && LAUNCH_ATTRIBUTES+=" 'source_sha:${TV_SOURCE_SHA}'"
+[[ -n "$TV_SOURCE_ACTOR" ]] && LAUNCH_ATTRIBUTES+=" 'source_actor:${TV_SOURCE_ACTOR}'"
+[[ -n "$TV_SOURCE_WORKFLOW" ]] && LAUNCH_ATTRIBUTES+=" 'source_workflow:${TV_SOURCE_WORKFLOW}'"
+[[ -n "$TV_SOURCE_RUN_ID" ]] && LAUNCH_ATTRIBUTES+=" 'source_run_id:${TV_SOURCE_RUN_ID}'"
+[[ -n "$TV_SOURCE_RUN_NUMBER" ]] && LAUNCH_ATTRIBUTES+=" 'source_run_number:${TV_SOURCE_RUN_NUMBER}'"
+[[ -n "$TV_TRIGGERED_BY" ]] && LAUNCH_ATTRIBUTES+=" 'triggered_by:${TV_TRIGGERED_BY}'"
 
 echo "rp_launch_attributes=${LAUNCH_ATTRIBUTES}"
 
