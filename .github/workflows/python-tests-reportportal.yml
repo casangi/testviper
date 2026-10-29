@@ -93,8 +93,7 @@ jobs:
         make build-main
         ls -l external/
 
-    - name: Run tests and publish to ReportPortal
-      run: python scripts/run_tests_reportportal.py
+    - name: Setup Environment Vars
       env:
         RP_API_KEY: ${{ secrets.REPORTPORTAL_API_KEY }}
         AGENT_NO_ANALYTICS: True
@@ -106,12 +105,38 @@ jobs:
         TV_SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id }}
         TV_SOURCE_RUN_NUMBER: ${{ github.event.inputs.source_run_number }}
         TV_TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
-        GITHUB_SHA: ${{ github.sha }}
-        GITHUB_REF_NAME: ${{ github.ref.sha }}
-        GITHUB_RUN_ID: ${{ github.run_id }}
-        GITHUB_EVENT_NAME: ${{ github.event_name }}
-        RUNNER_ARCH: ${{ env.RUNNER_ARCH }}
-        RUNNER_OS: ${{ env.RUNNER_OS }}
+      run: |
+        echo "RP_API_KEY=${RP_API_KEY}" >> $GITHUB_ENV
+        echo "AGENT_NO_ANALYTICS=${AGENT_NO_ANALYTICS}" >> $GITHUB_ENV
+        echo "TV_SOURCE_REPO=${TV_SOURCE_REPO}" >> $GITHUB_ENV
+        echo "TV_SOURCE_REF=${TV_SOURCE_REF}" >> $GITHUB_ENV
+        echo "TV_SOURCE_SHA=${TV_SOURCE_SHA}" >> $GITHUB_ENV
+        echo "TV_SOURCE_ACTOR=${TV_SOURCE_ACTOR}" >> $GITHUB_ENV
+        echo "TV_SOURCE_WORKFLOW=${TV_SOURCE_WORKFLOW}" >> $GITHUB_ENV
+        echo "TV_SOURCE_RUN_ID=${TV_SOURCE_RUN_ID}" >> $GITHUB_ENV
+        echo "TV_SOURCE_RUN_NUMBER=${TV_SOURCE_RUN_NUMBER}" >> $GITHUB_ENV
+        echo "TV_TRIGGERED_BY=${TV_TRIGGERED_BY}" >> $GITHUB_ENV
+    
+    - parallel:
+        - name: Run tests for TestViper
+          run: |
+            ./scripts/run-tests.sh "TestViper Integration" "." "tests/integration"
+
+        - name: Run tests for ToolViper
+          run: |
+            ./scripts/run-tests.sh "ToolViper" "external/toolviper" "tests"
+
+        - name: Run tests for Xradio
+          run: |
+            ./scripts/run-tests.sh "Xradio" "external/xradio" "tests"
+
+        - name: Run tests for GraphViper
+          run: |
+            ./scripts/run-tests.sh "GraphViper" "external/graphviper" "tests"
+
+        - name: Run tests for AstroViper
+          run: |
+            ./scripts/run-tests.sh "AstroViper" "external/astroviper" "tests"
 
     # - name: Repository Dispatch to benchviper
     #   uses: actions/github-script@v9
