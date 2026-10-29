@@ -157,13 +157,9 @@ def run_component_tests(component, run_info):
         with open(output_file, "a") as f:
             f.write(str(result.returncode) + "\n")
         if result.stdout:
-            print("STDOUT")
-            print(result.stdout)
-            # print("STDOUT (last 500 chars):\n", result.stdout[-500:])
+            print("STDOUT (last 500 chars):\n", result.stdout[-500:])
         if result.stderr and result.stderr.strip():
-            print("STDERR")
-            print(result.stderr)
-            # print("STDERR (last 500 chars):\n", result.stderr[-500:])
+            print("STDERR (last 500 chars):\n", result.stderr[-500:])
     except subprocess.TimeoutExpired:
         print(f"Tests for {component_name} timed out after # minutes")
     except Exception as e:
