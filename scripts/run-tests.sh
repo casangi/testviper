@@ -64,7 +64,7 @@ then
     exit 1
 fi
 
-COMPONENT_VERSION="$(python3 ./scripts/read_version.py ${BASE_PATH})"
+COMPONENT_VERSION="$(python3 ./scripts/read_version.py "${BASE_PATH}")"
 
 echo "+-------------------------------------------------------------------------"
 echo "| Running tests for $COMPONENT_NAME $COMPONENT_VERSION"
@@ -85,7 +85,16 @@ echo "| RUNNER_OS: $RUNNER_OS"
 echo "| GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
 echo "+-------------------------------------------------------------------------"
 
+## Build launch attributes string
+LAUNCH_ATTRIBUTES="'testviper_sha:${GITHUB_SHA}'"
+LAUNCH_ATTRIBUTES+=" 'testviper_ref:${GITHUB_REF_NAME}'"
+LAUNCH_ATTRIBUTES+=" 'testviper_ref:${GITHUB_REF_NAME}'"
+LAUNCH_ATTRIBUTES+=" 'run_id:${GITHUB_RUN_ID}'"
+LAUNCH_ATTRIBUTES+=" 'runner_arch:${RUNNER_ARCH}'"
+LAUNCH_ATTRIBUTES+=" 'runner_os:${RUNNER_OS}'"
+LAUNCH_ATTRIBUTES+=" 'event_name:${GITHUB_EVENT_NAME}'"
 
+echo "rp_launch_attributes=${LAUNCH_ATTRIBUTES}"
 
 # pytest --junitxml=junit/test-results.xml \
 #     --log-cli-level DEBUG \

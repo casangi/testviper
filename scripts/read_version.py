@@ -7,6 +7,7 @@ import os
 import sys
 import tomllib
 
+
 def read_version(path_to_toml):
     """Read version from .toml"""
     if os.path.exists(os.path.join(path_to_toml, "pyproject.toml")):
