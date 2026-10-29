@@ -88,7 +88,7 @@ echo "| GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
 echo "+-------------------------------------------------------------------------"
 
 ## Build launch attributes string
-LAUNCH_ATTRIBUTES="'python:${PYTHON_VERSION}' 'version:${COMPONENT_VERSION}'"
+LAUNCH_ATTRIBUTES="'python:${PYTHON_VERSION}' 'component:${COMPONENT_NAME}' 'version:${COMPONENT_VERSION}'"
 
 [[ -n "$GITHUB_SHA" ]] && LAUNCH_ATTRIBUTES+=" 'testviper_sha:${GITHUB_SHA}'"
 [[ -n "$GITHUB_REF_NAME" ]] && LAUNCH_ATTRIBUTES+=" 'testviper_ref:${GITHUB_REF_NAME}'"
@@ -106,14 +106,18 @@ LAUNCH_ATTRIBUTES="'python:${PYTHON_VERSION}' 'version:${COMPONENT_VERSION}'"
 [[ -n "$TV_SOURCE_RUN_NUMBER" ]] && LAUNCH_ATTRIBUTES+=" 'source_run_number:${TV_SOURCE_RUN_NUMBER}'"
 [[ -n "$TV_TRIGGERED_BY" ]] && LAUNCH_ATTRIBUTES+=" 'triggered_by:${TV_TRIGGERED_BY}'"
 
-echo "rp_launch_attributes=${LAUNCH_ATTRIBUTES}"
+echo "+-------------------------------------------------------------------------"
+echo "| launch_attributes: ${LAUNCH_ATTRIBUTES}"
+echo "+-------------------------------------------------------------------------"
 
-# pytest --junitxml=junit/test-results.xml \
-#     --log-cli-level DEBUG \
-#     --cov=dummy_app --cov-report=xml \
-#     --reportportal \
-#     --rp-launch "$GITHUB_REF_NAME" \
-#     --rp-launch-description "${GITHUB_EVENT_NAME}: $GITHUB_REF_NAME | $GITHUB_SHA" \
-#     -o "rp_tests_attributes=unit github $GITHUB_ACTOR" \
-#     -o "rp_launch_attributes=git_sha:${GITHUB_SHA}" \
-#     tests/unit/
+DEBUG=""
+if [[ -n "$RUNNER_DEBUG" ]]
+then
+    DEBUG="--log-cli-level=DEBUG"
+fi
+
+pytest "$DEBUG" \
+    --reportportal \
+    --rp-launch "$COMPONENT_NAME $COMPONENT_VERSION" \
+    -o "rp_launch_attributes=${LAUNCH_ATTRIBUTES}" \
+    "${FULL_TEST_PATH}"
