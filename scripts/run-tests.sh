@@ -88,7 +88,7 @@ echo "| GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
 echo "+-------------------------------------------------------------------------"
 
 ## Build launch attributes string
-LAUNCH_ATTRIBUTES="'python:${PYTHON_VERSION}' 'component:${COMPONENT_NAME}' 'version:${COMPONENT_VERSION}'"
+LAUNCH_ATTRIBUTES="'pytest' 'python:${PYTHON_VERSION}' 'component:${COMPONENT_NAME}' 'version:${COMPONENT_VERSION}'"
 
 [[ -n "$GITHUB_SHA" ]] && LAUNCH_ATTRIBUTES+=" 'testviper_sha:${GITHUB_SHA}'"
 [[ -n "$GITHUB_REF_NAME" ]] && LAUNCH_ATTRIBUTES+=" 'testviper_ref:${GITHUB_REF_NAME}'"
@@ -109,20 +109,27 @@ LAUNCH_ATTRIBUTES="'python:${PYTHON_VERSION}' 'component:${COMPONENT_NAME}' 'ver
 DEBUG=
 if [[ -n "$RUNNER_DEBUG" ]]
 then
-    DEBUG="--log-cli-level=DEBUG"
+    DEBUG="-v --log-cli-level=DEBUG"
 fi
 
 echo "+-------------------------------------------------------------------------"
 echo "About to run:"
-echo "python -m pytest -v $DEBUG \\"
+echo "python -m pytest $DEBUG \\"
 echo "    --reportportal \\"
 echo "    --rp-launch \"$COMPONENT_NAME $COMPONENT_VERSION\" \\"
 echo "    -o \"rp_launch_attributes=${LAUNCH_ATTRIBUTES}\" \\"
 echo "    $FULL_TEST_PATH"
 echo "+-------------------------------------------------------------------------"
 
-python -m pytest -v $DEBUG \
+python -m pytest $DEBUG \
     --reportportal \
+    -o "rp_endpoint=https://report-portal.nrao.casa" \
+    -o "rp_project=testviper" \
+    -o "rp_launch='Testviper'" \
+    -o "rp_ignore_attributes='xfail' 'usefixture'" \
+    -o "rp_verify_ssl=False" \
+    -o "rp_launch_uuid_print=True" \
+    -o "rp_api_retries=2" \
     --rp-launch "$COMPONENT_NAME $COMPONENT_VERSION" \
     -o "rp_launch_attributes=${LAUNCH_ATTRIBUTES}" \
     "${FULL_TEST_PATH}"
