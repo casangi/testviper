@@ -15,56 +15,58 @@ COMPONENTS = [
         "display_name": "TestViper Integration",
         "path": ".",
         "test_path": "tests/integration",
-        "icon": "🔬",
     },
     {
         "name": "toolviper",
         "display_name": "ToolViper",
         "path": "external/toolviper",
         "test_path": "tests",
-        "icon": "🛠️",
     },
     {
         "name": "xradio",
         "display_name": "Xradio",
         "path": "external/xradio",
         "test_path": "tests",
-        "icon": "📡",
     },
     {
         "name": "graphviper",
         "display_name": "GraphViper",
         "path": "external/graphviper",
         "test_path": "tests",
-        "icon": "📊",
     },
     {
         "name": "astroviper",
         "display_name": "AstroViper",
         "path": "external/astroviper",
         "test_path": "tests",
-        "icon": "🌟",
     },
 ]
 
 
+def env_var_or_default(env_var):
+    """Returns the value of the given environment variable, or a default if it is unset or if the value is an empty string"""
+    unset_value = "None"
+    val = os.getenv("TV_SOURCE_REPO", "").strip()
+    return unset_value if val == "" else val
+
+
 def get_run_info():
     """Get run source info from env vars"""
-    unset_value = "None"
     return {
-        "source_repo": os.getenv("TV_SOURCE_REPO", unset_value),
-        "source_ref": os.getenv("TV_SOURCE_REF", unset_value),
-        "source_sha": os.getenv("TV_SOURCE_SHA", unset_value),
-        "source_actor": os.getenv("TV_SOURCE_ACTOR", unset_value),
-        "source_workflow": os.getenv("TV_SOURCE_WORKFLOW", unset_value),
-        "source_run_id": os.getenv("TV_SOURCE_RUN_ID", unset_value),
-        "source_run_number": os.getenv("TV_SOURCE_RUN_NUMBER", unset_value),
-        "triggered_by": os.getenv("TV_TRIGGERED_BY", unset_value),
-        "testviper_sha": os.getenv("GITHUB_SHA", unset_value),
-        "testviper_ref": os.getenv("GITHUB_REF_NAME", unset_value),
-        "run_id": os.getenv("GITHUB_RUN_ID", unset_value),
-        "runner_arch": os.getenv("RUNNER_ARCH", unset_value),
-        "runner_os": os.getenv("RUNNER_OS", unset_value),
+        "source_repo": env_var_or_default("TV_SOURCE_REPO"),
+        "source_ref": env_var_or_default("TV_SOURCE_REF"),
+        "source_sha": env_var_or_default("TV_SOURCE_SHA"),
+        "source_actor": env_var_or_default("TV_SOURCE_ACTOR"),
+        "source_workflow": env_var_or_default("TV_SOURCE_WORKFLOW"),
+        "source_run_id": env_var_or_default("TV_SOURCE_RUN_ID"),
+        "source_run_number": env_var_or_default("TV_SOURCE_RUN_NUMBER"),
+        "triggered_by": env_var_or_default("TV_TRIGGERED_BY"),
+        "testviper_sha": env_var_or_default("GITHUB_SHA"),
+        "testviper_ref": env_var_or_default("GITHUB_REF_NAME"),
+        "run_id": env_var_or_default("GITHUB_RUN_ID"),
+        "runner_arch": env_var_or_default("RUNNER_ARCH"),
+        "runner_os": env_var_or_default("RUNNER_OS"),
+        "event_name": env_var_or_default("GITHUB_EVENT_NAME"),
     }
 
 
@@ -110,6 +112,8 @@ def run_component_tests(component, run_info):
         "python",
         "-m",
         "pytest",
+        "--log-cli-level",
+        "DEBUG",
         "--reportportal",
         "--rp-launch",
         str(component_name),
@@ -120,7 +124,7 @@ def run_component_tests(component, run_info):
         "-v",
     ]
 
-    launch_attributes = [
+    launch_attr_keys = [
         "source_repo",
         "source_ref",
         "source_sha",
@@ -134,10 +138,14 @@ def run_component_tests(component, run_info):
         "run_id",
         "runner_arch",
         "runner_os",
+        "event_name",
     ]
 
-    for key in launch_attributes:
-        test_command.extend(["-o", f"rp_launch_attributes={key}:{run_info[key]}"])
+    launch_attrs = []
+    for key in launch_attr_keys:
+        launch_attrs.append(f"'{key}:{run_info[key]}'")
+
+    test_command.extend(["-o", f"rp_launch_attributes={' '.join(launch_attrs)}"])
 
     try:
         # Add timeout to prevent hanging
@@ -149,9 +157,9 @@ def run_component_tests(component, run_info):
         with open(output_file, "a") as f:
             f.write(str(result.returncode) + "\n")
         if result.stdout:
-            print("STDOUT (last 200 chars):", result.stdout[-200:])
+            print("STDOUT (last 500 chars):\n", result.stdout[-500:])
         if result.stderr and result.stderr.strip():
-            print("STDERR (last 200 chars):", result.stderr[-200:])
+            print("STDERR (last 500 chars):\n", result.stderr[-500:])
     except subprocess.TimeoutExpired:
         print(f"Tests for {component_name} timed out after # minutes")
     except Exception as e:
