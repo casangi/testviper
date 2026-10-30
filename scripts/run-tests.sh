@@ -106,22 +106,22 @@ LAUNCH_ATTRIBUTES="'python:${PYTHON_VERSION}' 'component:${COMPONENT_NAME}' 'ver
 [[ -n "$TV_SOURCE_RUN_NUMBER" ]] && LAUNCH_ATTRIBUTES+=" 'source_run_number:${TV_SOURCE_RUN_NUMBER}'"
 [[ -n "$TV_TRIGGERED_BY" ]] && LAUNCH_ATTRIBUTES+=" 'triggered_by:${TV_TRIGGERED_BY}'"
 
-DEBUG=""
+DEBUG=
 if [[ -n "$RUNNER_DEBUG" ]]
 then
     DEBUG="--log-cli-level=DEBUG"
 fi
 
 echo "+-------------------------------------------------------------------------"
-echo "| About to run:"
-echo "| python -m pytest $DEBUG \\"
-echo "|     --reportportal \\"
-echo "|     --rp-launch \"$COMPONENT_NAME $COMPONENT_VERSION\" \\"
-echo "|     -o \"rp_launch_attributes=${LAUNCH_ATTRIBUTES}\" \\"
-echo "|     $FULL_TEST_PATH"
+echo "About to run:"
+echo "python -m pytest -v $DEBUG \\"
+echo "    --reportportal \\"
+echo "    --rp-launch \"$COMPONENT_NAME $COMPONENT_VERSION\" \\"
+echo "    -o \"rp_launch_attributes=${LAUNCH_ATTRIBUTES}\" \\"
+echo "    $FULL_TEST_PATH"
 echo "+-------------------------------------------------------------------------"
 
-python -m pytest "$DEBUG" \
+python -m pytest -v $DEBUG \
     --reportportal \
     --rp-launch "$COMPONENT_NAME $COMPONENT_VERSION" \
     -o "rp_launch_attributes=${LAUNCH_ATTRIBUTES}" \
