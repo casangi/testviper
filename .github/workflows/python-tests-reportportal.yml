@@ -50,6 +50,17 @@ on:
 jobs:
   integration-tests-reportportal:
     runs-on: ubuntu-latest
+    env:
+      RP_API_KEY: ${{ secrets.REPORTPORTAL_API_KEY }}
+      AGENT_NO_ANALYTICS: True
+      TV_SOURCE_REPO: ${{ github.event.inputs.source_repository }}
+      TV_SOURCE_REF: ${{ github.event.inputs.source_ref }}
+      TV_SOURCE_SHA: ${{ github.event.inputs.source_sha }}
+      TV_SOURCE_ACTOR: ${{ github.event.inputs.source_actor }}
+      TV_SOURCE_WORKFLOW: ${{ github.event.inputs.source_workflow }}
+      TV_SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id }}
+      TV_SOURCE_RUN_NUMBER: ${{ github.event.inputs.source_run_number }}
+      TV_TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
 
     steps:
     - name: Log dispatch information
@@ -93,50 +104,26 @@ jobs:
         make build-main
         ls -l external/
 
-    - name: Setup Environment Vars
-      env:
-        RP_API_KEY: ${{ secrets.REPORTPORTAL_API_KEY }}
-        AGENT_NO_ANALYTICS: True
-        TV_SOURCE_REPO: ${{ github.event.inputs.source_repository }}
-        TV_SOURCE_REF: ${{ github.event.inputs.source_ref }}
-        TV_SOURCE_SHA: ${{ github.event.inputs.source_sha }}
-        TV_SOURCE_ACTOR: ${{ github.event.inputs.source_actor }}
-        TV_SOURCE_WORKFLOW: ${{ github.event.inputs.source_workflow }}
-        TV_SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id }}
-        TV_SOURCE_RUN_NUMBER: ${{ github.event.inputs.source_run_number }}
-        TV_TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
-      run: |
-        echo "RP_API_KEY=${RP_API_KEY}" >> $GITHUB_ENV
-        echo "AGENT_NO_ANALYTICS=${AGENT_NO_ANALYTICS}" >> $GITHUB_ENV
-        echo "TV_SOURCE_REPO=${TV_SOURCE_REPO}" >> $GITHUB_ENV
-        echo "TV_SOURCE_REF=${TV_SOURCE_REF}" >> $GITHUB_ENV
-        echo "TV_SOURCE_SHA=${TV_SOURCE_SHA}" >> $GITHUB_ENV
-        echo "TV_SOURCE_ACTOR=${TV_SOURCE_ACTOR}" >> $GITHUB_ENV
-        echo "TV_SOURCE_WORKFLOW=${TV_SOURCE_WORKFLOW}" >> $GITHUB_ENV
-        echo "TV_SOURCE_RUN_ID=${TV_SOURCE_RUN_ID}" >> $GITHUB_ENV
-        echo "TV_SOURCE_RUN_NUMBER=${TV_SOURCE_RUN_NUMBER}" >> $GITHUB_ENV
-        echo "TV_TRIGGERED_BY=${TV_TRIGGERED_BY}" >> $GITHUB_ENV
+    - parallel:
+      - name: Run tests for TestViper
+        run: |
+          ./scripts/run-tests.sh "TestViper Integration" "." "tests/integration"
 
-    # - parallel:
-    - name: Run tests for TestViper
-      run: |
-        ./scripts/run-tests.sh "TestViper Integration" "." "tests/integration"
+      - name: Run tests for ToolViper
+        run: |
+          ./scripts/run-tests.sh "ToolViper" "external/toolviper" "tests"
 
-    - name: Run tests for ToolViper
-      run: |
-        ./scripts/run-tests.sh "ToolViper" "external/toolviper" "tests"
+      - name: Run tests for Xradio
+        run: |
+          ./scripts/run-tests.sh "Xradio" "external/xradio" "tests"
 
-    - name: Run tests for Xradio
-      run: |
-        ./scripts/run-tests.sh "Xradio" "external/xradio" "tests/unit/testing"
+      - name: Run tests for GraphViper
+        run: |
+          ./scripts/run-tests.sh "GraphViper" "external/graphviper" "tests"
 
-    - name: Run tests for GraphViper
-      run: |
-        ./scripts/run-tests.sh "GraphViper" "external/graphviper" "tests"
-
-    - name: Run tests for AstroViper
-      run: |
-        ./scripts/run-tests.sh "AstroViper" "external/astroviper" "tests/unit/node_tasks"
+      - name: Run tests for AstroViper
+        run: |
+          ./scripts/run-tests.sh "AstroViper" "external/astroviper" "tests"
 
     # - name: Repository Dispatch to benchviper
     #   uses: actions/github-script@v9
