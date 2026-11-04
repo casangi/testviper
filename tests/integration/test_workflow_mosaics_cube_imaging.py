@@ -5,7 +5,6 @@ import shutil
 import numpy as np
 import pytest
 import xarray as xr
-
 from flowviper.prefect_workflow.mosaics_cube_imaging import (
     DEFAULT_IMAGE_DATA_VARIABLES_KEEP,
     DEFAULT_PS_STORE,

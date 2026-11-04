@@ -8,14 +8,13 @@ import xarray as xr
 from astroviper.processing_functions.imaging.utils.imaging_dict import (
     imaging_dict_to_dataframe,
 )
-from xradio.measurement_set import open_processing_set
-
 from flowviper.prefect_workflow.single_field_cube_imaging_example import (
     DEFAULT_IMAGE_DATA_VARIABLES_KEEP,
     DEFAULT_PS_STORE,
     DEFAULT_SCAN_INTENTS,
     single_field_cube_imaging_flow,
 )
+from xradio.measurement_set import open_processing_set
 
 # Flow arguments shared by every case; each case overrides a subset of them.
 BASE_PARAMS = {

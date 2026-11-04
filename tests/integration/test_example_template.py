@@ -1,7 +1,6 @@
 import pytest
-from prefect.testing.utilities import prefect_test_harness
-
 from flowviper.prefect_workflow.example_template import compute_data, math_flow
+from prefect.testing.utilities import prefect_test_harness
 
 
 # Automatically provide an isolated Prefect backend database for all tests
