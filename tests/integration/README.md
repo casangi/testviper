@@ -60,14 +60,16 @@ Use prefect_test_harness as a context manager to run flows and tasks against a t
 from prefect import flow
 from prefect.testing.utilities import prefect_test_harness
 
+
 @flow
 def my_favorite_flow():
     return 42
 
+
 def test_my_favorite_flow():
-  with prefect_test_harness():
-      # run the flow against a temporary testing database
-      assert my_favorite_flow() == 42
+    with prefect_test_harness():
+        # run the flow against a temporary testing database
+        assert my_favorite_flow() == 42
 ```
 
 For more extensive testing, use prefect_test_harness as a fixture in your unit testing framework. For example, when using pytest:
@@ -77,14 +79,17 @@ from prefect import flow
 import pytest
 from prefect.testing.utilities import prefect_test_harness
 
+
 @pytest.fixture(autouse=True, scope="session")
 def prefect_test_fixture():
     with prefect_test_harness():
         yield
 
+
 @flow
 def my_favorite_flow():
     return 42
+
 
 def test_my_favorite_flow():
     assert my_favorite_flow() == 42

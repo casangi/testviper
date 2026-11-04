@@ -10,10 +10,12 @@ def prefect_test_fixture():
     with prefect_test_harness():
         yield
 
+
 # Test the flow as a whole
 def test_math_flow():
     flow_result = math_flow(10, 5)
     assert flow_result == 15
+
 
 # Test the task individually
 def test_compute_data_task():
