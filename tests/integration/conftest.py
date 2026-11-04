@@ -31,7 +31,7 @@ def tmp_output_dir(tmp_path):
 
 
 # NOTE: move to imaging/conftest.py once test_cube_imaging_example.py
-# and test_mosaics_cube_imaging.py are relocated to tests/integration/imaging/
+# and test_workflow_mosaics_cube_imaging.py are relocated to tests/integration/imaging/
 @pytest.fixture(
     params=[
         pytest.param({"nsources": 1, "fluxes": [1.0]}, id="single_source"),
