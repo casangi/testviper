@@ -1,7 +1,7 @@
-# TestVIPER 
+# TestVIPER
 Automated Test Repository for the VIPER Ecosystem
 
-[![Python 3.11 3.12 3.13](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://www.python.org/downloads/release/python-3130/)
+[![Python 3.12 3.13 3.14](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue)](https://www.python.org/downloads/release/python-3140/)
 [![Linux Tests](https://github.com/casangi/testviper/actions/workflows/python-tests-allure-report.yml/badge.svg?branch=main)](https://github.com/casangi/testviper/actions/workflows/python-tests-allure-report.yml?query=branch%3Amain)
 [![CI-Dashboard](https://img.shields.io/badge/Dashboard-Status-green)](https://casangi.github.io/testviper/)
 ![Static Badge](https://img.shields.io/badge/work_in-progress-yellow)
@@ -21,10 +21,9 @@ Structure of this repository:
 This repository runs integration and component tests against VIPER components in editable mode, with branch/tag/commit selection per component. The flow is PEP 508–compliant and CI-friendly.
 
 ### Prerequisites
-- Python 3.12 or 3.13
+- Python 3.12, 3.13 or 3.14
 - git
 - pip >= 24.1 (recommended)
-- macOS users need conda to install `python-casacore` (not required for the default build), but required to run tests.
 
 ### What gets installed
 - Components (editable) from local clones under `external/`:
@@ -33,17 +32,9 @@ This repository runs integration and component tests against VIPER components in
 
 Components are synced by `scripts/sync_components.sh` and installed via `requirements/main.txt` using editable local paths (PEP 508–compliant).
 
+CASA table access (XRADIO's MSv2 conversion) comes from [arcae](https://github.com/ska-sa/arcae), which the components' `[all]` extras install from pip on Linux and macOS; no conda environment is needed.
+
 ### Quick start (all components on main)
-
-#### Using Conda for macOS
-Use conda-forge to install the python-casacore library as a dependency for xradio.
-
-```bash
-conda create --name testviper-venv python=3.13 --no-default-packages
-conda activate testviper-venv
-conda install -c conda-forge python-casacore
-make build-main
-```
 
 #### Using a Python Virtual Environment
 ```bash

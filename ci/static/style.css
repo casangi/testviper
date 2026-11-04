@@ -717,18 +717,19 @@ html, body {
   z-index: 1;
 }
 /* Same typography as .ci-ov-table thead th (landing page).
-   Grid: dot | label | push | branch | status | last run.
-   Label column is the only 1fr — branch uses a px max (no fr) so long job names are not squeezed.
-   Push widens the gap between job description and branch; branch padding 0 keeps Status close. */
+   Grid: dot | label | fail% | push | branch | status | last run | avg dur.
+   Label is the only 1fr; fail% and avg dur are fixed-width; push is a visual spacer. */
 .ci-panel-head-row {
   display: grid;
   grid-template-columns:
     9px
     minmax(0, 1fr)
-    minmax(80px, 120px)
-    minmax(112px, 200px)
-    100px
-    minmax(72px, 96px);
+    60px
+    minmax(40px, 70px)
+    minmax(80px, 160px)
+    90px
+    minmax(60px, 88px)
+    68px;
   column-gap: 10px;
   align-items: center;
   padding: 8px 8px 8px 14px;
@@ -758,16 +759,20 @@ html, body {
   text-align: right;
   padding-right: 0;
 }
+.ci-panel-head-rate { text-align: center; }
+.ci-panel-head-dur  { text-align: right; }
 
 .ci-row {
   display: grid;
   grid-template-columns:
     9px
     minmax(0, 1fr)
-    minmax(80px, 120px)
-    minmax(112px, 200px)
-    100px
-    minmax(72px, 96px);
+    60px
+    minmax(40px, 70px)
+    minmax(80px, 160px)
+    90px
+    minmax(60px, 88px)
+    68px;
   column-gap: 10px;
   align-items: center;
   padding: 10px 8px 10px 14px;
@@ -796,6 +801,11 @@ html, body {
   font-size: 12px;
   color: var(--muted2);
 }
+#ci-actions-row {
+  display: flex; flex-direction: row; align-items: center; gap: 16px;
+  justify-content: space-between;
+  position: relative; z-index: 1;
+}
 #ci-open {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 9px 16px;
@@ -803,7 +813,6 @@ html, body {
   font-size: 13px; color: var(--muted2); text-decoration: none;
   background: var(--surface2);
   transition: border-color 0.15s, color 0.15s;
-  align-self: flex-start; position: relative; z-index: 1;
 }
 #ci-open:hover { border-color: var(--accent); color: var(--accent); }
 #ci-open svg   { width: 13px; height: 13px; flex-shrink: 0; }
@@ -1011,3 +1020,86 @@ html, body {
 }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
+
+/* ══════════════════════════════════════════════════════════════════════
+   CI INSIGHTS METRICS — failure rate pills, stats columns, Insights link
+══════════════════════════════════════════════════════════════════════ */
+
+/* Shared stats column alignment (overview table th/td and CI panel divs) */
+.ci-ov-stat {
+  white-space: nowrap;
+  text-align: right;
+  padding-right: 1rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+.ci-ov-dur {
+  color: var(--muted);
+}
+
+/* Failure rate pill */
+.ci-rate-pill {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.15em 0.5em;
+  border-radius: 999px;
+  min-width: 3.2em;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Severity colours — light themes */
+.ci-rate-good { background: #d1fae5; color: #065f46; }
+.ci-rate-warn { background: #fef3c7; color: #92400e; }
+.ci-rate-bad  { background: #fee2e2; color: #991b1b; }
+.ci-rate-none { background: transparent; color: var(--muted); font-weight: 400; }
+
+/* Dark / Slate overrides */
+[data-theme="dark"]  .ci-rate-good,
+[data-theme="slate"] .ci-rate-good { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"]  .ci-rate-warn,
+[data-theme="slate"] .ci-rate-warn { background: #78350f; color: #fcd34d; }
+[data-theme="dark"]  .ci-rate-bad,
+[data-theme="slate"] .ci-rate-bad  { background: #7f1d1d; color: #fca5a5; }
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] .ci-rate-good { background: #064e3b; color: #6ee7b7; }
+  [data-theme="system"] .ci-rate-warn { background: #78350f; color: #fcd34d; }
+  [data-theme="system"] .ci-rate-bad  { background: #7f1d1d; color: #fca5a5; }
+}
+
+/* "View in Insights ↗" link in CI panel header */
+.ci-insights-link {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  opacity: 0.8;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.ci-insights-link:hover { opacity: 1; text-decoration: underline; }
+
+/* CI panel row stats divs */
+.ci-panel-rate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ci-panel-dur {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Responsive: hide stats on narrow viewports */
+@media (max-width: 600px) {
+  .ci-ov-stat,
+  .ci-panel-rate,
+  .ci-panel-dur { display: none; }
+}

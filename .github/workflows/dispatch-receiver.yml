@@ -8,7 +8,7 @@ on:
 jobs:
   trigger-integration-tests:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Log dispatch event details
       run: |
@@ -19,13 +19,13 @@ jobs:
         echo "Source workflow: ${{ github.event.client_payload.workflow }}"
         echo "Source run ID: ${{ github.event.client_payload.run_id }}"
         echo "Source run number: ${{ github.event.client_payload.run_number }}"
-    
+
     - name: Trigger python-tests-allure-report workflow
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         script: |
           const payload = context.payload.client_payload;
-          
+
           // Trigger the python-tests-allure-report workflow
           await github.rest.actions.createWorkflowDispatch({
             owner: context.repo.owner,
@@ -43,20 +43,46 @@ jobs:
               'triggered_by': 'repository_dispatch'
             }
           });
-          
+
           console.log('Successfully triggered python-tests-allure-report workflow');
-    
+
+    - name: Trigger python-tests-reportportal workflow
+      uses: actions/github-script@v9
+      with:
+        script: |
+          const payload = context.payload.client_payload;
+
+          // Trigger the python-tests-reportportal workflow
+          await github.rest.actions.createWorkflowDispatch({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            workflow_id: 'python-tests-reportportal.yml',
+            ref: 'main',
+            inputs: {
+              'source_repository': payload.repository || '',
+              'source_ref': payload.ref || '',
+              'source_sha': payload.sha || '',
+              'source_actor': payload.actor || '',
+              'source_workflow': payload.workflow || '',
+              'source_run_id': payload.run_id || '',
+              'source_run_number': payload.run_number || '',
+              'triggered_by': 'repository_dispatch'
+            }
+          });
+
+          console.log('Successfully triggered python-tests-reportportal workflow');
+
     - name: Notify source repository of workflow trigger
-      uses: actions/github-script@v6
+      uses: actions/github-script@v9
       with:
         github-token: ${{ secrets.TESTVIPER_DISPATCH_TOKEN }}
         script: |
           const payload = context.payload.client_payload;
-          
+
           // Post a status check back to the source repository
           if (payload && payload.repository && payload.sha) {
             const [owner, repo] = payload.repository.split('/');
-            
+
             await github.rest.repos.createCommitStatus({
               owner: owner,
               repo: repo,

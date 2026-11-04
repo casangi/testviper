@@ -26,24 +26,23 @@ import sys
 import textwrap
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import yaml
 from jinja2 import Environment
-
 
 # ---------------------------------------------------------------------------
 # Paths (relative to repo root)
 # ---------------------------------------------------------------------------
 
-SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT   = os.path.normpath(os.path.join(SCRIPT_DIR, ".."))
+SCRIPT_DIR = os.path.dirname(__file__)
+REPO_ROOT = os.path.normpath(os.path.join(SCRIPT_DIR, ".."))
 
-CONFIG_PATH   = os.path.join(REPO_ROOT, "ci", "config", "projects.yaml")
+CONFIG_PATH = os.path.join(REPO_ROOT, "ci", "config", "projects.yaml")
 TEMPLATE_PATH = os.path.join(REPO_ROOT, "ci", "templates", "base.html")
-CSS_PATH      = os.path.join(REPO_ROOT, "ci", "static", "style.css")
-JS_PATH       = os.path.join(REPO_ROOT, "ci", "static", "app.js")
-DEFAULT_OUT   = os.path.join(REPO_ROOT, "ci", "html", "dashboard.html")
+CSS_PATH = os.path.join(REPO_ROOT, "ci", "static", "style.css")
+JS_PATH = os.path.join(REPO_ROOT, "ci", "static", "app.js")
+DEFAULT_OUT = os.path.join(REPO_ROOT, "ci", "html", "dashboard.html")
 
 
 # ---------------------------------------------------------------------------
@@ -51,7 +50,12 @@ DEFAULT_OUT   = os.path.join(REPO_ROOT, "ci", "html", "dashboard.html")
 # ---------------------------------------------------------------------------
 
 API_BASE = "https://api.github.com"
-BRANCH   = "main"
+BRANCH = "main"
+
+# How many completed runs to fetch per workflow for statistics.
+STATS_SAMPLE = 20
+# Minimum completed runs required before emitting failure_rate / avg_duration.
+MIN_SAMPLE = 5
 
 
 def _gh_get(path: str, token: str) -> dict:
@@ -59,8 +63,8 @@ def _gh_get(path: str, token: str) -> dict:
     req = urllib.request.Request(
         url,
         headers={
-            "Accept":               "application/vnd.github+json",
-            "Authorization":        f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
             "X-GitHub-Api-Version": "2022-11-28",
         },
     )
@@ -69,9 +73,7 @@ def _gh_get(path: str, token: str) -> dict:
             return json.loads(resp.read().decode())
     except urllib.error.HTTPError as exc:
         if exc.code in (401, 403):
-            raise RuntimeError(
-                f"GitHub API error (HTTP {exc.code}) for {url}"
-            ) from exc
+            raise RuntimeError(f"GitHub API error (HTTP {exc.code}) for {url}") from exc
         print(f"  WARNING: HTTP {exc.code} for {url}", file=sys.stderr)
         return {}
     except Exception as exc:
@@ -79,25 +81,62 @@ def _gh_get(path: str, token: str) -> dict:
         return {}
 
 
+def _compute_stats(runs: list) -> tuple:
+    """Return (failure_rate, avg_duration) from a list of completed run objects."""
+    if len(runs) < MIN_SAMPLE:
+        return None, None
+    failures = sum(1 for r in runs if r.get("conclusion") == "failure")
+    failure_rate = round(failures / len(runs) * 100, 1)
+    durations = []
+    for r in runs:
+        try:
+            start = datetime.fromisoformat(r["run_started_at"].replace("Z", "+00:00"))
+            end = datetime.fromisoformat(r["updated_at"].replace("Z", "+00:00"))
+            s = (end - start).total_seconds()
+            if s > 0:
+                durations.append(s)
+        except (KeyError, ValueError):
+            pass
+    avg_duration = round(sum(durations) / len(durations)) if durations else None
+    return failure_rate, avg_duration
+
+
 def fetch_workflow_run(owner, repo, wf_file, branch, token):
+    """Fetch latest N completed runs for a workflow on a specific branch, with stats."""
     path = (
         f"/repos/{owner}/{repo}/actions/workflows/{wf_file}/runs"
-        f"?branch={branch}&per_page=1"
+        f"?branch={branch}&per_page={STATS_SAMPLE}&status=completed"
     )
     data = _gh_get(path, token)
     runs = data.get("workflow_runs", [])
-    return runs[0] if runs else None
+    if not runs:
+        return None
+    latest = runs[0]
+    failure_rate, avg_duration = _compute_stats(runs)
+    return {
+        **latest,
+        "failure_rate": failure_rate,
+        "avg_duration": avg_duration,
+    }
 
 
 def fetch_workflow_run_any_branch(owner, repo, wf_file, token):
-    """Fetch the latest run for a workflow on any branch (used by CI panels)."""
+    """Fetch latest N completed runs for a workflow on any branch, with stats."""
     path = (
         f"/repos/{owner}/{repo}/actions/workflows/{wf_file}/runs"
-        f"?per_page=1"
+        f"?per_page={STATS_SAMPLE}&status=completed"
     )
     data = _gh_get(path, token)
     runs = data.get("workflow_runs", [])
-    return runs[0] if runs else None
+    if not runs:
+        return None
+    latest = runs[0]
+    failure_rate, avg_duration = _compute_stats(runs)
+    return {
+        **latest,
+        "failure_rate": failure_rate,
+        "avg_duration": avg_duration,
+    }
 
 
 def fetch_recent_branches(owner, repo, token, max_branches=2):
@@ -119,15 +158,16 @@ def fetch_recent_branches(owner, repo, token, max_branches=2):
 # Config → JS generation
 # ---------------------------------------------------------------------------
 
+
 def yaml_categories_to_js(project: dict) -> list[dict]:
     """Convert a YAML project's categories to the JS PROJECTS format."""
     js_cats = []
     for cat in project.get("categories", []):
         js_cat: dict = {
-            "id":    cat["id"],
+            "id": cat["id"],
             "label": cat["label"],
-            "type":  cat["type"],
-            "url":   cat.get("url", ""),
+            "type": cat["type"],
+            "url": cat.get("url", ""),
         }
         if cat["type"] == "ci":
             js_cat["github"] = {"owner": project["owner"], "repo": project["repo"]}
@@ -143,30 +183,42 @@ def yaml_categories_to_js(project: dict) -> list[dict]:
 def generate_js_config(config: dict, prefetched_data) -> str:
     """Generate the JS config constants block from the YAML config."""
     dashboard = config.get("dashboard", {})
-    projects  = config.get("projects", [])
+    projects = config.get("projects", [])
 
     js_projects = []
     for p in projects:
-        js_projects.append({
-            "id":         p["id"],
-            "name":       p["name"],
-            "categories": yaml_categories_to_js(p),
-        })
+        js_projects.append(
+            {
+                "id": p["id"],
+                "name": p["name"],
+                "categories": yaml_categories_to_js(p),
+            }
+        )
 
     ci_overview = []
     for p in projects:
-        ci_overview.append({
-            "id":          p["id"],
-            "fixedBranch": p.get("fixed_branch", False),
-            "workflows":   p.get("overview_workflows", []),
-        })
+        ci_overview.append(
+            {
+                "id": p["id"],
+                "fixedBranch": p.get("fixed_branch", False),
+                "workflows": p.get("overview_workflows", []),
+            }
+        )
 
     lines = []
     lines.append(f"const PROJECTS = {json.dumps(js_projects, separators=(',', ':'))};")
-    lines.append(f"const LANDING_TITLE = {json.dumps(dashboard.get('title', 'Dashboard'))};")
-    lines.append(f"const LAUNCH_PANEL_TYPES = {json.dumps(config.get('launch_panel_types', []))};")
-    lines.append(f"const LAUNCH_PANEL_URLS = {json.dumps(config.get('launch_panel_urls', []))};")
-    lines.append(f"const DEFAULT_THEME = {json.dumps(dashboard.get('default_theme', 'light'))};")
+    lines.append(
+        f"const LANDING_TITLE = {json.dumps(dashboard.get('title', 'Dashboard'))};"
+    )
+    lines.append(
+        f"const LAUNCH_PANEL_TYPES = {json.dumps(config.get('launch_panel_types', []))};"
+    )
+    lines.append(
+        f"const LAUNCH_PANEL_URLS = {json.dumps(config.get('launch_panel_urls', []))};"
+    )
+    lines.append(
+        f"const DEFAULT_THEME = {json.dumps(dashboard.get('default_theme', 'light'))};"
+    )
     lines.append(f"const THEME_LABELS = {json.dumps(config.get('themes', {}))};")
 
     worker_url = dashboard.get("worker_url", "")
@@ -176,11 +228,15 @@ def generate_js_config(config: dict, prefetched_data) -> str:
     lines.append(f"const MAX_RECENT_BRANCHES = {json.dumps(max_branches)};")
 
     if prefetched_data is not None:
-        lines.append(f"const PREFETCHED_CI_DATA = {json.dumps(prefetched_data, separators=(',', ':'))};")
+        lines.append(
+            f"const PREFETCHED_CI_DATA = {json.dumps(prefetched_data, separators=(',', ':'))};"
+        )
     else:
         lines.append("const PREFETCHED_CI_DATA = null;")
 
-    lines.append(f"const CI_OVERVIEW_PROJECTS = {json.dumps(ci_overview, separators=(',', ':'))};")
+    lines.append(
+        f"const CI_OVERVIEW_PROJECTS = {json.dumps(ci_overview, separators=(',', ':'))};"
+    )
 
     return "\n".join(lines)
 
@@ -189,19 +245,20 @@ def generate_js_config(config: dict, prefetched_data) -> str:
 # Bake CI data (optional)
 # ---------------------------------------------------------------------------
 
+
 def bake_ci_data(config: dict, token: str) -> dict | None:
     """Fetch CI data for all projects and return the PREFETCHED_CI_DATA payload."""
     projects = config.get("projects", [])
     max_branches = config.get("dashboard", {}).get("max_recent_branches", 2)
     baked_projects: dict = {}
     total_calls = 0
-    failures    = 0
+    failures = 0
 
     try:
         for proj in projects:
-            pid   = proj["id"]
+            pid = proj["id"]
             owner = proj["owner"]
-            repo  = proj["repo"]
+            repo = proj["repo"]
             print(f"\n[{pid}]")
 
             proj_data: dict = {"workflows": {}}
@@ -213,19 +270,24 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
                 total_calls += 1
                 if run:
                     proj_data["workflows"][wf_file] = {
-                        "conclusion": run.get("conclusion") or run.get("status") or "unknown",
+                        "conclusion": run.get("conclusion")
+                        or run.get("status")
+                        or "unknown",
                         "updated_at": run.get("updated_at", ""),
+                        "failure_rate": run.get("failure_rate"),
+                        "avg_duration": run.get("avg_duration"),
                     }
-                    print(proj_data["workflows"][wf_file]["conclusion"])
+                    conclusion = proj_data["workflows"][wf_file]["conclusion"]
+                    rate = run.get("failure_rate")
+                    rate_str = f"{rate}% fail" if rate is not None else "n/a"
+                    print(f"{conclusion}  [{rate_str}]")
                 else:
                     failures += 1
                     print("no data")
 
             # Fetch CI panel workflows (latest run on any branch)
-            ci_cats = [c for c in proj.get("categories", [])
-                       if c.get("type") == "ci"]
-            panel_wfs = {wf["file"] for c in ci_cats
-                         for wf in c.get("workflows", [])}
+            ci_cats = [c for c in proj.get("categories", []) if c.get("type") == "ci"]
+            panel_wfs = {wf["file"] for c in ci_cats for wf in c.get("workflows", [])}
             # Exclude workflows already fetched for overview (avoid duplicate calls)
             overview_wfs = {wf["file"] for wf in proj.get("overview_workflows", [])}
             extra_panel_wfs = panel_wfs - overview_wfs
@@ -238,9 +300,13 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
                 total_calls += 1
                 if run:
                     panel_data[wf_file] = {
-                        "conclusion":  run.get("conclusion") or run.get("status") or "unknown",
-                        "updated_at":  run.get("updated_at", ""),
+                        "conclusion": run.get("conclusion")
+                        or run.get("status")
+                        or "unknown",
+                        "updated_at": run.get("updated_at", ""),
                         "head_branch": run.get("head_branch", ""),
+                        "failure_rate": run.get("failure_rate"),
+                        "avg_duration": run.get("avg_duration"),
                     }
                     print(panel_data[wf_file]["conclusion"])
                 else:
@@ -253,9 +319,13 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
                 total_calls += 1
                 if run:
                     panel_data[wf_file] = {
-                        "conclusion":  run.get("conclusion") or run.get("status") or "unknown",
-                        "updated_at":  run.get("updated_at", ""),
+                        "conclusion": run.get("conclusion")
+                        or run.get("status")
+                        or "unknown",
+                        "updated_at": run.get("updated_at", ""),
                         "head_branch": run.get("head_branch", ""),
+                        "failure_rate": run.get("failure_rate"),
+                        "avg_duration": run.get("avg_duration"),
                     }
                     print(panel_data[wf_file]["conclusion"])
                 else:
@@ -281,13 +351,16 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
     print(f"\nTotal API calls attempted: {total_calls}")
 
     payload = {
-        "baked_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "baked_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "stats_sample": STATS_SAMPLE,
         "projects": baked_projects,
     }
 
     if failures:
-        print(f"\nWARNING: {failures} fetch(es) failed — baked data may be incomplete.",
-              file=sys.stderr)
+        print(
+            f"\nWARNING: {failures} fetch(es) failed — baked data may be incomplete.",
+            file=sys.stderr,
+        )
 
     return payload
 
@@ -295,6 +368,7 @@ def bake_ci_data(config: dict, token: str) -> dict | None:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     # ── Load config ────────────────────────────────────────────────────

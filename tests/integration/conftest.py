@@ -8,6 +8,10 @@ per-domain conftest.py (e.g. imaging/conftest.py).
 
 import pytest
 from prefect.testing.utilities import prefect_test_harness
+from toolviper.utils.data import download  # noqa: F401  (import smoke check)
+from xradio.measurement_set import (
+    convert_msv2_to_processing_set,  # noqa: F401  (import smoke check)
+)
 
 
 @pytest.fixture(autouse=True, scope="session")

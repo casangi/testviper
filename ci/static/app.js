@@ -162,6 +162,47 @@ function fetchWorkflowRow(owner, repo, file, branch, dotEl, statusEl, branchEl, 
     });
 }
 
+function fetchWorkflowRowWithStats(owner, repo, file, branch, dotEl, statusEl, branchEl, timeEl, ratePill, durTd) {
+  branchEl.textContent     = branch;
+  dotEl.style.background   = 'var(--border)';
+  statusEl.textContent     = 'Fetching\u2026';
+  statusEl.style.color     = '';
+  timeEl.textContent       = '';
+
+  fetch(
+    ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${file}/runs` +
+    `?branch=${encodeURIComponent(branch)}&per_page=20&status=completed`),
+    { headers: { 'Accept': 'application/vnd.github+json' } }
+  )
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data => {
+      const runs = data.workflow_runs || [];
+      const run  = runs[0];
+      if (run) {
+        const [color, label] = CI_CONCLUSION_MAP[run.conclusion]
+          || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
+        dotEl.style.background = color;
+        statusEl.textContent   = label;
+        statusEl.style.color   = color;
+        timeEl.textContent     = relTime(new Date(run.updated_at));
+        const { failure_rate, avg_duration } = computeStats(runs);
+        ratePill.className   = 'ci-rate-pill ' + failureRateClass(failure_rate);
+        ratePill.textContent = failure_rate !== null ? failure_rate.toFixed(1) + '%' : '\u2014';
+        durTd.textContent    = fmtDuration(avg_duration);
+      } else {
+        statusEl.textContent = 'no runs found';
+        ratePill.textContent = '\u2014';
+        durTd.textContent    = '\u2014';
+      }
+    })
+    .catch(err => {
+      dotEl.style.background = 'var(--border)';
+      statusEl.textContent   = 'unavailable (' + err.message + ')';
+      ratePill.textContent   = '\u2014';
+      durTd.textContent      = '\u2014';
+    });
+}
+
 function refreshProjectRows(tbody, owner, repo, projId, workflows, branch) {
   workflows.forEach(wf => {
     const row = tbody.querySelector(`tr[data-proj="${projId}"][data-wf="${wf.file}"]`);
@@ -170,7 +211,11 @@ function refreshProjectRows(tbody, owner, repo, projId, workflows, branch) {
     const statusEl = row.querySelector('.ci-ov-status');
     const branchEl = row.querySelector('.ci-ov-branch');
     const timeEl   = row.querySelector('.ci-ov-time');
-    fetchWorkflowRow(owner, repo, wf.file, branch, dotEl, statusEl, branchEl, timeEl);
+    const ratePill = row.querySelector('.ci-rate-pill');
+    const durTd    = row.querySelector('.ci-ov-dur');
+    if (ratePill) { ratePill.className = 'ci-rate-pill ci-rate-none'; ratePill.textContent = '\u2014'; }
+    if (durTd)    { durTd.textContent = '\u2014'; }
+    fetchWorkflowRowWithStats(owner, repo, wf.file, branch, dotEl, statusEl, branchEl, timeEl, ratePill, durTd);
   });
 }
 
@@ -214,6 +259,7 @@ function buildCIOverview(forceLive) {
   const table = document.createElement('table');
   table.className = 'ci-ov-table';
 
+  const sampleSize = (PREFETCHED_CI_DATA && PREFETCHED_CI_DATA.stats_sample) || 20;
   const thead = document.createElement('thead');
   thead.innerHTML =
     `<tr>` +
@@ -222,6 +268,8 @@ function buildCIOverview(forceLive) {
     `<th style="width:100px">Branch</th>` +
     `<th style="width:96px">Status</th>` +
     `<th style="width:108px">Last Run</th>` +
+    `<th class="ci-ov-stat" style="width:110px" title="Failure rate over the last ${sampleSize} completed runs (min. 5 runs required)">Fail rate (last ${sampleSize})</th>` +
+    `<th class="ci-ov-stat" style="width:90px">Avg duration</th>` +
     `</tr>`;
   table.appendChild(thead);
 
@@ -344,11 +392,21 @@ function buildCIOverview(forceLive) {
       timeSpan.className = 'ci-ov-time';
       timeTd.appendChild(timeSpan);
 
+      const rateTd  = document.createElement('td');
+      rateTd.className = 'ci-ov-stat';
+      const ratePill = document.createElement('span');
+      rateTd.appendChild(ratePill);
+
+      const durTd = document.createElement('td');
+      durTd.className = 'ci-ov-stat ci-ov-dur';
+
       row.appendChild(dotTd);
       row.appendChild(labelTd);
       row.appendChild(branchTd);
       row.appendChild(statusTd);
       row.appendChild(timeTd);
+      row.appendChild(rateTd);
+      row.appendChild(durTd);
       tbody.appendChild(row);
 
       const wfBaked = projBaked ? (projBaked.workflows || {})[wf.file] : null;
@@ -360,9 +418,16 @@ function buildCIOverview(forceLive) {
         statusSpan.style.color = color;
         branchSpan.textContent = 'main';
         timeSpan.textContent   = relTime(new Date(wfBaked.updated_at));
+        ratePill.className     = 'ci-rate-pill ' + failureRateClass(wfBaked.failure_rate);
+        ratePill.textContent   = wfBaked.failure_rate !== null && wfBaked.failure_rate !== undefined
+          ? wfBaked.failure_rate.toFixed(1) + '%' : '\u2014';
+        durTd.textContent      = fmtDuration(wfBaked.avg_duration);
       } else {
         statusSpan.textContent = 'Fetching\u2026';
-        fetchWorkflowRow(owner, repo, wf.file, 'main', dot, statusSpan, branchSpan, timeSpan);
+        ratePill.className     = 'ci-rate-pill ci-rate-none';
+        ratePill.textContent   = '\u2014';
+        durTd.textContent      = '\u2014';
+        fetchWorkflowRowWithStats(owner, repo, wf.file, 'main', dot, statusSpan, branchSpan, timeSpan, ratePill, durTd);
       }
     });
   });
@@ -699,6 +764,40 @@ function relTime(date) {
   return Math.floor(s / 86400) + 'd ago';
 }
 
+function fmtDuration(seconds) {
+  if (seconds === null || seconds === undefined) return '\u2014';
+  const s = Math.round(seconds);
+  if (s < 60)   return s + 's';
+  if (s < 3600) { const m = Math.floor(s/60), r = s%60; return r ? `${m}m ${r}s` : `${m}m`; }
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+  return m ? `${h}h ${String(m).padStart(2,'0')}m` : `${h}h`;
+}
+
+function failureRateClass(rate) {
+  if (rate === null || rate === undefined) return 'ci-rate-none';
+  if (rate < 5)   return 'ci-rate-good';
+  if (rate <= 20) return 'ci-rate-warn';
+  return 'ci-rate-bad';
+}
+
+function computeStats(runs) {
+  const MIN_SAMPLE = 5;
+  if (!runs || runs.length < MIN_SAMPLE) return { failure_rate: null, avg_duration: null };
+  const failures = runs.filter(r => r.conclusion === 'failure').length;
+  const failure_rate = Math.round(failures / runs.length * 1000) / 10;
+  const durations = runs.reduce((acc, r) => {
+    if (r.run_started_at && r.updated_at) {
+      const s = (new Date(r.updated_at) - new Date(r.run_started_at)) / 1000;
+      if (s > 0) acc.push(s);
+    }
+    return acc;
+  }, []);
+  const avg_duration = durations.length
+    ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+    : null;
+  return { failure_rate, avg_duration };
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    IFRAME LOADER
 ══════════════════════════════════════════════════════════════════════════ */
@@ -771,14 +870,28 @@ function showCIPanel(cat, projId) {
   nameEl.textContent = owner + ' / ' + repo;
   openEl.href        = `https://github.com/${owner}/${repo}/actions`;
 
+  // Add "View in Insights ↗" link alongside the existing open link
+  const existingInsights = document.getElementById('ci-insights-link');
+  if (existingInsights) existingInsights.remove();
+  const insightsLink = document.createElement('a');
+  insightsLink.id        = 'ci-insights-link';
+  insightsLink.className = 'ci-insights-link';
+  insightsLink.href      = `https://github.com/${owner}/${repo}/actions/metrics/performance`;
+  insightsLink.target    = '_blank';
+  insightsLink.rel       = 'noopener noreferrer';
+  insightsLink.textContent = 'View in Insights \u2197';
+  document.getElementById('ci-actions-row').prepend(insightsLink);
+
   rowsEl.innerHTML =
     `<div class="ci-row">
        <div class="ci-dot"></div>
        <div class="ci-label shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-panel-rate"><span class="ci-rate-pill ci-rate-none shimmer">&nbsp;</span></div>
        <div class="ci-panel-push" aria-hidden="true"></div>
        <div class="ci-branch shimmer" style="min-height:13px">&nbsp;</div>
        <div class="ci-status shimmer" style="min-height:13px">&nbsp;</div>
        <div class="ci-time shimmer" style="min-height:13px">&nbsp;</div>
+       <div class="ci-panel-dur shimmer" style="min-height:13px">&nbsp;</div>
      </div>`;
 
   const workflows = cat.workflows || [];
@@ -799,16 +912,20 @@ function showCIPanel(cat, projId) {
     row.innerHTML =
       `<div class="ci-dot"></div>
        <div class="ci-label">${wf.label}</div>
+       <div class="ci-panel-rate"><span class="ci-rate-pill ci-rate-none">\u2014</span></div>
        <div class="ci-panel-push" aria-hidden="true"></div>
        <div class="ci-branch">\u2014</div>
        <div class="ci-status">Fetching&#8230;</div>
-       <div class="ci-time"></div>`;
+       <div class="ci-time"></div>
+       <div class="ci-panel-dur">\u2014</div>`;
     rowsEl.appendChild(row);
 
-    const dot    = row.querySelector('.ci-dot');
-    const branch = row.querySelector('.ci-branch');
-    const status = row.querySelector('.ci-status');
-    const time   = row.querySelector('.ci-time');
+    const dot      = row.querySelector('.ci-dot');
+    const branch   = row.querySelector('.ci-branch');
+    const status   = row.querySelector('.ci-status');
+    const time     = row.querySelector('.ci-time');
+    const ratePill = row.querySelector('.ci-rate-pill');
+    const durDiv   = row.querySelector('.ci-panel-dur');
 
     const baked = panelBaked && panelBaked[wf.file];
     if (baked) {
@@ -819,16 +936,21 @@ function showCIPanel(cat, projId) {
       status.textContent   = label;
       status.style.color   = color;
       time.textContent     = relTime(new Date(baked.updated_at));
+      ratePill.className   = 'ci-rate-pill ' + failureRateClass(baked.failure_rate);
+      ratePill.textContent = baked.failure_rate !== null && baked.failure_rate !== undefined
+        ? baked.failure_rate.toFixed(1) + '%' : '\u2014';
+      durDiv.textContent   = fmtDuration(baked.avg_duration);
       return;
     }
 
     fetch(
-      ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${wf.file}/runs?per_page=1`),
+      ghApiUrl(`/repos/${owner}/${repo}/actions/workflows/${wf.file}/runs?per_page=20&status=completed`),
       { headers: { 'Accept': 'application/vnd.github+json' } }
     )
       .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(data => {
-        const run = (data.workflow_runs || [])[0];
+        const runs = data.workflow_runs || [];
+        const run  = runs[0];
         if (run) {
           const [color, label] = CI_CONCLUSION_MAP[run.conclusion]
             || ['#7a8ba8', run.conclusion || run.status || 'unknown'];
@@ -837,6 +959,10 @@ function showCIPanel(cat, projId) {
           status.textContent   = label;
           status.style.color   = color;
           time.textContent     = relTime(new Date(run.updated_at));
+          const { failure_rate, avg_duration } = computeStats(runs);
+          ratePill.className   = 'ci-rate-pill ' + failureRateClass(failure_rate);
+          ratePill.textContent = failure_rate !== null ? failure_rate.toFixed(1) + '%' : '\u2014';
+          durDiv.textContent   = fmtDuration(avg_duration);
         } else {
           branch.textContent = '\u2014';
           status.textContent = 'no runs found';

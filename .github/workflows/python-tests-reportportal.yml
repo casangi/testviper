@@ -1,0 +1,135 @@
+---
+name: Integration Tests with ReportPortal
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
+  workflow_dispatch:
+    inputs:
+      source_repository:
+        description: 'Source repository that triggered the dispatch'
+        required: false
+        type: string
+      source_ref:
+        description: 'Source branch/ref that triggered the dispatch'
+        required: false
+        type: string
+      source_sha:
+        description: 'Source commit SHA that triggered the dispatch'
+        required: false
+        type: string
+      source_actor:
+        description: 'Source actor that triggered the dispatch'
+        required: false
+        type: string
+      source_workflow:
+        description: 'Source workflow that triggered the dispatch'
+        required: false
+        type: string
+      source_run_id:
+        description: 'Source run ID that triggered the dispatch'
+        required: false
+        type: string
+      source_run_number:
+        description: 'Source run number that triggered the dispatch'
+        required: false
+        type: string
+      triggered_by:
+        description: 'How this workflow was triggered'
+        required: false
+        type: string
+
+jobs:
+  integration-tests-reportportal:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Log dispatch information
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        echo "Workflow triggered by repository dispatch"
+        echo "Source repository: ${{ github.event.inputs.source_repository }}"
+        echo "Source ref: ${{ github.event.inputs.source_ref }}"
+        echo "Source SHA: ${{ github.event.inputs.source_sha }}"
+        echo "Source actor: ${{ github.event.inputs.source_actor }}"
+        echo "Source workflow: ${{ github.event.inputs.source_workflow }}"
+        echo "Source run ID: ${{ github.event.inputs.source_run_id }}"
+        echo "Source run number: ${{ github.event.inputs.source_run_number }}"
+        echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
+
+    - name: Checkout repository
+      uses: actions/checkout@v7
+
+    - name: Install GCC 14
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y "gcc-14" "g++-14"
+        # Make the requested compiler the one CMake/scikit-build-core picks up
+        # for the pip build below (env persists to later steps via GITHUB_ENV).
+        echo "CC=gcc-14" >> "$GITHUB_ENV"
+        echo "CXX=g++-14" >> "$GITHUB_ENV"
+        "g++-14" --version
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.13'
+
+    - name: Install testviper dependencies
+      run: |
+        pwd
+        make build-testviper
+
+    - name: Clone and install component repositories
+      run: |
+        make build-main
+        ls -l external/
+
+    - name: Run tests and publish to ReportPortal
+      run: python scripts/run_tests_reportportal.py
+      env:
+        RP_API_KEY: ${{ secrets.REPORTPORTAL_API_KEY }}
+        AGENT_NO_ANALYTICS: True
+        TV_SOURCE_REPO: ${{ github.event.inputs.source_repository }}
+        TV_SOURCE_REF: ${{ github.event.inputs.source_ref }}
+        TV_SOURCE_SHA: ${{ github.event.inputs.source_sha }}
+        TV_SOURCE_ACTOR: ${{ github.event.inputs.source_actor }}
+        TV_SOURCE_WORKFLOW: ${{ github.event.inputs.source_workflow }}
+        TV_SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id }}
+        TV_SOURCE_RUN_NUMBER: ${{ github.event.inputs.source_run_number }}
+        TV_TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
+
+    # - name: Repository Dispatch to benchviper
+    #   uses: actions/github-script@v9
+    #   with:
+    #     github-token: ${{ secrets.TESTVIPER_DISPATCH_TOKEN }}
+    #     script: |
+    #       const payload = {
+    #         event_type: 'benchmark-test-trigger',
+    #         client_payload: {
+    #           repository: '${{ github.repository }}',
+    #           ref: '${{ github.ref }}',
+    #           sha: '${{ github.sha }}',
+    #           actor: '${{ github.actor }}',
+    #           workflow: '${{ github.workflow }}',
+    #           run_id: '${{ github.run_id }}',
+    #           run_number: '${{ github.run_number }}',
+    #           component: '${{ github.event.inputs.source_repository }}'
+
+    #         }
+    #       };
+
+    #       // Send repository dispatch to target repository
+    #       await github.rest.repos.createDispatchEvent({
+    #         owner: 'casangi',
+    #         repo: 'benchviper',
+    #         event_type: payload.event_type,
+    #         client_payload: payload.client_payload
+    #       });
+
+    #       // Note: repository_dispatch is repository-wide and not branch-specific.
+
+    #       console.log('Repository dispatch sent successfully to benchviper');

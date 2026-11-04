@@ -5,7 +5,7 @@ This document outlines the steps performed by the GitHub Actions workflow for in
 ## Workflow Overview
 
 A repository dispatch is implemented in TestVIPER to trigger the execution of integration tests everytime there is
-a merge to the main branch of any of the VIPER components: ToolVIPER, XRADIO, GraphVIPER and AstroVIPER. 
+a merge to the main branch of any of the VIPER components: ToolVIPER, XRADIO, GraphVIPER and AstroVIPER.
 
 The dispatch sender is implemented for all components in `toolviper/.github/workflows/python-testing-integration.yml`, which will send a dispatch on the event of a merge to main in one of the components, conditionally that the workflow with tests runs successfully in the component repository.
 
@@ -18,13 +18,13 @@ A new version of the Allure Reports will be created in the gh-pages branch and d
 ### Main Steps
 
 1. **Listen for Dispatch Events**
-   - Uses: `actions/github-script@v6` from `.github/workflows/dispatch-receiver.yml` to trigger the execution of tests.
+   - Uses: `actions/github-script@v9` from `.github/workflows/dispatch-receiver.yml` to trigger the execution of tests.
 
 1. **Checkout Repository**
    - Uses `actions/checkout` to clone the main repository.
 
 2. **Set Up Python**
-   - Installs Python 3.12 using `actions/setup-python`.
+   - Installs Python 3.13 using `actions/setup-python`.
 
 3. **Install Dependencies**
    - Runs `make build-testviper` to install dependencies for the main project.
@@ -93,4 +93,4 @@ installing base.txt from the requirements.
 ## Notes
 - Allure trend charts require that each component's history is preserved and restored individually.
 - The workflow ensures that history is copied for each component before report generation, and saved after.
-- The summary dashboard provides links to individual reports and coverage information. 
+- The summary dashboard provides links to individual reports and coverage information.

@@ -45,7 +45,7 @@ on:
 jobs:
   integration-tests:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Log dispatch information
       if: github.event_name == 'workflow_dispatch'
@@ -59,20 +59,30 @@ jobs:
         echo "Source run ID: ${{ github.event.inputs.source_run_id }}"
         echo "Source run number: ${{ github.event.inputs.source_run_number }}"
         echo "Triggered by: ${{ github.event.inputs.triggered_by }}"
-    
+
     - name: Checkout repository
-      uses: actions/checkout@v4
-      
+      uses: actions/checkout@v7
+
+    - name: Install GCC 14
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y "gcc-14" "g++-14"
+        # Make the requested compiler the one CMake/scikit-build-core picks up
+        # for the pip build below (env persists to later steps via GITHUB_ENV).
+        echo "CC=gcc-14" >> "$GITHUB_ENV"
+        echo "CXX=g++-14" >> "$GITHUB_ENV"
+        "g++-14" --version
+
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.13'
-        
+
     - name: Install testviper dependencies
       run: |
         pwd
         make build-testviper
-        
+
     - name: Clone and install component repositories
       run: |
         make build-main
@@ -89,15 +99,15 @@ jobs:
         #wget -qO- https://github.com/allure-framework/allure2/releases/download/2.24.1/allure-2.24.1.tgz | tar -xz
         #sudo mv allure-2.24.1 /opt/allure
         #sudo ln -s /opt/allure/bin/allure /usr/local/bin/allure
-        
+
     - name: Checkout gh-pages for history
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       if: always()
       continue-on-error: true
       with:
         ref: gh-pages
         path: gh-pages
-        
+
     - name: Copy Allure history for each component
       if: always()
       continue-on-error: true
@@ -130,30 +140,30 @@ jobs:
           echo "Unknown Allure version: $ALLURE_VERSION"
           exit 1
         fi
-      
+
     # - name: Run tests and generate coverage
     #   run: |
     #     python scripts/test_runner_with_coverage.py
-      
+
     - name: Run tests and generate Allure reports with history
       run: python scripts/enhanced_report_generator.py
-      
+
     # - name: Generate enhanced summary report with CodeCov links
     #   run: python scripts/enhanced_summary_generator.py
-      
+
     - name: Upload Allure Reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       if: always()
       with:
         name: allure-reports
         path: allure-report/
         retention-days: 30
-        
+
     - name: Generate Test Summary
       uses: test-summary/action@v2
       with:
         paths: "/home/runner/work/testviper/testviper/tests/**/*-pytest-report.xml"
-        
+
     - name: Deploy history to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       if: always()
@@ -164,7 +174,7 @@ jobs:
         destination_dir: main
         keep_files: true
         force_orphan: false
-        
+
     - name: Deploy report to gh-pages
       uses: peaceiris/actions-gh-pages@v4
       if: always()
@@ -186,3 +196,35 @@ jobs:
           fi
         done < "$FILE"
         echo "All Component subprocesses returned zero exit code."
+
+    - name: Repository Dispatch to benchviper
+      uses: actions/github-script@v9
+      with:
+        github-token: ${{ secrets.TESTVIPER_DISPATCH_TOKEN }}
+        script: |
+          const payload = {
+            event_type: 'benchmark-test-trigger',
+            client_payload: {
+              repository: '${{ github.repository }}',
+              ref: '${{ github.ref }}',
+              sha: '${{ github.sha }}',
+              actor: '${{ github.actor }}',
+              workflow: '${{ github.workflow }}',
+              run_id: '${{ github.run_id }}',
+              run_number: '${{ github.run_number }}',
+              component: '${{ github.event.inputs.source_repository }}'
+
+            }
+          };
+
+          // Send repository dispatch to target repository
+          await github.rest.repos.createDispatchEvent({
+            owner: 'casangi',
+            repo: 'benchviper',
+            event_type: payload.event_type,
+            client_payload: payload.client_payload
+          });
+
+          // Note: repository_dispatch is repository-wide and not branch-specific.
+
+          console.log('Repository dispatch sent successfully to benchviper');
