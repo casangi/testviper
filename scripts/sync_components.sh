@@ -6,6 +6,7 @@ set -euo pipefail
 #   scripts/sync_components.sh                       # all at main
 #   scripts/sync_components.sh --all feature/foo     # set same ref for all
 #   scripts/sync_components.sh --xradio dev --graphviper v0.3.1 --astroviper abcd123
+#   scripts/sync_components.sh --flowviper main
 #   scripts/sync_components.sh --comp-dir external   # specify clone directory
 #
 # Supported flags:
@@ -14,6 +15,7 @@ set -euo pipefail
 #   --graphviper <ref>
 #   --astroviper <ref>
 #   --toolviper <ref>
+#   --flowviper <ref>
 #   --comp-dir <path>            # default: external
 
 BASE_URL="https://github.com/casangi"
@@ -24,6 +26,7 @@ XRADIO_REF=""
 GRAPHVIPER_REF=""
 ASTROVIPER_REF=""
 TOOLVIPER_REF=""
+FLOWVIPER_REF=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,10 +40,12 @@ while [[ $# -gt 0 ]]; do
       ASTROVIPER_REF="$2"; shift 2 ;;
     --toolviper)
       TOOLVIPER_REF="$2"; shift 2 ;;
+    --flowviper)
+      FLOWVIPER_REF="$2"; shift 2 ;;
     --comp-dir)
       COMP_DIR="$2"; shift 2 ;;
     --help|-h)
-      echo "Usage: $0 [--comp-dir DIR] [--all REF] [--xradio REF] [--graphviper REF] [--astroviper REF] [--toolviper REF]"; exit 0 ;;
+      echo "Usage: $0 [--comp-dir DIR] [--all REF] [--xradio REF] [--graphviper REF] [--astroviper REF] [--toolviper REF] [--flowviper REF]"; exit 0 ;;
     *)
       echo "Unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -86,3 +91,4 @@ sync_repo xradio      "$XRADIO_REF"
 sync_repo graphviper  "$GRAPHVIPER_REF"
 sync_repo astroviper  "$ASTROVIPER_REF"
 sync_repo toolviper   "$TOOLVIPER_REF"
+sync_repo flowviper   "$FLOWVIPER_REF"

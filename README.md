@@ -27,7 +27,7 @@ This repository runs integration and component tests against VIPER components in
 
 ### What gets installed
 - Components (editable) from local clones under `external/`:
-  - `external/xradio`, `external/graphviper`, `external/astroviper`, `external/toolviper`
+  - `external/xradio`, `external/graphviper`, `external/astroviper`, `external/toolviper`, `external/flowviper`
 - TestVIPER dependencies from `requirements/base.txt`
 
 Components are synced by `scripts/sync_components.sh` and installed via `requirements/main.txt` using editable local paths (PEP 508–compliant).
