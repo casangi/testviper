@@ -1,5 +1,6 @@
 import os
 import pickle
+import shutil
 
 import numpy as np
 import pytest
@@ -7,7 +8,6 @@ import xarray as xr
 from astroviper.processing_functions.imaging.utils.imaging_dict import (
     imaging_dict_to_dataframe,
 )
-from toolviper.utils.data import download
 from xradio.measurement_set import open_processing_set
 
 from flowviper.prefect_workflow.single_field_cube_imaging_example import (
@@ -54,11 +54,11 @@ E2E_CASES = [
     pytest.param({"gain": 0.05, "max_iter": 300}, id="low-gain-deep-clean"),
     pytest.param({"max_iter": 20, "max_iter_per_cycle": 5}, id="short-minor-cycles"),
     pytest.param({"threshold": 0.2, "max_iter": 1000}, id="threshold-stop"),
-    pytest.param({"image_size": (128, 128), "cell_arcsec": 0.26}, id="small-coarse-cell"),
-    pytest.param({"image_size": (300, 200)}, id="rectangular-image"),
     pytest.param(
-        {"create_plots": True, "plot_frequency_index": 0}, id="create-plots"
+        {"image_size": (128, 128), "cell_arcsec": 0.26}, id="small-coarse-cell"
     ),
+    pytest.param({"image_size": (300, 200)}, id="rectangular-image"),
+    pytest.param({"create_plots": True, "plot_frequency_index": 0}, id="create-plots"),
     pytest.param(
         {"max_iter": 0, "max_cycles": 0},
         id="dirty-image-only",
@@ -76,19 +76,33 @@ E2E_CASES = [
 
 
 @pytest.fixture(scope="session")
-def twhya_processing_set():
-    """Download the TW Hya 5-channel processing set once and return its channel count."""
-    download(file=DEFAULT_PS_STORE)
-    ps_xdt = open_processing_set(DEFAULT_PS_STORE, scan_intents=DEFAULT_SCAN_INTENTS)
-    return len(ps_xdt.xr_ps.get_freq_axis())
+def twhya_processing_set(tmp_path_factory, stage_processing_set):
+    """Download the TW Hya set into a temp dir and delete it after the session.
+
+    Returns ``(ps_store, n_channels)``. A store already in the working
+    directory is removed first.
+    """
+    data_dir = tmp_path_factory.mktemp("twhya_data")
+    ps_store = stage_processing_set(data_dir, DEFAULT_PS_STORE)
+    ps_xdt = open_processing_set(ps_store, scan_intents=DEFAULT_SCAN_INTENTS)
+    n_channels = len(ps_xdt.xr_ps.get_freq_axis())
+    yield ps_store, n_channels
+    shutil.rmtree(data_dir, ignore_errors=True)
 
 
-def _run_imaging(tmp_path, name, **overrides):
+@pytest.fixture(autouse=True)
+def cleanup_test_outputs(tmp_path):
+    """Remove this test's image stores when the test finishes."""
+    yield
+    shutil.rmtree(tmp_path, ignore_errors=True)
+
+
+def _run_imaging(tmp_path, name, ps_store, **overrides):
     """Run the flow into a pytest temp directory and return the store path, params, and result."""
     params = {**BASE_PARAMS, **overrides}
     image_name = str(tmp_path / f"{name}.img.zarr")
     result = single_field_cube_imaging_flow(
-        ps_store=DEFAULT_PS_STORE,
+        ps_store=ps_store,
         image_name=image_name,
         scan_intents=list(DEFAULT_SCAN_INTENTS),
         dask_cores=2,
@@ -160,26 +174,22 @@ def _assert_deconvolution(
 
     cleaned = planes[planes["iter_total"] > 0]
     assert not cleaned.empty, "No plane was deconvolved"
-    assert (
-        cleaned["peakres_final"].abs() < cleaned["peakres_start"].abs()
-    ).all(), "CLEAN did not reduce the peak residual"
+    assert (cleaned["peakres_final"].abs() < cleaned["peakres_start"].abs()).all(), (
+        "CLEAN did not reduce the peak residual"
+    )
     assert np.abs(img_xds.SKY_MODEL.values).max() > 0.0
 
     if params["threshold"] > 0.0:
         stopped_early = planes[planes["iter_total"] < max_iter]
         assert not stopped_early.empty, "No plane stopped on the threshold"
-        assert (
-            stopped_early["peakres_final"].abs() <= params["threshold"] * 1.1
-        ).all()
+        assert (stopped_early["peakres_final"].abs() <= params["threshold"] * 1.1).all()
 
 
 @pytest.mark.timeout(1800)
 @pytest.mark.parametrize("overrides", E2E_CASES)
-def test_single_field_cube_imaging_flow_e2e(
-    twhya_processing_set, tmp_path, overrides
-):
-    n_channels = twhya_processing_set
-    image_name, params, result = _run_imaging(tmp_path, "cube", **overrides)
+def test_single_field_cube_imaging_flow_e2e(twhya_processing_set, tmp_path, overrides):
+    ps_store, n_channels = twhya_processing_set
+    image_name, params, result = _run_imaging(tmp_path, "cube", ps_store, **overrides)
 
     assert {
         "deconvolution",
@@ -195,7 +205,7 @@ def test_single_field_cube_imaging_flow_e2e(
 def test_natural_weighting_gives_wider_beam_than_uniform(
     twhya_processing_set, tmp_path
 ):
-    del twhya_processing_set
+    ps_store, _ = twhya_processing_set
 
     beams = {}
     for name, weighting, robust in (
@@ -203,7 +213,12 @@ def test_natural_weighting_gives_wider_beam_than_uniform(
         ("uniform", "briggs", -2.0),
     ):
         image_name, _, _ = _run_imaging(
-            tmp_path, name, weighting=weighting, robust=robust, max_iter=10
+            tmp_path,
+            name,
+            ps_store,
+            weighting=weighting,
+            robust=robust,
+            max_iter=10,
         )
         beam = xr.open_zarr(image_name).BEAM_FIT_PARAMS_POINT_SPREAD_FUNCTION
         beams[weighting] = beam.isel(time=0, polarization=0)
@@ -226,9 +241,9 @@ def test_natural_weighting_gives_wider_beam_than_uniform(
 def test_unsupported_stokes_selection_fails(
     twhya_processing_set, tmp_path, polarization_coords, match
 ):
-    del twhya_processing_set
+    ps_store, _ = twhya_processing_set
 
     with pytest.raises(ValueError, match=match):
         _run_imaging(
-            tmp_path, "cube", polarization_coords=polarization_coords
+            tmp_path, "cube", ps_store, polarization_coords=polarization_coords
         )

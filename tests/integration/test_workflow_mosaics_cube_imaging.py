@@ -5,7 +5,6 @@ import shutil
 import numpy as np
 import pytest
 import xarray as xr
-from toolviper.utils.data import download
 
 from flowviper.prefect_workflow.mosaics_cube_imaging import (
     DEFAULT_IMAGE_DATA_VARIABLES_KEEP,
@@ -16,15 +15,20 @@ from flowviper.prefect_workflow.mosaics_cube_imaging import (
 
 
 @pytest.fixture(scope="session")
-def antennae_processing_set():
-    """Download the Antennae North processing set once per test session."""
-    download(file=DEFAULT_PS_STORE)
+def antennae_processing_set(tmp_path_factory, stage_processing_set):
+    """Download the Antennae set into a temp dir and delete it afterwards."""
+    data_dir = tmp_path_factory.mktemp("antennae_data")
+    ps_store = stage_processing_set(data_dir, DEFAULT_PS_STORE)
+    yield ps_store
+    shutil.rmtree(data_dir, ignore_errors=True)
 
 
 @pytest.fixture(scope="session")
 def tmp_work_dir(tmp_path_factory):
-    """Shared writable directory for E2E imaging outputs."""
-    return tmp_path_factory.mktemp("mosaics_work")
+    """Shared writable directory for E2E imaging outputs, removed after the session."""
+    work = tmp_path_factory.mktemp("mosaics_work")
+    yield work
+    shutil.rmtree(work, ignore_errors=True)
 
 
 E2E_CASES = [
@@ -118,8 +122,6 @@ def test_mosaics_cube_imaging_flow_e2e(
     create_plots,
     request,
 ):
-    del antennae_processing_set
-
     case_id = request.node.callspec.id
     image_name = str(tmp_work_dir / f"cube_{case_id}.img.zarr")
     results_path = image_name + "_imaging_results.pkl"
@@ -133,7 +135,7 @@ def test_mosaics_cube_imaging_flow_e2e(
     request.addfinalizer(cleanup_outputs)
 
     mosaics_cube_imaging_flow(
-        ps_store=DEFAULT_PS_STORE,
+        ps_store=antennae_processing_set,
         image_name=image_name,
         scan_intents=list(DEFAULT_SCAN_INTENTS),
         image_size=image_size,
