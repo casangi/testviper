@@ -7,6 +7,11 @@ on:
     paths-ignore:
       - '**.md'
       - '**.rst'
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - '**.md'
+      - '**.rst'
   workflow_dispatch:
     inputs:
       source_repository:
@@ -45,6 +50,17 @@ on:
 jobs:
   integration-tests-reportportal:
     runs-on: ubuntu-latest
+    env:
+      RP_API_KEY: ${{ secrets.REPORTPORTAL_API_KEY }}
+      AGENT_NO_ANALYTICS: True
+      TV_SOURCE_REPO: ${{ github.event.inputs.source_repository }}
+      TV_SOURCE_REF: ${{ github.event.inputs.source_ref }}
+      TV_SOURCE_SHA: ${{ github.event.inputs.source_sha }}
+      TV_SOURCE_ACTOR: ${{ github.event.inputs.source_actor }}
+      TV_SOURCE_WORKFLOW: ${{ github.event.inputs.source_workflow }}
+      TV_SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id }}
+      TV_SOURCE_RUN_NUMBER: ${{ github.event.inputs.source_run_number }}
+      TV_TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
 
     steps:
     - name: Log dispatch information
@@ -88,48 +104,35 @@ jobs:
         make build-main
         ls -l external/
 
-    - name: Run tests and publish to ReportPortal
-      run: python scripts/run_tests_reportportal.py
-      env:
-        RP_API_KEY: ${{ secrets.REPORTPORTAL_API_KEY }}
-        AGENT_NO_ANALYTICS: True
-        TV_SOURCE_REPO: ${{ github.event.inputs.source_repository }}
-        TV_SOURCE_REF: ${{ github.event.inputs.source_ref }}
-        TV_SOURCE_SHA: ${{ github.event.inputs.source_sha }}
-        TV_SOURCE_ACTOR: ${{ github.event.inputs.source_actor }}
-        TV_SOURCE_WORKFLOW: ${{ github.event.inputs.source_workflow }}
-        TV_SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id }}
-        TV_SOURCE_RUN_NUMBER: ${{ github.event.inputs.source_run_number }}
-        TV_TRIGGERED_BY: ${{ github.event.inputs.triggered_by }}
+    - parallel:
+      - name: Run tests for TestViper
+        continue-on-error: true
+        run: |
+          ./scripts/run-tests.sh "TestViper Integration" "." "tests/integration"
 
-    # - name: Repository Dispatch to benchviper
-    #   uses: actions/github-script@v9
-    #   with:
-    #     github-token: ${{ secrets.TESTVIPER_DISPATCH_TOKEN }}
-    #     script: |
-    #       const payload = {
-    #         event_type: 'benchmark-test-trigger',
-    #         client_payload: {
-    #           repository: '${{ github.repository }}',
-    #           ref: '${{ github.ref }}',
-    #           sha: '${{ github.sha }}',
-    #           actor: '${{ github.actor }}',
-    #           workflow: '${{ github.workflow }}',
-    #           run_id: '${{ github.run_id }}',
-    #           run_number: '${{ github.run_number }}',
-    #           component: '${{ github.event.inputs.source_repository }}'
+      - name: Run tests for ToolViper
+        continue-on-error: true
+        run: |
+          ./scripts/run-tests.sh "ToolViper" "external/toolviper" "tests"
 
-    #         }
-    #       };
+      - name: Run tests for Xradio
+        continue-on-error: true
+        run: |
+          ./scripts/run-tests.sh "Xradio" "external/xradio" "tests"
 
-    #       // Send repository dispatch to target repository
-    #       await github.rest.repos.createDispatchEvent({
-    #         owner: 'casangi',
-    #         repo: 'benchviper',
-    #         event_type: payload.event_type,
-    #         client_payload: payload.client_payload
-    #       });
+      - name: Run tests for GraphViper
+        continue-on-error: true
+        run: |
+          ./scripts/run-tests.sh "GraphViper" "external/graphviper" "tests"
 
-    #       // Note: repository_dispatch is repository-wide and not branch-specific.
+      - name: Run tests for AstroViper
+        continue-on-error: true
+        run: |
+          ./scripts/run-tests.sh "AstroViper" "external/astroviper" "tests"
 
-    #       console.log('Repository dispatch sent successfully to benchviper');
+    - name: Generate and display links to ReportPortal for this run
+      run: |
+        echo "## View Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "View the results of these tests in ReportPortal:" >> $GITHUB_STEP_SUMMARY
+        echo "- [This Run](https://report-portal.nrao.casa/ui/#testviper/launches/all?launchesParams=filter.has.compositeAttribute%3Drun_id%3A${GITHUB_RUN_ID})" >> $GITHUB_STEP_SUMMARY
+        echo "- [All tests for this ref](https://report-portal.nrao.casa/ui/#testviper/launches/all?launchesParams=filter.has.compositeAttribute%3Dtestviper_ref%3A${GITHUB_REF_NAME})" >> $GITHUB_STEP_SUMMARY
