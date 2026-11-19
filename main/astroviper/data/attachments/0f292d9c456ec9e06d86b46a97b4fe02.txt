@@ -1,0 +1,346 @@
+[[38;2;128;05;128m2026-11-19 23:00:39,587[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Number of frequency chunks ... : 5 
+[[38;2;128;05;128m2026-11-19 23:00:39,666[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 5 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent). 
+[[38;2;128;05;128m2026-11-19 23:00:42,157[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 2.571  (100.0%)
+    create empty image xds        0.001  (0%)
+    write empty image to disk     0.020  (1%)
+    determine chunks + parallel coords    0.000  (0%)
+    create empty data vars on disk    0.014  (1%)
+    open processing set           0.039  (2%)
+    interpolate data coords       0.000  (0%)
+    input preflight               0.004  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.005  (0%)
+    compute dask graph            2.478  (96%)
+    write find_continuum first round    0.000  (0%)
+    drain find_continuum moments    0.000  (0%)
+    consolidate metadata          0.007  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      2.572
+ sum of phases above           2.571  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-19 23:00:42,165[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m AstroVIPER node-task timing over the 5 frequency chunks (seconds)
+                                                                         mean  median   max  total
+phase                                        step                                                 
+PREPARATION (once per chunk)                 phase total                0.046   0.046 0.053  0.231
+                                             imaging weights            0.003   0.003 0.003  0.015
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             vis mask                   0.000   0.000 0.000  0.002
+                                             uv-sampling grid (PSF)     0.012   0.012 0.012  0.058
+                                             fft normalize (PSF)        0.007   0.007 0.008  0.035
+                                             primary beam               0.002   0.002 0.002  0.010
+                                             pol transform              0.003   0.002 0.003  0.013
+                                             psf gaussian fit           0.018   0.017 0.025  0.091
+                                             (unaccounted)              0.001   0.001 0.002  0.006
+RESIDUAL UPDATE (summed over imaging cycles) phase total                0.062   0.065 0.078  0.309
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             pol transform              0.010   0.009 0.013  0.050
+                                             degrid (model->vis)        0.000   0.000 0.000  0.000
+                                             fft (degrid)               0.000   0.000 0.000  0.000
+                                             residual vis (obs-model)   0.000   0.000 0.000  0.000
+                                             vis mask                   0.001   0.001 0.003  0.005
+                                             uv-sampling grid           0.000   0.000 0.000  0.000
+                                             vis grid (vis->image)      0.028   0.028 0.032  0.139
+                                             fft (grid)                 0.022   0.027 0.041  0.111
+                                             (unaccounted)              0.001   0.001 0.001  0.004
+AUTO MASK (summed over residual updates)     phase total                0.000   0.000 0.000  0.000
+STOP TEST (summed over residual updates)     phase total                0.000   0.000 0.000  0.002
+MODEL UPDATE (summed over imaging cycles)    phase total                0.000   0.000 0.000  0.000
+                                             cycle control              0.000   0.000 0.000  0.000
+                                             convergence / merge        0.000   0.000 0.000  0.000
+                                             (unaccounted)              0.000   0.000 0.000  0.000
+RESTORE                                      phase total                0.000   0.000 0.000  0.000
+PRIMARY-BEAM CORRECTION                      phase total                0.000   0.000 0.000  0.000
+NODE I/O                                     phase total                0.125   0.124 0.138  0.627
+                                             make empty image           0.002   0.002 0.003  0.011
+                                             load visibilities          0.086   0.084 0.090  0.428
+                                             channel loop bookkeeping   0.002   0.002 0.002  0.011
+                                             image statistics           0.005   0.005 0.006  0.027
+                                             find_continuum first round 0.000   0.000 0.000  0.000
+                                             write image                0.030   0.026 0.038  0.151
+TASK TOTAL                                   T_image_cube_task          0.238   0.242 0.250  1.191
+                                             (outside the phases)       0.004   0.004 0.004  0.021 
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+imaging_metadata_pd      T_prep  T_prep_weights  ...  thread_native_id worker_name
+0  0.042640        0.002787  ...            129818        None
+1  0.046130        0.003206  ...            129818        None
+2  0.052521        0.002743  ...            129818        None
+3  0.045702        0.003056  ...            129818        None
+4  0.043585        0.002909  ...            129818        None
+
+[5 rows x 44 columns]
+imaging_dict (global channel numbering):
+==============================================================================
+Key(time=0, pol=0, chan=0)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231101
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.357506
+  peakres_nomask          :  0.357506
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0781081
+
+==============================================================================
+Key(time=0, pol=1, chan=0)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231101
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.121046
+  peakres_nomask          :  0.121046
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0781081
+
+==============================================================================
+Key(time=0, pol=0, chan=1)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231062
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.335113
+  peakres_nomask          :  0.335113
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0453959
+
+==============================================================================
+Key(time=0, pol=1, chan=1)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231062
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.117983
+  peakres_nomask          :  0.117983
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0453959
+
+==============================================================================
+Key(time=0, pol=0, chan=2)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231147
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.338023
+  peakres_nomask          :  0.338023
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0646055
+
+==============================================================================
+Key(time=0, pol=1, chan=2)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231147
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.130329
+  peakres_nomask          :  0.130329
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0646055
+
+==============================================================================
+Key(time=0, pol=0, chan=3)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231165
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.325024
+  peakres_nomask          :  0.325024
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0745454
+
+==============================================================================
+Key(time=0, pol=1, chan=3)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231165
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :   0.13279
+  peakres_nomask          :   0.13279
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0745454
+
+==============================================================================
+Key(time=0, pol=0, chan=4)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231165
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.353347
+  peakres_nomask          :  0.353347
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0464044
+
+==============================================================================
+Key(time=0, pol=1, chan=4)
+------------------------------------------------------------------------------
+Parameters:
+  max_psf_sidelobe : 0.231165
+  gain             : 0.1
+  stop_code        : StopCode(imaging=1, model_update=0)
+  stop_description : Reached max_iter
+Per-cycle history (0 cycles and the closing stop test):
+  cycle                   :      stop
+  peakres                 :  0.110419
+  peakres_nomask          :  0.110419
+  masksum                 :     62500
+  iter_done               :         0
+  entropy                 :       nan
+  residual_snr            :       nan
+  rms_in_mask             :       nan
+  rms_outside_mask        :       nan
+  max_in_mask             :       nan
+  min_in_mask             :       nan
+  mad_rms_outside_mask    :       nan
+  skew_in_mask            :       nan
+  excess_kurtosis_in_mask :       nan
+  t_residual_update       : 0.0464044
+
+niter0_t12 channel 0 SKY_RESIDUAL relative difference: 8.27228184058799e-13
+niter0_t12 channel 0 POINT_SPREAD_FUNCTION relative difference: 2.8589110245835815e-13
+niter0_t12 channel 0 PRIMARY_BEAM relative difference: 3.3306690738754696e-16
+niter0_t12 channel 1 SKY_RESIDUAL relative difference: 7.517766372890241e-13
+niter0_t12 channel 1 POINT_SPREAD_FUNCTION relative difference: 3.9237883775467043e-13
+niter0_t12 channel 1 PRIMARY_BEAM relative difference: 3.885780586188048e-16
+niter0_t12 channel 2 SKY_RESIDUAL relative difference: 7.946747347667077e-13
+niter0_t12 channel 2 POINT_SPREAD_FUNCTION relative difference: 4.605864301066033e-13
+niter0_t12 channel 2 PRIMARY_BEAM relative difference: 6.661338147750939e-16
+niter0_t12 channel 3 SKY_RESIDUAL relative difference: 1.326281697177162e-12
+niter0_t12 channel 3 POINT_SPREAD_FUNCTION relative difference: 3.215830379765806e-13
+niter0_t12 channel 3 PRIMARY_BEAM relative difference: 5.551115123125783e-16
+niter0_t12 channel 4 SKY_RESIDUAL relative difference: 6.546306062298574e-13
+niter0_t12 channel 4 POINT_SPREAD_FUNCTION relative difference: 5.904027267078547e-13
+niter0_t12 channel 4 PRIMARY_BEAM relative difference: 5.551115123125783e-16
