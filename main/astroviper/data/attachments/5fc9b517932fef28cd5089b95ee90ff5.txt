@@ -1,0 +1,134 @@
+[[38;2;128;05;128m2026-11-19 22:18:33,170[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m simulate_processing_set: 3700 times x 903 baselines x 3 channels x 2 polarizations in 1 x 3 chunks. 
+[[38;2;128;05;128m2026-11-19 22:18:44,568[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ simulate_processing_set timing
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 11.409  (100.0%)
+    build coordinates + MSv4 metadata    0.010  (0%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty MSv4 on disk     0.195  (2%)
+    interpolate data coords       0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.004  (0%)
+    compute dask graph           11.126  (98%)
+    consolidate metadata + schema check    0.072  (1%)
+
+----------------------------------------------------------------
+ TOTAL (T_total)              11.409
+ sum of phases above          11.409  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-19 22:18:44,571[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m simulate_processing_set node-task timing over the 3 (time, frequency) chunks (seconds)
+                 mean  median    max  total
+node task step                             
+T_uvw           9.335   9.953 10.621 28.006
+T_beams         0.000   0.000  0.000  0.000
+T_visibilities  0.354   0.376  0.418  1.063
+T_noise         0.006   0.006  0.007  0.017
+T_write         0.059   0.041  0.101  0.177
+T_simulate_task 9.756  10.420 10.931 29.268 
+[[38;2;128;05;128m2026-11-19 22:18:44,753[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Number of frequency chunks ... : 3 
+[[38;2;128;05;128m2026-11-19 22:18:45,156[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 3 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent). 
+[[38;2;128;05;128m2026-11-19 22:19:32,536[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 47.810  (99.9%)
+    create empty image xds        0.055  (0%)
+    write empty image to disk     0.089  (0%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.093  (0%)
+    open processing set           0.189  (0%)
+    interpolate data coords       0.002  (0%)
+    input preflight               0.026  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.002  (0%)
+    get compute resources         0.001  (0%)
+    generate dask graph           0.035  (0%)
+    compute dask graph           47.282  (99%)
+    write find_continuum first round    0.000  (0%)
+    drain find_continuum moments    0.000  (0%)
+    consolidate metadata          0.035  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)     47.840
+ sum of phases above          47.810  (99.9% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-19 22:19:32,588[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m AstroVIPER node-task timing over the 3 frequency chunks (seconds)
+                                                                          mean  median    max  total
+phase                                        step                                                   
+PREPARATION (once per chunk)                 phase total                 9.336   9.336  9.336  9.336
+                                             imaging weights             0.026   0.026  0.026  0.026
+                                             gcf kernel                  0.000   0.000  0.000  0.000
+                                             vis mask                    0.003   0.003  0.003  0.003
+                                             uv-sampling grid (PSF)      2.175   2.175  2.175  2.175
+                                             fft normalize (PSF)         3.126   3.126  3.126  3.126
+                                             primary beam                0.915   0.915  0.915  0.915
+                                             pol transform               0.013   0.013  0.013  0.013
+                                             psf gaussian fit            3.071   3.071  3.071  3.071
+                                             (unaccounted)               0.007   0.007  0.007  0.007
+RESIDUAL UPDATE (summed over imaging cycles) phase total                23.632  23.632 23.632 23.632
+                                             gcf kernel                  0.000   0.000  0.000  0.000
+                                             pol transform               0.511   0.511  0.511  0.511
+                                             degrid (model->vis)         1.899   1.899  1.899  1.899
+                                             fft (degrid)                5.190   5.190  5.190  5.190
+                                             residual vis (obs-model)    0.035   0.035  0.035  0.035
+                                             vis mask                    0.009   0.009  0.009  0.009
+                                             uv-sampling grid            0.000   0.000  0.000  0.000
+                                             vis grid (vis->image)      10.281  10.281 10.281 10.281
+                                             fft (grid)                  5.651   5.651  5.651  5.651
+                                             (unaccounted)               0.055   0.055  0.055  0.055
+AUTO MASK (summed over residual updates)     phase total                 0.000   0.000  0.000  0.000
+STOP TEST (summed over residual updates)     phase total                 4.028   4.028  4.028  4.028
+MODEL UPDATE (summed over imaging cycles)    phase total                 5.380   5.380  5.380  5.380
+                                             cycle control               0.001   0.001  0.001  0.001
+                                             make mask                   0.133   0.133  0.133  0.133
+                                             deconvolve                  5.214   5.214  5.214  5.214
+                                             convergence / merge         0.001   0.001  0.001  0.001
+                                             (unaccounted)               0.031   0.031  0.031  0.031
+RESTORE                                      phase total                 1.043   1.043  1.043  1.043
+PRIMARY-BEAM CORRECTION                      phase total                 0.577   0.577  0.577  0.577
+NODE I/O                                     phase total                 1.043   0.000  3.128  3.128
+                                             make empty image            0.072   0.072  0.072  0.072
+                                             load visibilities           0.218   0.218  0.218  0.218
+                                             channel loop bookkeeping    0.016   0.016  0.016  0.016
+                                             image statistics            1.394   1.394  1.394  1.394
+                                             find_continuum first round  0.000   0.000  0.000  0.000
+                                             write image                 1.429   1.429  1.429  1.429
+TASK TOTAL                                   T_image_cube_task          47.246  47.246 47.246 47.246
+                                             (outside the phases)        0.122   0.122  0.122  0.122 
+plane 200 MB, visibilities 107 MB per task; phase numbers in planes, relative to the start of the run; release numbers in MB; transparent huge pages not 'always'; the garbage collector was kept off during the direct runs (0 calls of gc.enable ignored); tasks (task id, channel): [(0, (100000000000.0,)), (1, (100500000000.0,)), (2, (101000000000.0,))]
+run 1: wall time 47.3 s, 3604764 minor page faults (reported only); traced peak 17.83 (budget 18.00), at return 0.001; resident set size peak 17.53, at return 0.071
+  load_processing_set: 1 call(s), adds at most 1.77 (budget 2.50); highest peak 1.77 on 0.00 held; resident set adds 1.74; untraced: net -0.034 (reported only), gross malloc +0.011; 0.2 s, 74351 minor page faults
+  imaging_setup_single_field: 1 call(s), adds at most 10.02 (budget 10.50); highest peak 11.25 on 1.24 held; resident set adds 10.04; untraced: net +0.024 (reported only), gross malloc +0.004; 9.3 s, 478764 minor page faults
+  residual_update_cube_single_field: 3 call(s), adds at most 7.76 (budget 8.30); highest peak 17.46 on 10.82 held; resident set adds 7.76; untraced: net +0.000 (reported only), gross malloc +0.003; 23.6 s, 324141 minor page faults
+  model_update_cube_single_field: 2 call(s), adds at most 2.50 (budget 3.00); highest peak 11.07 on 10.82 held; resident set adds 2.36; untraced: net -0.000 (reported only), gross malloc +0.000; 5.4 s, 1319236 minor page faults
+  restore_image: 1 call(s), adds at most 7.00 (budget 7.50); highest peak 17.83 on 10.82 held; resident set adds 5.13; untraced: net -1.871 (reported only), gross malloc +0.003; 1.6 s, 12285 minor page faults
+  calculate_plane_statistics: 1 call(s), adds at most 3.26 (budget 3.70); highest peak 15.52 on 12.25 held; resident set adds 3.26; untraced: net -0.005 (reported only), gross malloc +0.000; 1.4 s, 62636 minor page faults
+  write_result_chunk: 1 call(s), adds at most 2.00 (budget 2.50); highest peak 14.25 on 12.25 held; resident set adds 1.64; untraced: net -0.357 (reported only), gross malloc +0.011; 1.4 s, 242803 minor page faults
+run 2: wall time 43.5 s, 3136511 minor page faults (reported only); traced peak 17.83 (budget 18.00), at return 0.001; resident set size peak 17.46, at return -0.001
+  load_processing_set: 1 call(s), adds at most 1.77 (budget 2.50); highest peak 1.77 on 0.00 held; resident set adds 1.69; untraced: net -0.078 (reported only), gross malloc +0.011; 0.2 s, 74252 minor page faults
+  imaging_setup_single_field: 1 call(s), adds at most 10.02 (budget 10.50); highest peak 11.26 on 1.24 held; resident set adds 10.02; untraced: net +0.000 (reported only), gross malloc +0.004; 5.7 s, 28831 minor page faults
+  residual_update_cube_single_field: 3 call(s), adds at most 7.76 (budget 8.30); highest peak 17.46 on 10.82 held; resident set adds 7.76; untraced: net -0.000 (reported only), gross malloc +0.003; 23.2 s, 263627 minor page faults
+  model_update_cube_single_field: 2 call(s), adds at most 2.50 (budget 3.00); highest peak 11.07 on 10.82 held; resident set adds 2.39; untraced: net -0.113 (reported only), gross malloc +0.000; 5.6 s, 1322449 minor page faults
+  restore_image: 1 call(s), adds at most 7.00 (budget 7.50); highest peak 17.83 on 10.82 held; resident set adds 5.13; untraced: net -1.872 (reported only), gross malloc +0.002; 1.6 s, 12269 minor page faults
+  calculate_plane_statistics: 1 call(s), adds at most 3.26 (budget 3.70); highest peak 15.52 on 12.25 held; resident set adds 3.26; untraced: net -0.005 (reported only), gross malloc +0.000; 1.4 s, 63859 minor page faults
+  write_result_chunk: 1 call(s), adds at most 2.00 (budget 2.50); highest peak 14.25 on 12.25 held; resident set adds 1.65; untraced: net -0.352 (reported only), gross malloc +0.011; 1.4 s, 242811 minor page faults
+run 3: wall time 41.2 s, 2897603 minor page faults (reported only); traced peak 17.83 (budget 18.00), at return 0.001; resident set size peak 17.46, at return -0.002
+  load_processing_set: 1 call(s), adds at most 1.77 (budget 2.50); highest peak 1.77 on 0.00 held; resident set adds 1.63; untraced: net -0.141 (budget 0.25), gross malloc +0.011 (budget 0.05); 0.2 s, 74243 minor page faults
+  imaging_setup_single_field: 1 call(s), adds at most 10.02 (budget 10.50); highest peak 11.26 on 1.24 held; resident set adds 10.02; untraced: net -0.000 (budget 0.25), gross malloc +0.002 (budget 0.05); 5.7 s, 28990 minor page faults
+  residual_update_cube_single_field: 3 call(s), adds at most 7.76 (budget 8.30); highest peak 17.46 on 10.82 held; resident set adds 7.76; untraced: net -0.000 (budget 0.25), gross malloc +0.003 (budget 0.05); 21.4 s, 23429 minor page faults
+  model_update_cube_single_field: 2 call(s), adds at most 2.50 (budget 3.00); highest peak 11.07 on 10.82 held; resident set adds 2.47; untraced: net -0.029 (budget 0.25), gross malloc +0.000 (budget 0.05); 5.3 s, 1322528 minor page faults
+  restore_image: 1 call(s), adds at most 7.00 (budget 7.50); highest peak 17.83 on 10.82 held; resident set adds 5.13; untraced: net -1.872 (budget 0.25), gross malloc +0.002 (budget 0.05); 1.6 s, 12266 minor page faults
+  calculate_plane_statistics: 1 call(s), adds at most 3.26 (budget 3.70); highest peak 15.51 on 12.25 held; resident set adds 3.26; untraced: net -0.005 (budget 0.25), gross malloc +0.000 (budget 0.05); 1.4 s, 65125 minor page faults
+  write_result_chunk: 1 call(s), adds at most 2.00 (budget 2.50); highest peak 14.25 on 12.25 held; resident set adds 1.64; untraced: net -0.357 (budget 0.25), gross malloc +0.011 (budget 0.05); 1.4 s, 242816 minor page faults
+run 1, the whole call of the distributed application: traced memory kept +0.0011 planes (+0.23 MB) not counting 0.00 MB of first imports (budgets 0.0300 planes and 10.0 MB), +0.16 MB after a collection that found 47 objects in reference cycles ([('builtins.cell', 22), ('builtins.set', 12), ('builtins.tuple', 3), ('builtins.function', 3)] not counting xarray's dropped lazy trees, reported only)
+run 1: malloc memory kept beyond traced memory and first imports +1.81 MB (budget 5.00): malloc in use +3.56, traced +0.16, tracemalloc's own +1.59; first imports +0.01, +0.00 and +0.00; malloc in use from the start of run 1 to the start of its node task +2.40, over the node task +1.17
+run 1: anonymous memory kept +16.1 MB (reported only), of which outside malloc +16.1 MB (budget 30.0)
+run 2 leaves: by reference counting alone +0.126 MB traced (budget 0.60); 0 garbage collections inside the run (budget 0); 0 objects in reference cycles, 0 not counting xarray's dropped lazy trees (budget 0); after a collection +0.010 MB traced (budget 0.10), native +0.403 MB (budget 2.00), anonymous +0.717 MB (reported only), outside malloc +0.717 MB (budget 5.00); resident set size -0.001 planes (reported only)
+run 3 leaves: by reference counting alone +0.125 MB traced (budget 0.60); 0 garbage collections inside the run (budget 0); 0 objects in reference cycles, 0 not counting xarray's dropped lazy trees (budget 0); after a collection +0.009 MB traced (budget 0.10), native +0.003 MB (budget 0.25), anonymous +0.045 MB (budget 5.00), outside malloc +0.045 MB (budget 3.00); resident set size -0.002 planes (reported only)
+run 3 - run 2, traced peak: -0.0000 (budget +-0.010)
+run 3 - run 2, traced memory at return: -0.0000 (budget +-0.010)
