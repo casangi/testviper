@@ -1,0 +1,217 @@
+INFO     client:logger.py:78 simulate_processing_set: 4 times x 28 baselines x 2 channels x 2 polarizations in 1 x 2 chunks.
+INFO     client:logger.py:78 ================================================================
+ simulate_processing_set timing
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.886  (100.0%)
+    build coordinates + MSv4 metadata    0.004  (0%)
+    determine chunks + parallel coords    0.000  (0%)
+    create empty MSv4 on disk     0.102  (11%)
+    interpolate data coords       0.000  (0%)
+    create map/reduce graph       0.000  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.002  (0%)
+    compute dask graph            0.738  (83%)
+    consolidate metadata + schema check    0.040  (5%)
+
+----------------------------------------------------------------
+ TOTAL (T_total)               0.886
+ sum of phases above           0.886  (100.0% of total accounted)
+================================================================
+INFO     client:logger.py:78 simulate_processing_set node-task timing over the 2 (time, frequency) chunks (seconds)
+                 mean  median   max  total
+node task step                            
+T_uvw           0.007   0.007 0.007  0.014
+T_beams         0.000   0.000 0.000  0.000
+T_visibilities  0.000   0.000 0.000  0.000
+T_noise         0.000   0.000 0.000  0.000
+T_write         0.001   0.001 0.001  0.002
+T_simulate_task 0.009   0.009 0.009  0.018
+INFO     client:logger.py:78 Number of frequency chunks ... : 1
+INFO     client:logger.py:78 Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 1 node tasks, one per frequency chunk of ~2 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent).
+INFO     client:logger.py:78 ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.760  (99.2%)
+    create empty image xds        0.001  (0%)
+    write empty image to disk     0.022  (3%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.019  (3%)
+    open processing set           0.029  (4%)
+    interpolate data coords       0.000  (0%)
+    input preflight               0.004  (1%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.000  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.001  (0%)
+    compute dask graph            0.676  (89%)
+    write find_continuum first round    0.000  (0%)
+    drain find_continuum moments    0.000  (0%)
+    consolidate metadata          0.007  (1%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.766
+ sum of phases above           0.760  (99.2% of total accounted)
+================================================================
+INFO     client:logger.py:78 AstroVIPER node-task timing over the 1 frequency chunks (seconds)
+                                                                         mean  median   max  total
+phase                                        step                                                 
+PREPARATION (once per chunk)                 phase total                0.048   0.048 0.048  0.048
+                                             imaging weights            0.002   0.002 0.002  0.002
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             vis mask                   0.001   0.001 0.001  0.001
+                                             uv-sampling grid (PSF)     0.003   0.003 0.003  0.003
+                                             fft normalize (PSF)        0.004   0.004 0.004  0.004
+                                             primary beam               0.002   0.002 0.002  0.002
+                                             pol transform              0.004   0.004 0.004  0.004
+                                             psf gaussian fit           0.031   0.031 0.031  0.031
+                                             (unaccounted)              0.001   0.001 0.001  0.001
+RESIDUAL UPDATE (summed over imaging cycles) phase total                0.151   0.151 0.151  0.151
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             pol transform              0.077   0.077 0.077  0.077
+                                             degrid (model->vis)        0.007   0.007 0.007  0.007
+                                             fft (degrid)               0.012   0.012 0.012  0.012
+                                             residual vis (obs-model)   0.004   0.004 0.004  0.004
+                                             vis mask                   0.004   0.004 0.004  0.004
+                                             uv-sampling grid           0.000   0.000 0.000  0.000
+                                             vis grid (vis->image)      0.020   0.020 0.020  0.020
+                                             fft (grid)                 0.020   0.020 0.020  0.020
+                                             (unaccounted)              0.008   0.008 0.008  0.008
+AUTO MASK (summed over residual updates)     phase total                0.000   0.000 0.000  0.000
+STOP TEST (summed over residual updates)     phase total                0.004   0.004 0.004  0.004
+MODEL UPDATE (summed over imaging cycles)    phase total                0.021   0.021 0.021  0.021
+                                             cycle control              0.000   0.000 0.000  0.000
+                                             make mask                  0.003   0.003 0.003  0.003
+                                             deconvolve                 0.009   0.009 0.009  0.009
+                                             convergence / merge        0.000   0.000 0.000  0.000
+                                             (unaccounted)              0.008   0.008 0.008  0.008
+RESTORE                                      phase total                0.000   0.000 0.000  0.000
+PRIMARY-BEAM CORRECTION                      phase total                0.000   0.000 0.000  0.000
+NODE I/O                                     phase total                0.017   0.017 0.017  0.017
+                                             make empty image           0.002   0.002 0.002  0.002
+                                             load visibilities          0.002   0.002 0.002  0.002
+                                             channel loop bookkeeping   0.004   0.004 0.004  0.004
+                                             image statistics           0.006   0.006 0.006  0.006
+                                             find_continuum first round 0.000   0.000 0.000  0.000
+                                             write image                0.003   0.003 0.003  0.003
+TASK TOTAL                                   T_image_cube_task          0.265   0.265 0.265  0.265
+                                             (outside the phases)       0.022   0.022 0.022  0.022
+INFO     client:logger.py:78   parallelism p              : 1 worker slots (recorded; 1 host, 1 reconstructed lanes)
+INFO     client:logger.py:78   T_ideal = W / p            :      0.3 s (W = Σ Δτ_i = 0.3 s over 1 map + 0 reduce tasks)
+INFO     client:logger.py:78   task-window makespan       :      0.3 s (+0.0 s ramp/gaps/tail, 100.0% busy inside window)
+INFO     client:logger.py:78   T_compute (map+reduce)     :      0.7 s = 0.0 s PRE first task (pre-map: worker imports + graph submit) + 0.3 s task window + 0.4 s POST (post-map: reduce residue + gather/save)   [anchors: measured]
+INFO     client:logger.py:78   application total          :      0.8 s = 0.1 s driver setup + 0.7 s compute + 0.0 s finalize (entire distributed application call)
+INFO     client:logger.py:78   E map-reduce               :     39.2 %   [= (W / p) / (t_3 - t_1)]
+INFO     client:logger.py:78   E end-to-end               :     35.1 %   [= (W / p) / (t_3 - t_0)]
+INFO     client:logger.py:78   ramp to 95% busy           :      0.0 s
+INFO     client:logger.py:78   straggler tail (p95->last) :      0.0 s
+INFO     client:logger.py:78 plot_cluster_resource_usage: I/O
+    read: 2.51e-05 GiB in all; 3.72e-05 GiB/s while >= 95 % of peak tasks run (0-1 s); largest 0.02 s bin there 4.35e-05 GiB/s
+    write: 0.000249 GiB in all; 0.000369 GiB/s while >= 95 % of peak tasks run (0-1 s); largest 0.02 s bin there 0.000591 GiB/s
+INFO     client:logger.py:78 moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB)
+INFO     client:logger.py:78 Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64})
+INFO     client:logger.py:78 ================================================================
+ moments timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.874  (100.0%)
+    open input image              0.009  (1%)
+    determine chunks + parallel coords    0.002  (0%)
+    create empty image xds        0.004  (0%)
+    write empty image to disk     0.021  (2%)
+    create empty data vars on disk    0.007  (1%)
+    interpolate data coords       0.000  (0%)
+    create map graph              0.000  (0%)
+    generate dask graph           0.000  (0%)
+    get compute resources         0.000  (0%)
+    compute dask graph            0.824  (94%)
+    consolidate metadata          0.006  (1%)
+    write FITS images             0.000  (0%)
+    collect node task timing      0.001  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.874
+ sum of phases above           0.874  (100.0% of total accounted)
+================================================================
+INFO     client:logger.py:78 moments node-task timing over the 1 chunks (seconds)
+                mean  median   max  total
+node task step                           
+T_load         0.011   0.011 0.011  0.011
+T_moments      0.004   0.004 0.004  0.004
+T_stream_read  0.000   0.000 0.000  0.000
+T_accumulate   0.003   0.003 0.003  0.003
+T_write        0.000   0.000 0.000  0.000
+T_moments_task 0.445   0.445 0.445  0.445
+INFO     client:logger.py:78 moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB)
+INFO     client:logger.py:78 Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64})
+INFO     client:logger.py:78 ================================================================
+ moments timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.825  (100.0%)
+    open input image              0.010  (1%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty image xds        0.003  (0%)
+    write empty image to disk     0.021  (3%)
+    create empty data vars on disk    0.011  (1%)
+    interpolate data coords       0.000  (0%)
+    create map graph              0.000  (0%)
+    generate dask graph           0.000  (0%)
+    get compute resources         0.000  (0%)
+    compute dask graph            0.771  (93%)
+    consolidate metadata          0.006  (1%)
+    write FITS images             0.000  (0%)
+    collect node task timing      0.001  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.825
+ sum of phases above           0.825  (100.0% of total accounted)
+================================================================
+INFO     client:logger.py:78 moments node-task timing over the 1 chunks (seconds)
+                mean  median   max  total
+node task step                           
+T_load         0.011   0.011 0.011  0.011
+T_moments      0.003   0.003 0.003  0.003
+T_stream_read  0.000   0.000 0.000  0.000
+T_accumulate   0.003   0.003 0.003  0.003
+T_write        0.000   0.000 0.000  0.000
+T_moments_task 0.398   0.398 0.398  0.398
+INFO     client:logger.py:78 moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB)
+INFO     client:logger.py:78 Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64})
+INFO     client:logger.py:78 ================================================================
+ moments timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.812  (100.0%)
+    open input image              0.010  (1%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty image xds        0.003  (0%)
+    write empty image to disk     0.019  (2%)
+    create empty data vars on disk    0.007  (1%)
+    interpolate data coords       0.000  (0%)
+    create map graph              0.000  (0%)
+    generate dask graph           0.000  (0%)
+    get compute resources         0.000  (0%)
+    compute dask graph            0.763  (94%)
+    consolidate metadata          0.006  (1%)
+    write FITS images             0.000  (0%)
+    collect node task timing      0.001  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.812
+ sum of phases above           0.812  (100.0% of total accounted)
+================================================================
+INFO     client:logger.py:78 moments node-task timing over the 1 chunks (seconds)
+                mean  median   max  total
+node task step                           
+T_load         0.011   0.011 0.011  0.011
+T_moments      0.003   0.003 0.003  0.003
+T_stream_read  0.000   0.000 0.000  0.000
+T_accumulate   0.003   0.003 0.003  0.003
+T_write        0.000   0.000 0.000  0.000
+T_moments_task 0.394   0.394 0.394  0.394
+INFO     client:logger.py:78 Report written to /tmp/pytest-of-runner/pytest-3/test_html_report_of_a_monitore1/cube_report.html
