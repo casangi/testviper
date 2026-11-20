@@ -1,0 +1,73 @@
+INFO     toolviper:logger.py:78 Number of frequency chunks ... : 1
+INFO     toolviper:logger.py:78 Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 1 node tasks, one per frequency chunk of ~5 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent).
+INFO     toolviper:logger.py:78 ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 16.164  (100.0%)
+    create empty image xds        0.002  (0%)
+    write empty image to disk     0.036  (0%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.034  (0%)
+    open processing set           0.070  (0%)
+    interpolate data coords       0.000  (0%)
+    input preflight               0.007  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.000  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.001  (0%)
+    compute dask graph           15.999  (99%)
+    write find_continuum first round    0.000  (0%)
+    drain find_continuum moments    0.000  (0%)
+    consolidate metadata          0.013  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)     16.172
+ sum of phases above          16.164  (100.0% of total accounted)
+================================================================
+INFO     toolviper:logger.py:78 AstroVIPER node-task timing over the 1 frequency chunks (seconds)
+                                                                          mean  median    max  total
+phase                                        step                                                   
+PREPARATION (once per chunk)                 phase total                 0.556   0.556  0.556  0.556
+                                             imaging weights             0.041   0.041  0.041  0.041
+                                             gcf kernel                  0.000   0.000  0.000  0.000
+                                             vis mask                    0.004   0.004  0.004  0.004
+                                             uv-sampling grid (PSF)      0.164   0.164  0.164  0.164
+                                             fft normalize (PSF)         0.054   0.054  0.054  0.054
+                                             primary beam                0.018   0.018  0.018  0.018
+                                             pol transform               0.019   0.019  0.019  0.019
+                                             psf gaussian fit            0.248   0.248  0.248  0.248
+                                             (unaccounted)               0.009   0.009  0.009  0.009
+RESIDUAL UPDATE (summed over imaging cycles) phase total                 2.705   2.705  2.705  2.705
+                                             gcf kernel                  0.000   0.000  0.000  0.000
+                                             pol transform               0.446   0.446  0.446  0.446
+                                             degrid (model->vis)         0.225   0.225  0.225  0.225
+                                             fft (degrid)                0.251   0.251  0.251  0.251
+                                             residual vis (obs-model)    0.046   0.046  0.046  0.046
+                                             vis mask                    0.029   0.029  0.029  0.029
+                                             uv-sampling grid            0.000   0.000  0.000  0.000
+                                             vis grid (vis->image)       1.330   1.330  1.330  1.330
+                                             fft (grid)                  0.317   0.317  0.317  0.317
+                                             (unaccounted)               0.060   0.060  0.060  0.060
+AUTO MASK (summed over residual updates)     phase total                 0.000   0.000  0.000  0.000
+STOP TEST (summed over residual updates)     phase total                 0.208   0.208  0.208  0.208
+MODEL UPDATE (summed over imaging cycles)    phase total                11.601  11.601 11.601 11.601
+                                             cycle control               0.002   0.002  0.002  0.002
+                                             make mask                   0.018   0.018  0.018  0.018
+                                             deconvolve                 11.520  11.520 11.520 11.520
+                                             convergence / merge         0.003   0.003  0.003  0.003
+                                             (unaccounted)               0.059   0.059  0.059  0.059
+RESTORE                                      phase total                 0.026   0.026  0.026  0.026
+PRIMARY-BEAM CORRECTION                      phase total                 0.000   0.000  0.000  0.000
+NODE I/O                                     phase total                 0.354   0.354  0.354  0.354
+                                             make empty image            0.003   0.003  0.003  0.003
+                                             load visibilities           0.149   0.149  0.149  0.149
+                                             channel loop bookkeeping    0.026   0.026  0.026  0.026
+                                             image statistics            0.096   0.096  0.096  0.096
+                                             find_continuum first round  0.000   0.000  0.000  0.000
+                                             write image                 0.080   0.080  0.080  0.080
+TASK TOTAL                                   T_image_cube_task          15.545  15.545 15.545 15.545
+                                             (outside the phases)        0.094   0.094  0.094  0.094

@@ -1,0 +1,197 @@
+[[38;2;128;05;128m2026-11-20 02:57:57,269[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Number of frequency chunks ... : 2 
+[[38;2;128;05;128m2026-11-20 02:57:57,339[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 2 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  output format: FITS (one file per kept image variable); each node task pwrites its channel block directly. Zarr sharding and chunking parameters (image_sharding, image_chunking) do not apply to FITS. 
+[[38;2;128;05;128m2026-11-20 02:57:58,475[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 1.201  (99.3%)
+    create empty image xds        0.002  (0%)
+    write empty image to disk     0.000  (0%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.016  (1%)
+    open processing set           0.047  (4%)
+    interpolate data coords       0.000  (0%)
+    input preflight               0.006  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.003  (0%)
+    compute dask graph            1.125  (94%)
+    write find_continuum first round    0.000  (0%)
+    drain find_continuum moments    0.000  (0%)
+    consolidate metadata          0.000  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      1.209
+ sum of phases above           1.201  (99.3% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-20 02:57:58,487[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m AstroVIPER node-task timing over the 2 frequency chunks (seconds)
+                                                                         mean  median   max  total
+phase                                        step                                                 
+PREPARATION (once per chunk)                 phase total                0.040   0.040 0.043  0.079
+                                             imaging weights            0.001   0.001 0.001  0.003
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             vis mask                   0.001   0.001 0.001  0.001
+                                             uv-sampling grid (PSF)     0.003   0.003 0.003  0.005
+                                             fft normalize (PSF)        0.003   0.003 0.003  0.006
+                                             primary beam               0.001   0.001 0.001  0.003
+                                             pol transform              0.003   0.003 0.003  0.006
+                                             psf gaussian fit           0.027   0.027 0.030  0.053
+                                             (unaccounted)              0.001   0.001 0.001  0.003
+RESIDUAL UPDATE (summed over imaging cycles) phase total                0.119   0.119 0.119  0.238
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             pol transform              0.060   0.060 0.060  0.120
+                                             degrid (model->vis)        0.006   0.006 0.006  0.011
+                                             fft (degrid)               0.010   0.010 0.010  0.019
+                                             residual vis (obs-model)   0.003   0.003 0.004  0.007
+                                             vis mask                   0.003   0.003 0.003  0.006
+                                             uv-sampling grid           0.000   0.000 0.000  0.000
+                                             vis grid (vis->image)      0.015   0.015 0.016  0.031
+                                             fft (grid)                 0.016   0.016 0.016  0.031
+                                             (unaccounted)              0.006   0.006 0.006  0.013
+AUTO MASK (summed over residual updates)     phase total                0.000   0.000 0.000  0.000
+STOP TEST (summed over residual updates)     phase total                0.003   0.003 0.003  0.007
+MODEL UPDATE (summed over imaging cycles)    phase total                0.017   0.017 0.017  0.034
+                                             cycle control              0.000   0.000 0.000  0.000
+                                             make mask                  0.003   0.003 0.003  0.005
+                                             deconvolve                 0.007   0.007 0.007  0.015
+                                             convergence / merge        0.000   0.000 0.000  0.001
+                                             (unaccounted)              0.007   0.007 0.007  0.013
+RESTORE                                      phase total                0.000   0.000 0.000  0.001
+PRIMARY-BEAM CORRECTION                      phase total                0.000   0.000 0.000  0.000
+NODE I/O                                     phase total                0.022   0.022 0.023  0.044
+                                             make empty image           0.003   0.003 0.003  0.006
+                                             load visibilities          0.003   0.003 0.003  0.005
+                                             channel loop bookkeeping   0.002   0.002 0.003  0.005
+                                             image statistics           0.007   0.007 0.007  0.014
+                                             find_continuum first round 0.000   0.000 0.000  0.000
+                                             write image                0.007   0.007 0.007  0.015
+TASK TOTAL                                   T_image_cube_task          0.218   0.218 0.221  0.436
+                                             (outside the phases)       0.016   0.016 0.016  0.032 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   parallelism p              : 1 worker slots (recorded; 1 host, 1 reconstructed lanes) 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   T_ideal = W / p            :      0.5 s (W = Σ Δτ_i = 0.5 s over 2 map + 1 reduce tasks) 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   task-window makespan       :      0.8 s (+0.3 s ramp/gaps/tail, 57.0% busy inside window) 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   T_compute (map+reduce)     :      1.1 s = 0.0 s PRE first task (pre-map: worker imports + graph submit) + 0.8 s task window + 0.4 s POST (post-map: reduce residue + gather/save)   [anchors: measured] 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   application total          :      1.2 s = 0.1 s driver setup + 1.1 s compute + 0.0 s finalize (entire distributed application call) 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   E map-reduce               :     40.7 %   [= (W / p) / (t_3 - t_1)] 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   E end-to-end               :     38.1 %   [= (W / p) / (t_3 - t_0)] 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   ramp to 95% busy           :      0.0 s 
+[[38;2;128;05;128m2026-11-20 02:57:58,673[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   straggler tail (p95->last) :      0.0 s 
+[[38;2;128;05;128m2026-11-20 02:57:58,674[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   reduce nodes (measured)    : 1 calls,      0.0 s busy, window 1.1-1.1 s, 0% of reduce busy inside the map window 
+[[38;2;128;05;128m2026-11-20 02:57:59,947[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m plot_cluster_resource_usage: no resource series recorded (monitoring off or psutil missing); skipping. 
+[[38;2;128;05;128m2026-11-20 02:57:59,947[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m plot_core_resource_usage: no resource series recorded (monitoring off or psutil missing); skipping. 
+[[38;2;128;05;128m2026-11-20 02:57:59,947[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m No 'cpu_percent' series recorded (monitoring off, psutil missing, or counter unavailable on this platform). 
+[[38;2;128;05;128m2026-11-20 02:57:59,947[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m No 'memory_rss_bytes' series recorded (monitoring off, psutil missing, or counter unavailable on this platform). 
+[[38;2;128;05;128m2026-11-20 02:57:59,948[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m No 'read_chars' series recorded (monitoring off, psutil missing, or counter unavailable on this platform). 
+[[38;2;128;05;128m2026-11-20 02:57:59,952[0m] [38;2;255;160;0m WARNING[0m[38;2;112;128;144m      client: [0m The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute 
+[[38;2;128;05;128m2026-11-20 02:58:00,315[0m] [38;2;255;160;0m WARNING[0m[38;2;112;128;144m      client: [0m The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute 
+[[38;2;128;05;128m2026-11-20 02:58:00,330[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB) 
+[[38;2;128;05;128m2026-11-20 02:58:00,332[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64}) 
+[[38;2;128;05;128m2026-11-20 02:58:00,398[0m] [38;2;255;160;0m WARNING[0m[38;2;112;128;144m      client: [0m The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute 
+[[38;2;128;05;128m2026-11-20 02:58:01,103[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m ================================================================
+ moments timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.801  (100.0%)
+    open input image              0.028  (3%)
+    determine chunks + parallel coords    0.002  (0%)
+    create empty image xds        0.003  (0%)
+    write empty image to disk     0.043  (5%)
+    create empty data vars on disk    0.014  (2%)
+    interpolate data coords       0.001  (0%)
+    create map graph              0.000  (0%)
+    generate dask graph           0.001  (0%)
+    get compute resources         0.000  (0%)
+    compute dask graph            0.699  (87%)
+    consolidate metadata          0.009  (1%)
+    write FITS images             0.000  (0%)
+    collect node task timing      0.001  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.801
+ sum of phases above           0.801  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-20 02:58:01,106[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m moments node-task timing over the 1 chunks (seconds)
+                mean  median   max  total
+node task step                           
+T_load         0.019   0.019 0.019  0.019
+T_moments      0.006   0.006 0.006  0.006
+T_stream_read  0.002   0.002 0.002  0.002
+T_accumulate   0.004   0.004 0.004  0.004
+T_write        0.000   0.000 0.000  0.000
+T_moments_task 0.376   0.376 0.376  0.376 
+[[38;2;128;05;128m2026-11-20 02:58:01,395[0m] [38;2;255;160;0m WARNING[0m[38;2;112;128;144m      client: [0m The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute 
+[[38;2;128;05;128m2026-11-20 02:58:01,410[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB) 
+[[38;2;128;05;128m2026-11-20 02:58:01,412[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64}) 
+[[38;2;128;05;128m2026-11-20 02:58:01,480[0m] [38;2;255;160;0m WARNING[0m[38;2;112;128;144m      client: [0m The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute 
+[[38;2;128;05;128m2026-11-20 02:58:02,193[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m ================================================================
+ moments timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.802  (100.0%)
+    open input image              0.019  (2%)
+    determine chunks + parallel coords    0.002  (0%)
+    create empty image xds        0.003  (0%)
+    write empty image to disk     0.046  (6%)
+    create empty data vars on disk    0.013  (2%)
+    interpolate data coords       0.000  (0%)
+    create map graph              0.000  (0%)
+    generate dask graph           0.001  (0%)
+    get compute resources         0.000  (0%)
+    compute dask graph            0.707  (88%)
+    consolidate metadata          0.009  (1%)
+    write FITS images             0.000  (0%)
+    collect node task timing      0.001  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.802
+ sum of phases above           0.802  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-20 02:58:02,196[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m moments node-task timing over the 1 chunks (seconds)
+                mean  median   max  total
+node task step                           
+T_load         0.019   0.019 0.019  0.019
+T_moments      0.006   0.006 0.006  0.006
+T_stream_read  0.002   0.002 0.002  0.002
+T_accumulate   0.004   0.004 0.004  0.004
+T_write        0.000   0.000 0.000  0.000
+T_moments_task 0.367   0.367 0.367  0.367 
+[[38;2;128;05;128m2026-11-20 02:58:02,540[0m] [38;2;255;160;0m WARNING[0m[38;2;112;128;144m      client: [0m The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute 
+[[38;2;128;05;128m2026-11-20 02:58:02,551[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m moments: read budget 2.34 GiB per task (target 80% of 3.9 GiB per thread, baseline 0.78 GiB) 
+[[38;2;128;05;128m2026-11-20 02:58:02,553[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64}) 
+[[38;2;128;05;128m2026-11-20 02:58:02,620[0m] [38;2;255;160;0m WARNING[0m[38;2;112;128;144m      client: [0m The FITS header has no usable observation date (DATE-OBS or MJD-OBS other than MJD 0.0); its time coordinate is MJD 0.0 (1858-11-17), the value casacore uses for an unset observation date, and the image has no obsdate attribute 
+[[38;2;128;05;128m2026-11-20 02:58:03,302[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m ================================================================
+ moments timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.765  (100.0%)
+    open input image              0.014  (2%)
+    determine chunks + parallel coords    0.002  (0%)
+    create empty image xds        0.003  (0%)
+    write empty image to disk     0.045  (6%)
+    create empty data vars on disk    0.014  (2%)
+    interpolate data coords       0.000  (0%)
+    create map graph              0.000  (0%)
+    generate dask graph           0.001  (0%)
+    get compute resources         0.000  (0%)
+    compute dask graph            0.675  (88%)
+    consolidate metadata          0.010  (1%)
+    write FITS images             0.000  (0%)
+    collect node task timing      0.001  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.765
+ sum of phases above           0.765  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-20 02:58:03,305[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m moments node-task timing over the 1 chunks (seconds)
+                mean  median   max  total
+node task step                           
+T_load         0.014   0.014 0.014  0.014
+T_moments      0.006   0.006 0.006  0.006
+T_stream_read  0.002   0.002 0.002  0.002
+T_accumulate   0.004   0.004 0.004  0.004
+T_write        0.000   0.000 0.000  0.000
+T_moments_task 0.349   0.349 0.349  0.349 
+[[38;2;128;05;128m2026-11-20 02:58:06,282[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Report written to /tmp/pytest-of-runner/pytest-3/test_pdf_report_of_fits_output0/cube_report.pdf 
