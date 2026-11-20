@@ -1,0 +1,103 @@
+[[38;2;128;05;128m2026-11-20 07:53:53,872[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m simulate_processing_set: 48 times x 903 baselines x 5 channels x 4 polarizations in 8 x 1 chunks. 
+[[38;2;128;05;128m2026-11-20 07:53:56,653[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ simulate_processing_set timing
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 2.787  (100.0%)
+    build coordinates + MSv4 metadata    0.006  (0%)
+    determine chunks + parallel coords    0.000  (0%)
+    write sky image               0.131  (5%)
+    create empty MSv4 on disk     0.138  (5%)
+    interpolate data coords       0.000  (0%)
+    create map/reduce graph       0.002  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.016  (1%)
+    compute dask graph            2.441  (88%)
+    consolidate metadata + schema check    0.052  (2%)
+
+----------------------------------------------------------------
+ TOTAL (T_total)               2.787
+ sum of phases above           2.787  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-20 07:53:56,656[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m simulate_processing_set node-task timing over the 8 (time, frequency) chunks (seconds)
+                 mean  median   max  total
+node task step                            
+T_uvw           0.100   0.096 0.291  0.799
+T_beams         0.000   0.000 0.000  0.000
+T_visibilities  0.227   0.271 0.360  1.818
+T_noise         0.230   0.171 0.593  1.842
+T_write         0.211   0.143 0.578  1.685
+T_simulate_task 0.770   0.822 1.147  6.164 
+[[38;2;128;05;128m2026-11-20 07:53:56,762[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Number of frequency chunks ... : 5 
+[[38;2;128;05;128m2026-11-20 07:53:56,866[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 5 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent). 
+[[38;2;128;05;128m2026-11-20 07:54:07,225[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 10.458  (99.9%)
+    create empty image xds        0.002  (0%)
+    write empty image to disk     0.027  (0%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.028  (0%)
+    open processing set           0.040  (0%)
+    interpolate data coords       0.000  (0%)
+    input preflight               0.006  (0%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.007  (0%)
+    compute dask graph           10.336  (99%)
+    write find_continuum first round    0.000  (0%)
+    drain find_continuum moments    0.000  (0%)
+    consolidate metadata          0.010  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)     10.466
+ sum of phases above          10.458  (99.9% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-20 07:54:07,236[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m   toolviper: [0m AstroVIPER node-task timing over the 5 frequency chunks (seconds)
+                                                                         mean  median   max  total
+phase                                        step                                                 
+PREPARATION (once per chunk)                 phase total                0.367   0.418 0.542  1.836
+                                             imaging weights            0.003   0.003 0.006  0.016
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             vis mask                   0.002   0.002 0.003  0.010
+                                             uv-sampling grid (PSF)     0.049   0.050 0.051  0.246
+                                             fft normalize (PSF)        0.124   0.064 0.367  0.618
+                                             primary beam               0.017   0.018 0.026  0.084
+                                             pol transform              0.004   0.004 0.006  0.020
+                                             psf gaussian fit           0.163   0.092 0.278  0.815
+                                             (unaccounted)              0.006   0.006 0.008  0.028
+RESIDUAL UPDATE (summed over imaging cycles) phase total                3.778   3.868 4.462 18.888
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             pol transform              0.490   0.553 0.610  2.449
+                                             degrid (model->vis)        0.237   0.225 0.302  1.185
+                                             fft (degrid)               0.942   1.093 1.117  4.710
+                                             residual vis (obs-model)   0.018   0.019 0.026  0.088
+                                             vis mask                   0.011   0.008 0.019  0.055
+                                             uv-sampling grid           0.000   0.000 0.000  0.000
+                                             vis grid (vis->image)      1.114   0.969 1.543  5.571
+                                             fft (grid)                 0.897   0.952 1.000  4.487
+                                             (unaccounted)              0.069   0.077 0.096  0.343
+AUTO MASK (summed over residual updates)     phase total                0.000   0.000 0.000  0.000
+STOP TEST (summed over residual updates)     phase total                0.733   0.915 0.978  3.667
+MODEL UPDATE (summed over imaging cycles)    phase total                0.943   1.093 1.107  4.716
+                                             cycle control              0.001   0.001 0.001  0.004
+                                             make mask                  0.009   0.010 0.013  0.046
+                                             deconvolve                 0.879   1.020 1.041  4.397
+                                             convergence / merge        0.002   0.002 0.002  0.008
+                                             (unaccounted)              0.052   0.050 0.093  0.260
+RESTORE                                      phase total                0.015   0.014 0.030  0.075
+PRIMARY-BEAM CORRECTION                      phase total                0.068   0.013 0.298  0.342
+NODE I/O                                     phase total                0.276   0.261 0.529  1.382
+                                             make empty image           0.003   0.003 0.003  0.015
+                                             load visibilities          0.065   0.056 0.085  0.323
+                                             channel loop bookkeeping   0.006   0.007 0.007  0.029
+                                             image statistics           0.105   0.133 0.153  0.527
+                                             find_continuum first round 0.000   0.000 0.000  0.000
+                                             write image                0.098   0.055 0.305  0.489
+TASK TOTAL                                   T_image_cube_task          6.240   6.707 7.499 31.198
+                                             (outside the phases)       0.058   0.056 0.087  0.292 
