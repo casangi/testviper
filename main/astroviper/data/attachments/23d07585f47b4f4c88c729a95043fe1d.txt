@@ -1,0 +1,47 @@
+INFO     toolviper:logger.py:78 moments: read budget 2.30 GiB per task (target 80% of 3.8 GiB per thread, baseline 0.77 GiB)
+INFO     toolviper:logger.py:78 Moments parallel chunks: l=3, m=2 -> 6 node tasks (on-disk chunks {'l': 6, 'm': 7})
+INFO     toolviper:logger.py:78 ================================================================
+ moments timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 1.903  (100.0%)
+    open input image              0.009  (0%)
+    determine chunks + parallel coords    0.002  (0%)
+    create empty image xds        0.005  (0%)
+    write empty image to disk     0.024  (1%)
+    create empty data vars on disk    0.011  (1%)
+    interpolate data coords       0.000  (0%)
+    create map graph              0.000  (0%)
+    generate dask graph           0.002  (0%)
+    get compute resources         0.000  (0%)
+    compute dask graph            1.835  (96%)
+    consolidate metadata          0.007  (0%)
+    write FITS images             0.000  (0%)
+    collect node task timing      0.008  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      1.903
+ sum of phases above           1.903  (100.0% of total accounted)
+================================================================
+INFO     toolviper:logger.py:78 moments node-task timing over the 6 chunks (seconds)
+                mean  median   max  total
+node task step                           
+T_load         0.010   0.010 0.010  0.060
+T_moments      0.005   0.005 0.006  0.028
+T_stream_read  0.000   0.000 0.001  0.003
+T_accumulate   0.004   0.004 0.005  0.025
+T_write        0.000   0.000 0.000  0.003
+T_moments_task 0.164   0.156 0.199  0.986
+INFO     toolviper:logger.py:78   parallelism p              : 1 worker slots (recorded; 1 host, 1 reconstructed lanes)
+INFO     toolviper:logger.py:78   T_ideal = W / p            :      1.0 s (W = Σ Δτ_i = 1.0 s over 6 map + 0 reduce tasks)
+INFO     toolviper:logger.py:78   task-window makespan       :      1.7 s (+0.7 s ramp/gaps/tail, 58.2% busy inside window)
+INFO     toolviper:logger.py:78   T_compute (map+reduce)     :      1.8 s = 0.0 s PRE first task (pre-map: worker imports + graph submit) + 1.7 s task window + 0.1 s POST (post-map: reduce residue + gather/save)   [anchors: measured]
+INFO     toolviper:logger.py:78   application total          :      1.9 s = 0.1 s driver setup + 1.8 s compute + 0.0 s finalize (entire distributed application call)
+INFO     toolviper:logger.py:78   E map-reduce               :     53.8 %   [= (W / p) / (t_3 - t_1)]
+INFO     toolviper:logger.py:78   E end-to-end               :     52.2 %   [= (W / p) / (t_3 - t_0)]
+INFO     toolviper:logger.py:78   ramp to 95% busy           :      0.0 s
+INFO     toolviper:logger.py:78   straggler tail (p95->last) :      0.1 s
+INFO     toolviper:logger.py:78 plot_cluster_resource_usage: I/O
+    read: 0.000115 GiB in all; 6.25e-05 GiB/s while >= 95 % of peak tasks run (0-2 s); largest 0.02 s bin there 0.000123 GiB/s
+    write: 3.9e-06 GiB in all; 2.13e-06 GiB/s while >= 95 % of peak tasks run (0-2 s); largest 0.02 s bin there 4.37e-06 GiB/s
+INFO     toolviper:logger.py:78 Report written to /tmp/pytest-of-runner/pytest-3/test_html_report_of_a_monitore0/tiled_report.html
