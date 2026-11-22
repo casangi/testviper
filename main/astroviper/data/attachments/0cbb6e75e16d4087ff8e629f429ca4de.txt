@@ -1,0 +1,123 @@
+[[38;2;128;05;128m2026-11-22 19:36:16,614[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Number of frequency chunks ... : 2 
+[[38;2;128;05;128m2026-11-22 19:36:16,695[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Parallelism and output-image layout:
+  mapping parallelism (n_mapping_parallelism): 2 node tasks, one per frequency chunk of ~1 channel(s). For cube imaging the mapping parallelism is always on frequency.
+  sharding (image_sharding): none; one file per written Zarr chunk.
+  chunking (image_chunking): none; each node task writes its whole image chunk as one on-disk chunk per variable (full l/m extent). 
+[[38;2;128;05;128m2026-11-22 19:36:17,430[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m ================================================================
+ AstroVIPER distributed-application timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.811  (99.1%)
+    create empty image xds        0.001  (0%)
+    write empty image to disk     0.025  (3%)
+    determine chunks + parallel coords    0.001  (0%)
+    create empty data vars on disk    0.013  (2%)
+    open processing set           0.038  (5%)
+    interpolate data coords       0.000  (0%)
+    input preflight               0.005  (1%)
+    add lazy input data           0.000  (0%)
+    create map/reduce graph       0.001  (0%)
+    get compute resources         0.000  (0%)
+    generate dask graph           0.002  (0%)
+    compute dask graph            0.719  (89%)
+    write find_continuum first round    0.000  (0%)
+    drain find_continuum moments    0.000  (0%)
+    consolidate metadata          0.006  (1%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.818
+ sum of phases above           0.811  (99.1% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-22 19:36:17,439[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m AstroVIPER node-task timing over the 2 frequency chunks (seconds)
+                                                                         mean  median   max  total
+phase                                        step                                                 
+PREPARATION (once per chunk)                 phase total                0.022   0.022 0.030  0.043
+                                             imaging weights            0.001   0.001 0.001  0.002
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             vis mask                   0.000   0.000 0.000  0.001
+                                             uv-sampling grid (PSF)     0.002   0.002 0.002  0.004
+                                             fft normalize (PSF)        0.002   0.002 0.002  0.005
+                                             primary beam               0.001   0.001 0.001  0.002
+                                             pol transform              0.002   0.002 0.002  0.004
+                                             psf gaussian fit           0.012   0.012 0.020  0.023
+                                             (unaccounted)              0.001   0.001 0.001  0.002
+RESIDUAL UPDATE (summed over imaging cycles) phase total                0.057   0.057 0.062  0.114
+                                             gcf kernel                 0.000   0.000 0.000  0.000
+                                             pol transform              0.029   0.029 0.031  0.058
+                                             degrid (model->vis)        0.003   0.003 0.003  0.005
+                                             fft (degrid)               0.004   0.004 0.004  0.008
+                                             residual vis (obs-model)   0.002   0.002 0.002  0.004
+                                             vis mask                   0.001   0.001 0.002  0.003
+                                             uv-sampling grid           0.000   0.000 0.000  0.000
+                                             vis grid (vis->image)      0.007   0.007 0.008  0.014
+                                             fft (grid)                 0.008   0.008 0.008  0.015
+                                             (unaccounted)              0.003   0.003 0.003  0.006
+AUTO MASK (summed over residual updates)     phase total                0.000   0.000 0.000  0.000
+STOP TEST (summed over residual updates)     phase total                0.002   0.002 0.002  0.003
+MODEL UPDATE (summed over imaging cycles)    phase total                0.008   0.008 0.009  0.016
+                                             cycle control              0.000   0.000 0.000  0.000
+                                             make mask                  0.002   0.002 0.002  0.003
+                                             deconvolve                 0.004   0.004 0.004  0.007
+                                             convergence / merge        0.000   0.000 0.000  0.000
+                                             (unaccounted)              0.003   0.003 0.003  0.005
+RESTORE                                      phase total                0.000   0.000 0.000  0.000
+PRIMARY-BEAM CORRECTION                      phase total                0.000   0.000 0.000  0.000
+NODE I/O                                     phase total                0.011   0.011 0.011  0.021
+                                             make empty image           0.002   0.002 0.002  0.005
+                                             load visibilities          0.002   0.002 0.002  0.004
+                                             channel loop bookkeeping   0.002   0.002 0.002  0.004
+                                             image statistics           0.003   0.003 0.004  0.006
+                                             find_continuum first round 0.000   0.000 0.000  0.000
+                                             write image                0.001   0.001 0.001  0.002
+TASK TOTAL                                   T_image_cube_task          0.108   0.108 0.124  0.216
+                                             (outside the phases)       0.009   0.009 0.010  0.018 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   parallelism p              : 1 worker slots (recorded; 1 host, 1 reconstructed lanes) 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   T_ideal = W / p            :      0.2 s (W = Σ Δτ_i = 0.2 s over 2 map + 1 reduce tasks) 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   task-window makespan       :      0.5 s (+0.3 s ramp/gaps/tail, 46.0% busy inside window) 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   T_compute (map+reduce)     :      0.7 s = 0.0 s PRE first task (pre-map: worker imports + graph submit) + 0.5 s task window + 0.2 s POST (post-map: reduce residue + gather/save)   [anchors: measured] 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   application total          :      0.8 s = 0.1 s driver setup + 0.7 s compute + 0.0 s finalize (entire distributed application call) 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   E map-reduce               :     31.5 %   [= (W / p) / (t_3 - t_1)] 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   E end-to-end               :     28.1 %   [= (W / p) / (t_3 - t_0)] 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   ramp to 95% busy           :      0.0 s 
+[[38;2;128;05;128m2026-11-22 19:36:17,464[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   straggler tail (p95->last) :      0.0 s 
+[[38;2;128;05;128m2026-11-22 19:36:17,465[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m   reduce nodes (measured)    : 1 calls,      0.0 s busy, window 0.7-0.7 s, 0% of reduce busy inside the map window 
+[[38;2;128;05;128m2026-11-22 19:36:18,033[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m plot_cluster_resource_usage: no resource series recorded (monitoring off or psutil missing); skipping. 
+[[38;2;128;05;128m2026-11-22 19:36:18,033[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m plot_core_resource_usage: no resource series recorded (monitoring off or psutil missing); skipping. 
+[[38;2;128;05;128m2026-11-22 19:36:18,033[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m No 'cpu_percent' series recorded (monitoring off, psutil missing, or counter unavailable on this platform). 
+[[38;2;128;05;128m2026-11-22 19:36:18,033[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m No 'memory_rss_bytes' series recorded (monitoring off, psutil missing, or counter unavailable on this platform). 
+[[38;2;128;05;128m2026-11-22 19:36:18,033[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m No 'read_chars' series recorded (monitoring off, psutil missing, or counter unavailable on this platform). 
+[[38;2;128;05;128m2026-11-22 19:36:18,060[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m moments: read budget 2.30 GiB per task (target 80% of 3.8 GiB per thread, baseline 0.77 GiB) 
+[[38;2;128;05;128m2026-11-22 19:36:18,061[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Moments parallel chunks: l=1, m=1 -> 1 node tasks (on-disk chunks {'l': 64, 'm': 64}) 
+[[38;2;128;05;128m2026-11-22 19:36:18,624[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m ================================================================
+ moments timing (driver, seconds)
+================================================================
+
+DISTRIBUTED APPLICATION (driver): 0.574  (100.0%)
+    open input image              0.009  (2%)
+    determine chunks + parallel coords    0.002  (0%)
+    create empty image xds        0.005  (1%)
+    write empty image to disk     0.025  (4%)
+    create empty data vars on disk    0.008  (1%)
+    interpolate data coords       0.000  (0%)
+    create map graph              0.000  (0%)
+    generate dask graph           0.000  (0%)
+    get compute resources         0.000  (0%)
+    compute dask graph            0.517  (90%)
+    consolidate metadata          0.007  (1%)
+    write FITS images             0.000  (0%)
+    collect node task timing      0.001  (0%)
+
+----------------------------------------------------------------
+ TOTAL (driver wall time)      0.574
+ sum of phases above           0.574  (100.0% of total accounted)
+================================================================ 
+[[38;2;128;05;128m2026-11-22 19:36:18,626[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m moments node-task timing over the 1 chunks (seconds)
+                mean  median   max  total
+node task step                           
+T_load         0.010   0.010 0.010  0.010
+T_moments      0.004   0.004 0.004  0.004
+T_stream_read  0.000   0.000 0.000  0.000
+T_accumulate   0.004   0.004 0.004  0.004
+T_write        0.000   0.000 0.000  0.000
+T_moments_task 0.273   0.273 0.273  0.273 
+[[38;2;128;05;128m2026-11-22 19:36:20,375[0m] [38;2;50;50;205m    INFO[0m[38;2;112;128;144m      client: [0m Report written to /tmp/pytest-of-runner/pytest-3/test_zarr_restored_beams_are_f0/none_report.html 
