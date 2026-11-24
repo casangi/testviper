@@ -34,7 +34,7 @@ BASE_PARAMS = {
     "max_psf_fraction": 0.8,
 }
 
-ITERATION_CONTROL_KEYS = (
+CYCLE_CONTROL_KEYS = (
     "gain",
     "max_iter",
     "threshold",
@@ -58,19 +58,8 @@ E2E_CASES = [
     ),
     pytest.param({"image_size": (300, 200)}, id="rectangular-image"),
     pytest.param({"create_plots": True, "plot_frequency_index": 0}, id="create-plots"),
-    pytest.param(
-        {"max_iter": 0, "max_cycles": 0},
-        id="dirty-image-only",
-        marks=pytest.mark.xfail(
-            strict=True,
-            reason=(
-                "With max_iter=0 astroviper fails to write the image chunks "
-                "(KeyError: no SKY_MODEL, which is in "
-                "DEFAULT_IMAGE_DATA_VARIABLES_KEEP), leaving the PSF all-NaN "
-                "while the flow still reports success."
-            ),
-        ),
-    ),
+    # Failed before astroviper 0.0.44 (no SKY_MODEL written with max_iter=0).
+    pytest.param({"max_iter": 0, "max_cycles": 0}, id="dirty-image-only"),
 ]
 
 
@@ -148,10 +137,18 @@ def _assert_saved_config(image_name: str, params: dict) -> None:
     assert config["imaging_weights_params"] == {
         "weighting": params["weighting"],
         "robust": params["robust"],
+        "casa_weighting_implementation": False,
     }
+    # astroviper >= 0.0.44: anti-aliasing gridder by default, which needs
+    # fft_padding >= 1.05; the flow's default padding is 1.2.
+    assert image_params["fft_padding"] == 1.2
+    assert config["gridder"] == "anti_alias"
+    assert config["gridding_kernel_params"] is None
     assert config["algorithm"] == params["algorithm"]
-    for key in ITERATION_CONTROL_KEYS:
-        assert config["iteration_control_params"][key] == params[key], key
+    cycle_control = config["cycle_control_params"]
+    for key in CYCLE_CONTROL_KEYS:
+        assert cycle_control[key] == params[key], key
+    assert cycle_control["primary_beam_limit"] == 0.2
 
 
 def _assert_deconvolution(

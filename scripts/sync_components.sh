@@ -32,20 +32,20 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --all)
       ALL_REF="$2"; shift 2 ;;
+    --toolviper)
+      TOOLVIPER_REF="$2"; shift 2 ;;
     --xradio)
       XRADIO_REF="$2"; shift 2 ;;
     --graphviper)
       GRAPHVIPER_REF="$2"; shift 2 ;;
     --astroviper)
       ASTROVIPER_REF="$2"; shift 2 ;;
-    --toolviper)
-      TOOLVIPER_REF="$2"; shift 2 ;;
     --flowviper)
       FLOWVIPER_REF="$2"; shift 2 ;;
     --comp-dir)
       COMP_DIR="$2"; shift 2 ;;
     --help|-h)
-      echo "Usage: $0 [--comp-dir DIR] [--all REF] [--xradio REF] [--graphviper REF] [--astroviper REF] [--toolviper REF] [--flowviper REF]"; exit 0 ;;
+      echo "Usage: $0 [--comp-dir DIR] [--all REF] [--toolviper REF] [--xradio REF] [--graphviper REF] [--astroviper REF] [--flowviper REF]"; exit 0 ;;
     *)
       echo "Unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -87,8 +87,8 @@ sync_repo() {
   printf "%s -> %s @ %s\n" "$name" "$desired_ref" "$(git -C "$dir" rev-parse --short HEAD)"
 }
 
+sync_repo toolviper   "$TOOLVIPER_REF"
 sync_repo xradio      "$XRADIO_REF"
 sync_repo graphviper  "$GRAPHVIPER_REF"
 sync_repo astroviper  "$ASTROVIPER_REF"
-sync_repo toolviper   "$TOOLVIPER_REF"
 sync_repo flowviper   "$FLOWVIPER_REF"
