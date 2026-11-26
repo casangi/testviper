@@ -6,6 +6,7 @@ XRADIO ?=
 GRAPHVIPER ?=
 ASTROVIPER ?=
 TOOLVIPER ?=
+FLOWVIPER ?=
 
 # MAIN BRANCH Installation and Tests
 # --------------------------------------------------------------
@@ -51,12 +52,13 @@ test-latest:
 
 # Build with per-component refs
 # Usage:
-#   make build-refs XRADIO=branch1 GRAPHVIPER=v0.3.1 ASTROVIPER=abc123 TOOLVIPER=main
+#   make build-refs XRADIO=branch1 GRAPHVIPER=v0.3.1 ASTROVIPER=abc123 TOOLVIPER=main FLOWVIPER=main
 build-refs:
 	bash scripts/sync_components.sh \
 		$(if $(XRADIO),--xradio $(XRADIO),) \
 		$(if $(GRAPHVIPER),--graphviper $(GRAPHVIPER),) \
 		$(if $(ASTROVIPER),--astroviper $(ASTROVIPER),) \
-		$(if $(TOOLVIPER),--toolviper $(TOOLVIPER),)
+		$(if $(TOOLVIPER),--toolviper $(TOOLVIPER),) \
+		$(if $(FLOWVIPER),--flowviper $(FLOWVIPER),)
 	pip install -r requirements/main.txt
 	pip install -r requirements/base.txt

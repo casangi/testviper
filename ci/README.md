@@ -30,7 +30,7 @@ A new version of the Allure Reports will be created in the gh-pages branch and d
    - Runs `make build-testviper` to install dependencies for the main project.
 
 4. **Clone Component Repositories**
-   - Clones the latest versions of `toolviper`, `xradio`, `graphviper`, and `astroviper`.
+   - Clones the latest versions of `toolviper`, `xradio`, `graphviper`, `astroviper`, and `flowviper`.
 
 5. **Install Component Dependencies**
    - Runs `make build-main` to install dependencies for all components.
