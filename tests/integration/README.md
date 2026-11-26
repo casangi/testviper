@@ -7,18 +7,13 @@ This folder contains Prefect workflow integration examples and tests for TestVIP
 Prefect is an open-source workflow orchestration engine that turns Python functions into production-grade pipelines with minimal friction. You can build and schedule workflows in pure Python—no DSLs or complex config files—and run them anywhere Python runs. Prefect handles the heavy lifting for you out of the box, including automatic state tracking, failure handling, real-time monitoring, and more.
 
 ## Contents
-- `example_pipeline.py` — simple Prefect flow and task definitions
-- `test_pipeline.py` — pytest tests that validate the flow and task behavior
+- `test_example_template.py` — simple Prefect flow and task definitions
 
 ## Prerequisites
 1. Create and activate a Python environment.
 2. Install the repository dependencies and the VIPER components:
    ```bash
    make build-main
-   ```
-3. Install Prefect:
-   ```bash
-   pip install prefect
    ```
 
 ## Workflow Terminology
@@ -102,12 +97,12 @@ def test_my_favorite_flow():
 ### Run the workflow tests
 From the repository root:
 ```bash
-pytest -v tests/workflow/
+pytest -v tests/integration/
 ```
 
 Run with Allure reporting:
 ```bash
-pytest -v tests/workflow/ --junitxml="test_results.xml" --alluredir="allure-results"
+pytest -v tests/integration/ --junitxml="test_results.xml" --alluredir="allure-results"
 allure generate "allure-results" --output "allure-report"
 allure open "allure-report"
 ```
@@ -116,6 +111,3 @@ allure open "allure-report"
 ```bash
 python -c "from tests.workflow.example_pipeline import math_flow; print(math_flow(10, 5))"
 ```
-
-## CI integration
-The GitHub Actions workflow at `.github/workflows/prefect_worfkflow_tests_linux.yml` installs Prefect, runs `pytest -v tests/workflow/`, and generates Allure reports from the test results.
